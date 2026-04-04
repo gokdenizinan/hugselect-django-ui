@@ -9,7 +9,7 @@ Improvements over the original:
 4) Merges duplicate rows to preserve strongest signals
 5) Keeps Semantic Scholar as the search backend
 6) Saves both CSV and JSON
-7) Makes exclusion of papers with no GitHub repo toggleable
+7) Makes exclusion of papers with no GitHub repo toggleabledasd
 """
 
 from __future__ import annotations
