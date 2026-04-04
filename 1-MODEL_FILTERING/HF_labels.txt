@@ -1,0 +1,5 @@
+HF-v2: orijinal
+HF-F2: filtrelenmis
+HF-F8: v2 kopya
+HF-D: sample 
+HF-D2: sample filrelenmis

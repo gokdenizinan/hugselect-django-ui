@@ -1,0 +1,1090 @@
+from dataclasses import dataclass, field
+from typing import List, Dict, Optional, Literal, Any, Tuple
+import os
+import json
+import glob
+import time
+import math
+import random
+import hashlib
+import itertools
+import traceback
+from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+print("starting....")
+
+# === FEATURES ===
+print("importing feature classes...")
+from EA_Features import (
+    EssentialFeatures,
+    PreferenceFeatures,
+    QualityFeatures,
+    FeatureBundle,
+    UserQuery,
+    ModelResult,
+)
+
+# === LLM CLIENT ===
+print("importing llm client...")
+from EB_LLM_Client import LLMClient, LoggingLLMClient
+
+# === FEATURE EXTRACTOR ===
+print("importing ALL feature extractors...")
+print("importing functional feature extractor...")
+from EC_FunctionalFeatureExtractor import NounPhraseExtractor
+from EC_FunctionalFeatureExtractor import FunctionalFeatures
+
+print("importing essential feature extractor...")
+from EC_EssentialFeatureExtractor import EssentialFeaturesExtractor
+
+print("importing preference feature extractor...")
+from EC_PreferenceFeatureExtractor import PreferenceFeaturesExtractor
+
+print("importing quality feature extractor...")
+from EC_QualityFeatureExtractor import QualityFeaturesExtractor
+
+print("importing user input...")
+from ED_User_Input import user_inputs, rationale_input
+
+print("running ALL feature extractors...")
+
+from E_utils import parse_llm_json_flex, save_to_json, object_to_dict
+from EC_PreferenceFeatureExtractor import (
+    get_llm_text,
+    to_categorical_feat,
+    to_numeric_feat,
+    to_bool_feat,
+    to_recency_feat,
+)
+
+from elasticsearch import Elasticsearch
+from EE_Query_Builder_All_relax_modified_cached import ESQueryBuilderAdaptive
+from EE_Query_Builder_All_relax_modified_cached import query_mapping
+
+# =========================================================
+# OPTIONAL VECTOR ENCODER
+# =========================================================
+_VECTOR_ENCODER = None
+_VECTOR_ENCODER_LOAD_FAILED = False
+
+
+def get_vector_encoder(model_name: str):
+    global _VECTOR_ENCODER, _VECTOR_ENCODER_LOAD_FAILED
+    if _VECTOR_ENCODER is not None:
+        return _VECTOR_ENCODER
+    if _VECTOR_ENCODER_LOAD_FAILED:
+        return None
+
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        print(f"Loading vector encoder: {model_name}")
+        _VECTOR_ENCODER = SentenceTransformer(model_name)
+        return _VECTOR_ENCODER
+    except Exception as e:
+        _VECTOR_ENCODER_LOAD_FAILED = True
+        print(f"Vector encoder could not be loaded. Falling back to BM25 only. Error: {e}")
+        return None
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+
+def load_single_feature_json(folder_path, eval_id):
+    """
+    Loads a single saved eval file like eval_A8.json and returns parsed JSON content.
+    """
+    pattern = os.path.join(folder_path, f"eval_{eval_id}.json")
+    matches = glob.glob(pattern)
+
+    if not matches:
+        print(f"File not found: {pattern}")
+        return None
+
+    fpath = matches[0]
+    with open(fpath, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+
+    if not raw:
+        print(f"Empty JSON content in: {fpath}")
+        return None
+
+    raw_text = get_llm_text(raw[0])
+    return parse_llm_json_flex(raw_text)
+
+
+# =========================================================
+# CONFIG
+# =========================================================
+MAKE_RECOMMENDATION = True
+specific_deneme_count = False
+OUTPUT_LETTER = "sil"
+
+ENABLE_RANK_FUNCTIONS = True
+ENABLE_QUALITY_DIMENSIONS = True
+ENABLE_FEATURE_LOCATIONS = True
+# Rotate this key if it's real
+GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+
+SPECIFIC_DENEME = {"8"} if specific_deneme_count else None
+
+feature_folder_q = "8-CRITERIA_SELECTION/user_intent/quality_features"
+feature_folder_e = "8-CRITERIA_SELECTION/user_intent/essential_features"
+feature_folder_p = "8-CRITERIA_SELECTION/user_intent/preference_features"
+
+experiment_output_dir = f"8-CRITERIA_SELECTION/user_intent/experiment_runs_{OUTPUT_LETTER}"
+os.makedirs(experiment_output_dir, exist_ok=True)
+
+ground_truth = {}
+non_null_count = 0
+
+ES_URL = "http://localhost:9200"
+INDEX_NAME = "models_t7"
+
+# =========================================================
+# SEARCH / EXPERIMENT SETTINGS
+# =========================================================
+SEARCH_MODE = "grid"  # "grid" or "random"
+N_EXPERIMENTS = 5
+RANDOM_SEED = 42
+EXPERIMENT_PARALLELISM = max(1, min(8, (os.cpu_count() or 4)))
+
+HYBRID_SEARCH_ENABLED = True
+HYBRID_FUSION_MODE = "rrf"  # only rrf implemented here
+RRF_K = 60
+VECTOR_RRF_WEIGHT_DEFAULT = 0.75
+BM25_RRF_WEIGHT_DEFAULT = 1.00
+VECTOR_ENCODER_MODEL = os.getenv("VECTOR_ENCODER_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+VECTOR_FIELD = os.getenv("VECTOR_FIELD", "embedding")
+VECTOR_TOP_K = 120
+VECTOR_NUM_CANDIDATES = 300
+
+# Balanced baseline
+BASE_FEATURE_WEIGHT_GROUPS = {
+    "essential": {
+        "task": 8.5,
+        "domain": 2.5,
+        "author": 2.5,
+        "objective": 2.0,
+        "model_name": 8.0,
+    },
+    "preference": {
+        "license_name": 1.0,
+        "library_name": 1.8,
+        "basemodels": 1.8,
+        "datasets": 1.8,
+        "language": 2.5,
+        "metrics": 1.0,
+    },
+    "functional": {
+        "functional_item": 10.0,
+    },
+    "quality": {
+        "Functional_Suitability": 2.0,
+        "Compatibility": 1.2,
+        "Performance_Efficiency": 1.2,
+        "Reliability": 1.2,
+        "Interaction_Capability": 1.0,
+        "Security": 1.0,
+        "Maintainability": 1.0,
+        "Flexibility": 1.2,
+    },
+    "rank": {
+        "likes": 0.2,
+        "downloads_last_30_days": 0.35,
+        "Functional_Suitability": 1.2,
+        "Compatibility": 0.8,
+        "Performance_Efficiency": 0.8,
+        "Reliability": 0.9,
+        "Interaction_Capability": 0.7,
+        "Security": 0.8,
+        "Maintainability": 0.7,
+        "Flexibility": 0.8,
+    },
+}
+
+BASE_BOOST_CONFIG = {
+    "tier": {
+        "start": 120.0,
+        "step": 45.0,
+    },
+    "rank": {
+        "max": 25.0,
+    },
+    "match_mode": {
+        "grams_factor": 0.90,
+    },
+}
+
+DEFAULT_PRIORITY_MULTIPLIERS = {
+    "must": 1.6,
+    "strong_prefer": 1.3,
+    "prefer": 1.0,
+    "avoid": 0.0,
+}
+
+DEFAULT_MINIMUM_SHOULD_MATCH = 5
+DEFAULT_SYNONYM_MIN_CONF = 0.50
+
+# Random search now explores whole-group scales + builder controls + hybrid controls.
+PARAM_SPACE = {
+    "functional_group_scale": (0.8, 1.5),
+    "essential_group_scale": (0.8, 1.4),
+    "preference_group_scale": (0.6, 1.4),
+    "quality_group_scale": (0.6, 1.5),
+    "rank_group_scale": (0.2, 1.1),
+    "tier_start": (80.0, 180.0),
+    "tier_step": (25.0, 70.0),
+    "rank_max": (15.0, 40.0),
+    "grams_factor": (0.84, 0.96),
+    "priority_must": (1.2, 2.0),
+    "priority_strong_prefer": (1.05, 1.6),
+    "priority_prefer": (0.85, 1.15),
+    "synonym_min_conf": (0.10, 0.40),
+    "minimum_should_match": (5, 10),
+    "target_hits": (80, 180),
+    "size": (60, 140),
+    "vector_rrf_weight": (0.35, 1.10),
+}
+
+# Systematic grid without duplicate configs.
+GRID_OPTIONS = {
+    "functional_group_scale": [0.9, 1.15, 1.4],
+    "essential_group_scale": [0.9, 1.1, 1.3],
+    "preference_group_scale": [0.8, 1.0, 1.2],
+    "quality_group_scale": [0.75, 1.0, 1.25],
+    "rank_group_scale": [0.5, 0.8],
+    "tier_start": [90.0, 120.0, 150.0],
+    "tier_step": [30.0, 45.0, 60.0],
+    "rank_max": [20.0, 30.0],
+    "grams_factor": [0.86, 0.90, 0.94],
+    "priority_must": [1.4, 1.6, 1.9],
+    "priority_strong_prefer": [1.15, 1.3, 1.45],
+    "priority_prefer": [0.95, 1.0, 1.05],
+    "synonym_min_conf": [0.20, 0.50],
+    "minimum_should_match": [3, 4],
+    "target_hits": [100, 140, 180],
+    "size": [80, 120],
+    "vector_rrf_weight": [0.0, 0.55, 0.9],
+}
+
+# =========================================================
+# UTILS
+# =========================================================
+
+
+def round2(x):
+    return round(float(x), 4)
+
+
+def replace_slash(s: str) -> str:
+    return s.replace("/", "__")
+
+
+def scale_dict_values(d, factor):
+    return {k: round2(v * factor) for k, v in d.items()}
+
+
+GROUP_KEYS_FOR_SCALING = ["functional", "essential", "preference", "quality", "rank"]
+
+
+def deep_copy_config(base_weights, base_boost):
+    return deepcopy(base_weights), deepcopy(base_boost)
+
+
+def apply_group_scales(feature_weights, combo_dict):
+    feature_weights["functional"] = scale_dict_values(
+        feature_weights["functional"], combo_dict["functional_group_scale"]
+    )
+    feature_weights["essential"] = scale_dict_values(
+        feature_weights["essential"], combo_dict["essential_group_scale"]
+    )
+    feature_weights["preference"] = scale_dict_values(
+        feature_weights["preference"], combo_dict["preference_group_scale"]
+    )
+    feature_weights["quality"] = scale_dict_values(
+        feature_weights["quality"], combo_dict["quality_group_scale"]
+    )
+    feature_weights["rank"] = scale_dict_values(
+        feature_weights["rank"], combo_dict["rank_group_scale"]
+    )
+    return feature_weights
+
+
+@dataclass
+class ExperimentConfig:
+    experiment_id: str
+    feature_weight_groups: Dict[str, Dict[str, float]]
+    boost_config: Dict[str, Dict[str, float]]
+    target_hits: int
+    size: int
+    minimum_should_match: int = DEFAULT_MINIMUM_SHOULD_MATCH
+    synonym_min_conf: float = DEFAULT_SYNONYM_MIN_CONF
+    priority_multipliers: Dict[str, float] = field(default_factory=lambda: deepcopy(DEFAULT_PRIORITY_MULTIPLIERS))
+    hybrid_search_enabled: bool = HYBRID_SEARCH_ENABLED
+    bm25_rrf_weight: float = BM25_RRF_WEIGHT_DEFAULT
+    vector_rrf_weight: float = VECTOR_RRF_WEIGHT_DEFAULT
+    vector_field: str = VECTOR_FIELD
+    vector_top_k: int = VECTOR_TOP_K
+    vector_num_candidates: int = VECTOR_NUM_CANDIDATES
+
+    def to_dict(self):
+        return {
+            "experiment_id": self.experiment_id,
+            "feature_weight_groups": self.feature_weight_groups,
+            "boost_config": self.boost_config,
+            "target_hits": self.target_hits,
+            "size": self.size,
+            "minimum_should_match": self.minimum_should_match,
+            "synonym_min_conf": self.synonym_min_conf,
+            "priority_multipliers": self.priority_multipliers,
+            "hybrid_search_enabled": self.hybrid_search_enabled,
+            "bm25_rrf_weight": self.bm25_rrf_weight,
+            "vector_rrf_weight": self.vector_rrf_weight,
+            "vector_field": self.vector_field,
+            "vector_top_k": self.vector_top_k,
+            "vector_num_candidates": self.vector_num_candidates,
+        }
+
+
+
+def config_signature(cfg: Dict[str, Any]) -> str:
+    payload = deepcopy(cfg)
+    payload.pop("experiment_id", None)
+    return hashlib.sha1(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+
+def sampled_product(grid_options: Dict[str, List[Any]], limit: int, seed: int = 42):
+    """
+    Deterministic systematic sampler over the Cartesian product.
+    It avoids duplicate experiments and spreads picks across the full grid.
+    """
+    keys = list(grid_options.keys())
+    values = [grid_options[k] for k in keys]
+    total = 1
+    for v in values:
+        total *= len(v)
+
+    if total <= limit:
+        for combo in itertools.product(*values):
+            yield dict(zip(keys, combo))
+        return
+
+    # Deterministic strided walk across the full Cartesian index space.
+    rng = random.Random(seed)
+    start = rng.randrange(total)
+    step = total // max(1, limit)
+    if math.gcd(step, total) != 1:
+        step += 1
+        while math.gcd(step, total) != 1:
+            step += 1
+
+    seen = set()
+    idx = start
+    produced = 0
+    while produced < limit:
+        if idx not in seen:
+            seen.add(idx)
+            combo = []
+            rem = idx
+            for vals in reversed(values):
+                rem, offset = divmod(rem, len(vals))
+                combo.append(vals[offset])
+            combo.reverse()
+            yield dict(zip(keys, combo))
+            produced += 1
+        idx = (idx + step) % total
+
+
+
+def make_experiment_config(exp_id: int, combo_dict: Dict[str, Any]) -> ExperimentConfig:
+    feature_weights, boost_config = deep_copy_config(BASE_FEATURE_WEIGHT_GROUPS, BASE_BOOST_CONFIG)
+    feature_weights = apply_group_scales(feature_weights, combo_dict)
+
+    boost_config["tier"]["start"] = round2(combo_dict["tier_start"])
+    boost_config["tier"]["step"] = round2(combo_dict["tier_step"])
+    boost_config["rank"]["max"] = round2(combo_dict["rank_max"])
+    boost_config["match_mode"]["grams_factor"] = round2(combo_dict["grams_factor"])
+
+    priority_multipliers = {
+        "must": round2(combo_dict["priority_must"]),
+        "strong_prefer": round2(combo_dict["priority_strong_prefer"]),
+        "prefer": round2(combo_dict["priority_prefer"]),
+        "avoid": 0.0,
+    }
+
+    return ExperimentConfig(
+        experiment_id=f"exp_{exp_id:03d}",
+        feature_weight_groups=feature_weights,
+        boost_config=boost_config,
+        target_hits=int(combo_dict["target_hits"]),
+        size=int(combo_dict["size"]),
+        minimum_should_match=int(combo_dict["minimum_should_match"]),
+        synonym_min_conf=round2(combo_dict["synonym_min_conf"]),
+        priority_multipliers=priority_multipliers,
+        hybrid_search_enabled=HYBRID_SEARCH_ENABLED,
+        bm25_rrf_weight=BM25_RRF_WEIGHT_DEFAULT,
+        vector_rrf_weight=round2(combo_dict["vector_rrf_weight"]),
+        vector_field=VECTOR_FIELD,
+        vector_top_k=VECTOR_TOP_K,
+        vector_num_candidates=VECTOR_NUM_CANDIDATES,
+    )
+
+
+
+def make_random_experiment_configs(n_experiments: int, seed: int) -> List[ExperimentConfig]:
+    rng = random.Random(seed)
+    configs = []
+    signatures = set()
+    max_attempts = max(200, n_experiments * 30)
+    attempts = 0
+
+    while len(configs) < n_experiments and attempts < max_attempts:
+        attempts += 1
+        combo_dict = {
+            "functional_group_scale": rng.uniform(*PARAM_SPACE["functional_group_scale"]),
+            "essential_group_scale": rng.uniform(*PARAM_SPACE["essential_group_scale"]),
+            "preference_group_scale": rng.uniform(*PARAM_SPACE["preference_group_scale"]),
+            "quality_group_scale": rng.uniform(*PARAM_SPACE["quality_group_scale"]),
+            "rank_group_scale": rng.uniform(*PARAM_SPACE["rank_group_scale"]),
+            "tier_start": rng.uniform(*PARAM_SPACE["tier_start"]),
+            "tier_step": rng.uniform(*PARAM_SPACE["tier_step"]),
+            "rank_max": rng.uniform(*PARAM_SPACE["rank_max"]),
+            "grams_factor": rng.uniform(*PARAM_SPACE["grams_factor"]),
+            "priority_must": rng.uniform(*PARAM_SPACE["priority_must"]),
+            "priority_strong_prefer": rng.uniform(*PARAM_SPACE["priority_strong_prefer"]),
+            "priority_prefer": rng.uniform(*PARAM_SPACE["priority_prefer"]),
+            "synonym_min_conf": rng.uniform(*PARAM_SPACE["synonym_min_conf"]),
+            "minimum_should_match": rng.randint(*PARAM_SPACE["minimum_should_match"]),
+            "target_hits": rng.randint(*PARAM_SPACE["target_hits"]),
+            "size": rng.randint(*PARAM_SPACE["size"]),
+            "vector_rrf_weight": rng.uniform(*PARAM_SPACE["vector_rrf_weight"]),
+        }
+
+        # Quantize a bit so the sampled space is systematic and dedupe works well.
+        for key in [
+            "functional_group_scale", "essential_group_scale", "preference_group_scale",
+            "quality_group_scale", "rank_group_scale", "tier_start", "tier_step",
+            "rank_max", "grams_factor", "priority_must", "priority_strong_prefer",
+            "priority_prefer", "synonym_min_conf", "vector_rrf_weight"
+        ]:
+            combo_dict[key] = round2(combo_dict[key])
+
+        cfg = make_experiment_config(len(configs) + 1, combo_dict)
+        sig = config_signature(cfg.to_dict())
+        if sig in signatures:
+            continue
+        signatures.add(sig)
+        configs.append(cfg)
+
+    return configs
+
+
+
+def make_grid_experiment_configs(limit: int = 100, seed: int = 42) -> List[ExperimentConfig]:
+    configs: List[ExperimentConfig] = []
+    signatures = set()
+
+    for idx, combo_dict in enumerate(sampled_product(GRID_OPTIONS, limit=limit, seed=seed), start=1):
+        cfg = make_experiment_config(idx, combo_dict)
+        sig = config_signature(cfg.to_dict())
+        if sig in signatures:
+            continue
+        signatures.add(sig)
+        configs.append(cfg)
+
+    return configs
+
+
+
+def build_experiment_configs() -> List[ExperimentConfig]:
+    if SEARCH_MODE == "grid":
+        return make_grid_experiment_configs(limit=N_EXPERIMENTS, seed=RANDOM_SEED)
+    return make_random_experiment_configs(n_experiments=N_EXPERIMENTS, seed=RANDOM_SEED)
+
+
+
+def get_top_hit_model_id(response):
+    hits = response.get("hits", {}).get("hits", [])
+    if not hits:
+        return None
+    src = hits[0].get("_source", {}) or {}
+    return src.get("modelID") or src.get("model_id") or hits[0].get("_id")
+
+
+
+def get_top_k_model_ids(response, k=10):
+    hits = response.get("hits", {}).get("hits", [])[:k]
+    model_ids = []
+    for h in hits:
+        src = h.get("_source", {}) or {}
+        mid = src.get("modelID") or src.get("model_id") or h.get("_id")
+        model_ids.append(mid)
+    return model_ids
+
+
+
+def get_rank_of_correct_model(response, correct_model, k=100):
+    hits = response.get("hits", {}).get("hits", [])[:k]
+    for i, h in enumerate(hits, start=1):
+        src = h.get("_source", {}) or {}
+        mid = src.get("modelID") or src.get("model_id") or h.get("_id")
+        if mid == correct_model:
+            return i
+    return None
+
+
+
+def save_json_file(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+
+
+def build_query_text(user_text: str, features: FeatureBundle) -> str:
+    parts = [user_text]
+    try:
+        func_items = getattr(features.functional, "functional_items", None) or getattr(features.functional, "items", None)
+        if func_items:
+            parts.extend([str(x) for x in func_items if x])
+    except Exception:
+        pass
+
+    for group_name in ["essential", "preferences"]:
+        group = getattr(features, group_name, None)
+        if not group:
+            continue
+        try:
+            raw = object_to_dict(group)
+            for _, value in raw.items():
+                if value is None:
+                    continue
+                if isinstance(value, (str, int, float, bool)):
+                    parts.append(str(value))
+                elif isinstance(value, list):
+                    parts.extend([str(v) for v in value if v])
+                elif isinstance(value, dict):
+                    for _, v in value.items():
+                        if v:
+                            parts.append(str(v))
+        except Exception:
+            continue
+
+    return " ".join([p for p in parts if p]).strip()
+
+
+
+def normalize_hits(response: Dict[str, Any]) -> List[Dict[str, Any]]:
+    return response.get("hits", {}).get("hits", []) if response else []
+
+
+
+def make_knn_query(query_vector, vector_field: str, size: int, num_candidates: int, bm25_query: Optional[Dict[str, Any]] = None):
+    query = {
+        "size": size,
+        "knn": {
+            "field": vector_field,
+            "query_vector": query_vector,
+            "k": size,
+            "num_candidates": num_candidates,
+        },
+        "_source": True,
+    }
+
+    if bm25_query and isinstance(bm25_query, dict):
+        # Use the bm25 query as a filter when supported by ES.
+        if "query" in bm25_query and bm25_query["query"]:
+            query["knn"]["filter"] = bm25_query["query"]
+
+    return query
+
+
+
+def encode_query_text(query_text: str):
+    encoder = get_vector_encoder(VECTOR_ENCODER_MODEL)
+    if encoder is None:
+        return None
+    vec = encoder.encode(query_text, normalize_embeddings=True)
+    return vec.tolist() if hasattr(vec, "tolist") else list(vec)
+
+
+
+def rrf_fuse_responses(
+    responses: Dict[str, Dict[str, Any]],
+    weights: Dict[str, float],
+    size: int,
+    k: int = 60,
+) -> Dict[str, Any]:
+    fused_scores: Dict[str, float] = {}
+    hit_by_id: Dict[str, Dict[str, Any]] = {}
+
+    for name, response in responses.items():
+        weight = float(weights.get(name, 1.0))
+        if weight <= 0:
+            continue
+        for rank, hit in enumerate(normalize_hits(response), start=1):
+            src = hit.get("_source", {}) or {}
+            doc_id = src.get("modelID") or src.get("model_id") or hit.get("_id")
+            if doc_id is None:
+                continue
+            fused_scores.setdefault(doc_id, 0.0)
+            fused_scores[doc_id] += weight * (1.0 / (k + rank))
+            if doc_id not in hit_by_id:
+                hit_by_id[doc_id] = hit
+
+    ranked_ids = sorted(fused_scores.keys(), key=lambda d: fused_scores[d], reverse=True)[:size]
+    fused_hits = []
+    for doc_id in ranked_ids:
+        hit = deepcopy(hit_by_id[doc_id])
+        hit["_score"] = round2(fused_scores[doc_id])
+        fused_hits.append(hit)
+
+    return {
+        "hits": {
+            "total": {"value": len(fused_scores), "relation": "eq"},
+            "hits": fused_hits,
+        },
+        "_fusion": {
+            "mode": "rrf",
+            "rrf_k": k,
+            "weights": weights,
+            "sources": list(responses.keys()),
+        },
+    }
+
+
+
+def instantiate_builder(exp_cfg: ExperimentConfig):
+    base_kwargs = dict(
+        mapping=query_mapping,
+        target_hits=exp_cfg.target_hits,
+        size=exp_cfg.size,
+        feature_weight_groups=exp_cfg.feature_weight_groups,
+        boost_config=exp_cfg.boost_config,
+        enable_rank_functions=ENABLE_RANK_FUNCTIONS,
+        enable_quality_dimensions=ENABLE_QUALITY_DIMENSIONS,
+        enable_feature_locations=ENABLE_FEATURE_LOCATIONS,
+        priority_multipliers=exp_cfg.priority_multipliers,
+        synonym_min_conf=exp_cfg.synonym_min_conf,
+        minimum_should_match=exp_cfg.minimum_should_match,
+        synonym_cache_path= "synonym_cache.json"
+    )
+
+    try:
+        return ESQueryBuilderAdaptive(**base_kwargs)
+    except TypeError:
+        # Backward-compatible fallback when the builder does not yet expose the new args.
+        for key in ["priority_multipliers", "synonym_min_conf", "minimum_should_match"]:
+            base_kwargs.pop(key, None)
+        return ESQueryBuilderAdaptive(**base_kwargs)
+
+
+
+def run_bm25_and_optional_vector_search(
+    exp_cfg: ExperimentConfig,
+    features: FeatureBundle,
+    user_text: str,
+    index_name: str,
+) -> Tuple[Dict[str, Any], Dict[str, Any], Any]:
+    es_client = Elasticsearch(ES_URL)
+    builder = instantiate_builder(exp_cfg)
+    prebuilt_groups = builder.precompute_feature_group_cache(Fbundle)
+
+    bm25_response, final_query, final_feature_groups = builder.search(
+        es_client=es_client,
+        index=index_name,
+        features=features,
+        prebuilt_groups=prebuilt_groups,
+        include_score_breakdown=True,
+        include_explain=False,
+    )
+
+    hybrid_query = {"bm25": final_query}
+
+    if not exp_cfg.hybrid_search_enabled or exp_cfg.vector_rrf_weight <= 0:
+        return bm25_response, hybrid_query, final_feature_groups
+
+    query_text = build_query_text(user_text=user_text, features=features)
+    query_vector = encode_query_text(query_text)
+
+    if query_vector is None:
+        hybrid_query["vector_skipped"] = "encoder_unavailable"
+        return bm25_response, hybrid_query, final_feature_groups
+
+    vector_query = make_knn_query(
+        query_vector=query_vector,
+        vector_field=exp_cfg.vector_field,
+        size=min(exp_cfg.size, exp_cfg.vector_top_k),
+        num_candidates=exp_cfg.vector_num_candidates,
+        bm25_query=final_query,
+    )
+    hybrid_query["vector"] = vector_query
+
+    try:
+        vector_response = es_client.search(index=index_name, body=vector_query)
+        fused_response = rrf_fuse_responses(
+            responses={"bm25": bm25_response, "vector": vector_response},
+            weights={"bm25": exp_cfg.bm25_rrf_weight, "vector": exp_cfg.vector_rrf_weight},
+            size=exp_cfg.size,
+            k=RRF_K,
+        )
+        return fused_response, hybrid_query, final_feature_groups
+    except Exception as e:
+        hybrid_query["vector_error"] = str(e)
+        return bm25_response, hybrid_query, final_feature_groups
+
+
+
+def run_single_experiment(
+    eval_id: str,
+    sample_key: str,
+    correct_model: str,
+    user_text: str,
+    bundle: FeatureBundle,
+    exp_cfg: ExperimentConfig,
+):
+    experiment_id = exp_cfg.experiment_id
+    print(f"[{eval_id}] Running {experiment_id}")
+    started = time.time()
+
+    response, final_query, final_feature_groups = run_bm25_and_optional_vector_search(
+        exp_cfg=exp_cfg,
+        features=bundle,
+        user_text=user_text,
+        index_name=INDEX_NAME,
+    )
+
+    builder = instantiate_builder(exp_cfg)
+    prebuilt_groups = builder.precompute_feature_group_cache(Fbundle)
+    top1_model = get_top_hit_model_id(response)
+    top10_models = get_top_k_model_ids(response, k=10)
+    correct_rank = get_rank_of_correct_model(response, correct_model, k=100)
+
+    result_row = {
+        "eval_id": eval_id,
+        "sample_key": sample_key,
+        "experiment_id": experiment_id,
+        "correct_model": correct_model,
+        "top1_model": top1_model,
+        "top10_models": top10_models,
+        "correct_rank": correct_rank,
+        "hit_at_1": top1_model == correct_model,
+        "hit_at_10": correct_model in top10_models,
+        "config": exp_cfg.to_dict(),
+        "elapsed_seconds": round2(time.time() - started),
+    }
+
+    full_output_dir = os.path.join(experiment_output_dir, eval_id, experiment_id)
+    os.makedirs(full_output_dir, exist_ok=True)
+    save_json_file(os.path.join(full_output_dir, "query.json"), final_query)
+    save_json_file(os.path.join(full_output_dir, "response.json"), response)
+    save_json_file(os.path.join(full_output_dir, "feature_groups.json"), object_to_dict(final_feature_groups))
+    save_json_file(os.path.join(full_output_dir, "summary.json"), result_row)
+
+    try:
+        diagnose = builder.compare_fundle_to_sample(
+            features=bundle,
+            prebuilt_groups=prebuilt_groups,
+            sample_file=f"8-CRITERIA_SELECTION/test_models/{replace_slash(correct_model)}.json",
+        )
+        save_json_file(os.path.join(full_output_dir, "diagnose.json"), diagnose)
+    except Exception as e:
+        save_json_file(
+            os.path.join(full_output_dir, "diagnose.json"),
+            {"error": str(e), "traceback": traceback.format_exc()},
+        )
+
+    return result_row
+
+
+# =========================================================
+# PREPARE EXPERIMENTS
+# =========================================================
+experiment_configs = build_experiment_configs()
+print(f"Prepared {len(experiment_configs)} unique experiment configurations.")
+
+# Aggregate outputs
+all_sample_level_results = []
+
+# =========================================================
+# MAIN LOOP OVER PAPERS
+# =========================================================
+for original_key, original_paper in rationale_input.items():
+    if not original_paper:
+        continue
+
+    parts = original_key.split("_")
+    if len(parts) < 2:
+        print(f"Skipping malformed key: {original_key}")
+        continue
+
+    paper_id = parts[1]
+
+    if SPECIFIC_DENEME is not None and paper_id not in SPECIFIC_DENEME:
+        continue
+
+    sample_key = f"sample_{paper_id}"
+    paper = rationale_input.get(sample_key)
+
+    if not paper:
+        print(f"Skipping {sample_key}: no data found.")
+        continue
+
+    user_text = paper.get("user_intent")
+    correct_model = paper.get("model_full_name")
+
+    if user_text is None or correct_model is None:
+        print(f"Skipping {sample_key}: missing user_intent or model_full_name.")
+        continue
+
+    non_null_count += 1
+
+    eval_id = f"A{paper_id}"
+    print(f"\n==============================")
+    print(f"Processing {eval_id}")
+    print(f"==============================")
+
+    ground_truth[eval_id] = correct_model
+    save_json_file("8-CRITERIA_SELECTION/user_intent/ground_truth.json", ground_truth)
+
+    eval_path_q = os.path.join(feature_folder_q, f"eval_{eval_id}.json")
+    eval_path_e = os.path.join(feature_folder_e, f"eval_{eval_id}.json")
+    eval_path_p = os.path.join(feature_folder_p, f"eval_{eval_id}.json")
+
+    # =====================================================
+    # LLM FEATURE EXTRACTION MODE
+    # =====================================================
+    llm_client = LLMClient(
+        api_key=GEMINI_API_KEY,
+        model_name="gemini-2.5-flash",
+        max_retries=5,
+        retry_delay_seconds=20.0,
+    )
+
+    Elogger = LoggingLLMClient(
+        llm_client=llm_client,
+        save_dir=feature_folder_e,
+        print_output=True,
+        save_file=f"eval_{eval_id}.json",
+    )
+    Plogger = LoggingLLMClient(
+        llm_client=llm_client,
+        save_dir=feature_folder_p,
+        print_output=True,
+        save_file=f"eval_{eval_id}.json",
+    )
+    Qlogger = LoggingLLMClient(
+        llm_client=llm_client,
+        save_dir=feature_folder_q,
+        print_output=True,
+        save_file=f"eval_{eval_id}.json",
+    )
+
+    Eextractor = EssentialFeaturesExtractor(Elogger)
+    Pextractor = PreferenceFeaturesExtractor(Plogger)
+    Qextractor = QualityFeaturesExtractor(Qlogger)
+
+    Ffeatures = FunctionalFeatures()
+    Fextractor = NounPhraseExtractor()
+    Ffeatures.add_from_query(user_text, Fextractor)
+
+    if not MAKE_RECOMMENDATION:
+        if not os.path.exists(eval_path_e):
+            print(f"Running EssentialFeaturesExtractor for {sample_key}...")
+            time.sleep(60)
+            Eextractor.extract(user_text)
+        else:
+            print(f"Skipping essential extraction, already exists: {eval_path_e}")
+
+        if not os.path.exists(eval_path_p):
+            print(f"Running PreferenceFeaturesExtractor for {sample_key}...")
+            time.sleep(60)
+            Pextractor.extract(user_text)
+        else:
+            print(f"Skipping preference extraction, already exists: {eval_path_p}")
+
+        if not os.path.exists(eval_path_q):
+            print(f"Running QualityFeaturesExtractor for {sample_key}...")
+            time.sleep(60)
+            Qextractor.extract(user_text)
+        else:
+            print(f"Skipping quality extraction, already exists: {eval_path_q}")
+
+        continue
+
+    # =====================================================
+    # LOAD SAVED FEATURES ONCE
+    # =====================================================
+    Efeatures_data = load_single_feature_json(feature_folder_e, eval_id)
+    Pfeatures_data = load_single_feature_json(feature_folder_p, eval_id)
+    Qfeatures_data = load_single_feature_json(feature_folder_q, eval_id)
+
+    if Efeatures_data is None or Pfeatures_data is None or Qfeatures_data is None:
+        print(f"Skipping {eval_id}: one or more feature files missing or invalid.")
+        continue
+
+    Efeatures = EssentialFeatures(
+        task=to_categorical_feat(Efeatures_data.get("task")),
+        domain=to_categorical_feat(Efeatures_data.get("domain")),
+        model_name=to_categorical_feat(Efeatures_data.get("model_name")),
+        author=to_categorical_feat(Efeatures_data.get("author")),
+        objective=to_categorical_feat(Efeatures_data.get("objective")),
+        task_aliases=to_categorical_feat(Efeatures_data.get("task_aliases")),
+        domain_aliases=to_categorical_feat(Efeatures_data.get("domain_aliases")),
+    )
+
+    Qfeatures = QualityFeatures(
+        Functional_Suitability=Qfeatures_data.get("Functional_Suitability"),
+        Compatibility=Qfeatures_data.get("Compatibility"),
+        Performance_Efficiency=Qfeatures_data.get("Performance_Efficiency"),
+        Reliability=Qfeatures_data.get("Reliability"),
+        Interaction_Capability=Qfeatures_data.get("Interaction_Capability"),
+        Security=Qfeatures_data.get("Security"),
+        Maintainability=Qfeatures_data.get("Maintainability"),
+        Flexibility=Qfeatures_data.get("Flexibility"),
+    )
+
+    Pfeatures = PreferenceFeatures(
+        basemodels=to_categorical_feat(Pfeatures_data.get("basemodels")),
+        license_name=to_categorical_feat(Pfeatures_data.get("license_name")),
+        downloads_all_time=to_numeric_feat(Pfeatures_data.get("downloads_all_time")),
+        downloads_last_30_days=to_numeric_feat(Pfeatures_data.get("downloads_last_30_days")),
+        file_count=to_numeric_feat(Pfeatures_data.get("file_count")),
+        gated=to_bool_feat(Pfeatures_data.get("gated")),
+        lastModified=to_recency_feat(Pfeatures_data.get("lastModified")),
+        library_name=to_categorical_feat(Pfeatures_data.get("library_name")),
+        likes=to_numeric_feat(Pfeatures_data.get("likes")),
+        tensors_total=to_numeric_feat(Pfeatures_data.get("tensors_total")),
+        usedStorage=to_numeric_feat(Pfeatures_data.get("usedStorage")),
+        datasets=to_categorical_feat(Pfeatures_data.get("datasets")),
+        language=to_categorical_feat(Pfeatures_data.get("language")),
+        metrics=to_categorical_feat(Pfeatures_data.get("metrics")),
+    )
+
+    print("Creating feature bundle")
+    Fbundle = FeatureBundle(
+        essential=Efeatures,
+        preferences=Pfeatures,
+        quality=Qfeatures,
+        functional=Ffeatures,
+    )
+
+    bundle_output_path = os.path.join(experiment_output_dir, f"{eval_id}_feature_bundle.json")
+    save_json_file(bundle_output_path, object_to_dict(Fbundle))
+
+    # =====================================================
+    # SEQUENTIAL EXPERIMENTS FOR THIS SAMPLE
+    # =====================================================
+    sample_experiment_results = []
+
+    for exp_cfg in experiment_configs:
+        try:
+            row = run_single_experiment(
+                eval_id,
+                sample_key,
+                correct_model,
+                user_text,
+                Fbundle,
+                exp_cfg,
+            )
+            sample_experiment_results.append(row)
+            all_sample_level_results.append(row)
+        except Exception as e:
+            print(f"Experiment failed for {eval_id}: {e}")
+            print(traceback.format_exc())
+
+    ranked = sorted(
+        sample_experiment_results,
+        key=lambda x: (
+            999 if x["correct_rank"] is None else x["correct_rank"],
+            0 if x["hit_at_1"] else 1,
+            x.get("elapsed_seconds", 999999),
+        ),
+    )
+
+    print(f"\nTop experiment summaries for {eval_id}:")
+    for row in ranked[:5]:
+        print(
+            f"{row['experiment_id']} | "
+            f"rank={row['correct_rank']} | "
+            f"hit@1={row['hit_at_1']} | "
+            f"top1={row['top1_model']} | "
+            f"time={row.get('elapsed_seconds')}s"
+        )
+
+    save_json_file(
+        os.path.join(experiment_output_dir, f"{eval_id}_all_experiments.json"),
+        sample_experiment_results,
+    )
+
+# =========================================================
+# FINAL GLOBAL SUMMARY
+# =========================================================
+summary_by_experiment = {}
+
+for row in all_sample_level_results:
+    exp_id = row["experiment_id"]
+    if exp_id not in summary_by_experiment:
+        summary_by_experiment[exp_id] = {
+            "experiment_id": exp_id,
+            "n_samples": 0,
+            "hit_at_1_count": 0,
+            "hit_at_10_count": 0,
+            "rank_sum": 0,
+            "rank_count": 0,
+            "elapsed_seconds_sum": 0.0,
+            "config": row["config"],
+        }
+
+    s = summary_by_experiment[exp_id]
+    s["n_samples"] += 1
+    s["hit_at_1_count"] += int(row["hit_at_1"])
+    s["hit_at_10_count"] += int(row["hit_at_10"])
+    s["elapsed_seconds_sum"] += float(row.get("elapsed_seconds", 0.0))
+
+    if row["correct_rank"] is not None:
+        s["rank_sum"] += row["correct_rank"]
+        s["rank_count"] += 1
+
+final_summary = []
+for exp_id, s in summary_by_experiment.items():
+    n = max(s["n_samples"], 1)
+    avg_rank = None if s["rank_count"] == 0 else round(s["rank_sum"] / s["rank_count"], 4)
+
+    final_summary.append({
+        "experiment_id": exp_id,
+        "n_samples": s["n_samples"],
+        "hit_at_1": round(s["hit_at_1_count"] / n, 4),
+        "hit_at_10": round(s["hit_at_10_count"] / n, 4),
+        "avg_rank_when_found": avg_rank,
+        "avg_elapsed_seconds": round(s["elapsed_seconds_sum"] / n, 4),
+        "config": s["config"],
+    })
+
+final_summary = sorted(
+    final_summary,
+    key=lambda x: (
+        -x["hit_at_1"],
+        -x["hit_at_10"],
+        999999 if x["avg_rank_when_found"] is None else x["avg_rank_when_found"],
+        x.get("avg_elapsed_seconds", 999999),
+    ),
+)
+
+save_json_file(os.path.join(experiment_output_dir, "global_experiment_summary.json"), final_summary)
+save_json_file(os.path.join(experiment_output_dir, "all_sample_level_results.json"), all_sample_level_results)
+
+print(f"\nNUMBER OF TESTED INPUTS: {non_null_count}")
+print("\nBest experiments overall:")
+for row in final_summary[:10]:
+    print(
+        f"{row['experiment_id']} | "
+        f"hit@1={row['hit_at_1']} | "
+        f"hit@10={row['hit_at_10']} | "
+        f"avg_rank={row['avg_rank_when_found']} | "
+        f"avg_time={row['avg_elapsed_seconds']}"
+    )

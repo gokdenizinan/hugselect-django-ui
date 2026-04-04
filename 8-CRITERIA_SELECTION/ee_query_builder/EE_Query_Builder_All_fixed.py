@@ -1,0 +1,1752 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple, Literal, Union, Iterable
+
+from datetime import datetime, timedelta
+from collections import defaultdict
+import re
+
+
+query_mapping = {
+    # high-level intent
+    "task_field": ["Metadata.pipeline_tag", "Metadata.tags", "Metadata.model_type", "Features"],
+    "domain_field": ["Metadata.tags", "Features"],
+    # Support both legacy and current item schemas.
+    "model_name_field": ["model_id", "modelID"],
+    "author_field": ["author"],
+    # Objective-like evidence often appears only in free-text descriptions.
+    "objective_field": ["Metadata.tags", "Features"],
+
+    # metadata / constraints
+    "license_field": ["Metadata.license", "Metadata.tags"],
+    "downloads_all_time_field": "Metadata.downloads_all_time",
+    "likes_field": "Metadata.likes",
+    "downloads_30d_field": "Metadata.downloads_last_30_days",
+    "file_count_field": "Metadata.file_count",
+    "gated_field": "Metadata.gated",
+    "library_name_field": ["Metadata.library_name", "Features"],
+    "model_type_field": ["Metadata.model_type", "Features"],
+    "basemodels_field": ["Metadata.basemodels", "Features"],
+    "datasets_field": ["Metadata.datasets", "Features"],
+    "tensors_total_field": "Metadata.tensors_total",
+    "used_storage_field": "Metadata.usedStorage",
+    "last_modified_field": "Metadata.lastModified",
+    "language_field": ["Metadata.language", "Metadata.tags", "Features"],
+    "metrics_field": ["Metadata.metrics", "Features"],
+
+    # dedicated functional-feature search space
+    "functional_search_fields": [
+        "Features",
+        "Metadata.tags",
+        "Metadata.pipeline_tag",
+        "Metadata.model_type",
+        "Metadata.library_name",
+        "Metadata.basemodels",
+        "Metadata.datasets",
+        "Metadata.language",
+        "Metadata.metrics",
+    ],
+
+    # quality dimensions (numeric score fields)
+    "functional_suitability_field": "Quality.Functional Suitability.score",
+    "compatibility_field": "Quality.Compatibility.score",
+    "performance_efficiency_field": "Quality.Performance Efficiency.score",
+    "reliability_field": "Quality.Reliability.score",
+    "interaction_capability_field": "Quality.Interaction Capability.score",
+    "security_field": "Quality.Security.score",
+    "maintainability_field": "Quality.Maintainability.score",
+    "flexibility_field": "Quality.Flexibility.score",
+}
+# ----------------------------
+# Types
+# ----------------------------
+
+PreferencePriority = Literal["must", "strong_prefer", "prefer", "avoid"]
+RelaxLevel = Literal[0, 1, 2, 3, 4]  # 0 strict, 1 synonym-must, 2 should-gram, 3 should-syn, 4 dropped
+MappingValue = Union[str, List[str]]
+MappingType = Dict[str, MappingValue]
+
+# External contracts (yours)
+from EE_Alias_Creation import AliasResolver, make_embedding_provider_factory
+
+
+# ----------------------------
+# FeatureGroup: relax feature-by-feature with levels
+# ----------------------------
+
+@dataclass
+class FeatureGroup:
+    feature_key: str                         # e.g. "license_name", "domain", "author"
+    priority: PreferencePriority              # must/strong_prefer/prefer/avoid
+    # user inputs (normalized values)
+    include: List[Any] = field(default_factory=list)
+    exclude: List[Any] = field(default_factory=list)
+
+    # fields (ES paths) that this feature can match on
+    fields: List[str] = field(default_factory=list)
+
+    # computed variants
+    grams_by_value: Dict[str, List[str]] = field(default_factory=dict)
+    syn_by_value: Dict[str, List[Tuple[str, float]]] = field(default_factory=dict)
+
+    # relaxation state
+    level: int = 0                           # 0..4
+    relaxable: bool = True                   # task might be False, etc.
+
+    # scoring
+    base_weight: float = 1.0                 # feature-level base weight
+    per_value_weight: Optional[float] = None # if you want per-value weights
+
+
+# ----------------------------
+# Helpers: ES query building primitives
+# ----------------------------
+
+def _emit_term(field: str, value: Any) -> Dict[str, Any]:
+    return {"term": {field: value}}
+
+def _emit_terms(field: str, values: List[Any]) -> Dict[str, Any]:
+    return {"terms": {field: values}}
+
+def _emit_range(field: str, body: Dict[str, Any]) -> Dict[str, Any]:
+    return {"range": {field: body}}
+
+def _wrap_constant_score(filter_clause: Dict[str, Any], boost: float) -> Dict[str, Any]:
+    return {"constant_score": {"filter": filter_clause, "boost": float(boost)}}
+
+def _bool_should(clauses: List[Dict[str, Any]], msm: int = 1) -> Dict[str, Any]:
+    return {"bool": {"should": clauses, "minimum_should_match": int(msm)}}
+
+def _terms_many(fields: List[str], values: List[str], k: int = 1) -> Dict[str, Any]:
+    """
+    Requires at least k distinct values to match; each value can match any of the fields.
+    Useful when you want "k-of-n values".
+    """
+    per_value_groups = [
+        {"bool": {"should": [{"term": {f: v}} for f in fields], "minimum_should_match": 1}}
+        for v in values
+    ]
+    return {"bool": {"should": per_value_groups, "minimum_should_match": int(k)}}
+
+def _terms_any(fields: List[str], values: List[str]) -> Dict[str, Any]:
+    """Any of values across any fields."""
+    return {"bool": {"should": [{"terms": {f: values}} for f in fields], "minimum_should_match": 1}}
+
+def _dis_max_once(queries: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Take the best scoring match only (prevents double counting)."""
+    return {"dis_max": {"tie_breaker": 0.0, "queries": queries}}
+
+import math
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+def _as_list(v: Any) -> List[Any]:
+    if v is None:
+        return []
+    if isinstance(v, (list, tuple, set)):
+        return list(v)
+    return [v]
+
+def _get_by_dotted_path(obj: Dict[str, Any], path: str) -> Any:
+    """
+    Resolve dotted paths like 'Metadata.likes' from a nested _source dict.
+    Returns None if missing.
+    """
+    cur: Any = obj
+    for part in path.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return None
+        cur = cur[part]
+    return cur
+
+def normalize_es_id(es_id: str) -> str:
+    out = es_id.replace("__", "/")
+    if out.endswith(".json"):
+        out = out[:-5]
+    return out
+
+def _normalize_value_key(value: Any) -> str:
+    return str(value).strip().lower()
+
+
+def _as_boolish_string(value: Any) -> Optional[str]:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"true", "1", "yes", "y"}:
+            return "true"
+        if v in {"false", "0", "no", "n"}:
+            return "false"
+    return None
+
+
+def _normalize_text(value: Any) -> str:
+    if value is None:
+        return ""
+    boolish = _as_boolish_string(value)
+    if boolish is not None:
+        return boolish
+    s = str(value).strip().lower()
+    s = s.replace("__", "/")
+    if s.endswith('.json'):
+        s = s[:-5]
+    s = re.sub(r'[_\-]+', ' ', s)
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip()
+
+
+def _lexical_variants(value: Any) -> List[str]:
+    if value is None:
+        return []
+    raw = str(value).strip()
+    if not raw:
+        return []
+
+    variants = {
+        raw,
+        raw.lower(),
+        raw.replace('-', ' '),
+        raw.replace('-', '_'),
+        raw.replace('_', '-'),
+        raw.replace('_', ' '),
+        raw.replace('/', ' / '),
+    }
+
+    norm = _normalize_text(raw)
+    if norm:
+        variants.add(norm)
+        variants.add(norm.replace(' ', '-'))
+        variants.add(norm.replace(' ', '_'))
+
+    boolish = _as_boolish_string(value)
+    if boolish is not None:
+        variants.update({boolish, boolish.title(), boolish.upper()})
+
+    return [v for v in dict.fromkeys(v.strip() for v in variants if str(v).strip())]
+
+
+def _feature_value_variants(feature_key: str, value: Any) -> List[str]:
+    variants = _lexical_variants(value)
+    norm = _normalize_text(value)
+
+    def add_prefixed(prefix: str):
+        if norm:
+            variants.append(f"{prefix}:{norm}")
+            variants.append(f"{prefix}:{norm.replace(' ', '-')}")
+            variants.append(f"{prefix}:{norm.replace(' ', '_')}")
+
+    if feature_key == "license_name":
+        add_prefixed("license")
+    elif feature_key == "datasets":
+        add_prefixed("dataset")
+    elif feature_key == "objective":
+        # Help phrases like pre-trained / pretrained / pre training line up.
+        if "pre" in norm and "train" in norm:
+            variants.extend(["pretrained", "pre trained", "pre-training", "pre training", "pretrained model"])
+        if "embedding" in norm:
+            variants.extend(["embedding", "embeddings", "text embedding", "text embeddings"])
+    elif feature_key == "gated":
+        boolish = _as_boolish_string(value)
+        if boolish is not None:
+            variants.extend([boolish, boolish.title(), boolish.upper()])
+
+    return [v for v in dict.fromkeys(v.strip() for v in variants if str(v).strip())]
+
+
+def _canonical_compare_variants(value: Any) -> List[str]:
+    norm = _normalize_text(value)
+    if not norm:
+        return []
+    variants = {norm}
+    for prefix in ("license:", "dataset:"):
+        if norm.startswith(prefix):
+            variants.add(norm[len(prefix):].strip())
+        else:
+            variants.add(f"{prefix}{norm}")
+    return list(variants)
+
+
+def _quality_attr_to_mapping_key(attr_name: str) -> str:
+    return f"{attr_name.lower()}_field"
+
+
+def _quality_attr_to_default_path(attr_name: str) -> str:
+    return f"Quality.{attr_name.replace('_', ' ')}.score"
+
+
+# ----------------------------
+# Core: Relaxation-driven ES Query Builder
+# ----------------------------
+
+class ESQueryBuilderAdaptive:
+    """
+    Implements:
+      1) Relax feature-by-feature (one feature per stage)
+      2) Relax only features with no matches (feasibility tests)
+      3) First relaxed check: synonyms (strict is canonical + grams)
+      4) When must->should: grams first, then synonyms
+      5) Relax order: strong_prefer -> must (prefer already should)
+      6) Later-stage matches score less (level penalty)
+      7) Normalize final score to 0..100 based on max possible from given query features
+      8) No double counting per user value across overlapping categories/fields (dis_max tie_breaker=0)
+    """
+
+    LEVEL_PENALTY: Dict[int, float] = {
+        0: 1.00,  # strict
+        1: 0.85,  # synonym must (still required, less faithful)
+        2: 0.70,  # should grams
+        3: 0.55,  # should synonyms
+        4: 0.00,  # dropped
+    }
+
+    def __init__(
+        self,
+        mapping: MappingType,
+        *,
+        base_signal_weights: Optional[Dict[str, float]] = None,
+        priority_multipliers: Optional[Dict[PreferencePriority, float]] = None,
+        feature_weight_groups: Optional[Dict[str, Dict[str, float]]] = None,
+        boost_config: Optional[Dict[str, Dict[str, float]]] = None,
+        size: int = 5,
+        target_hits: int = 20,
+        max_relax_steps: int = 50,
+        synonym_min_conf: float = 0.35,
+        max_synonyms_per_value: int = 10,
+        tier_boost_start: float = 100.0,
+        tier_boost_step: float = 100.0,
+        rank_max_boost: float = 50.0,
+    ):
+        self.mapping = mapping
+        self.size = size
+        self.target_hits = target_hits
+        self.max_relax_steps = max_relax_steps
+
+        self.resolver = AliasResolver(
+            synonym_provider_factory=make_embedding_provider_factory(min_similarity=0.5),
+            max_synonyms=max_synonyms_per_value,
+        )
+
+        default_feature_weight_groups: Dict[str, Dict[str, float]] = {
+            "essential": {
+                "task": 10.0,
+                "domain": 2.0,
+                "author": 3.0,
+                "objective": 1.0,
+            },
+            "preference": {
+                "license_name": 1.0,
+                "library_name": 1.0,
+                "basemodels": 1.0,
+                "datasets": 1.0,
+                "language": 1.0,
+                "metrics": 1.0,
+            },
+            "functional": {
+                "functional_item": 2.5,
+            },
+            "quality": {
+                "Functional_Suitability": 1.5,
+                "Compatibility": 1.0,
+                "Performance_Efficiency": 1.0,
+                "Reliability": 1.0,
+                "Interaction_Capability": 1.0,
+                "Security": 1.0,
+                "Maintainability": 1.0,
+                "Flexibility": 1.0,
+            },
+            "rank": {
+                "likes": 0.8,
+                "downloads_last_30_days": 1.2,
+                "Functional_Suitability": 1.5,
+                "Compatibility": 1.0,
+                "Performance_Efficiency": 1.0,
+                "Reliability": 1.0,
+                "Interaction_Capability": 1.0,
+                "Security": 1.0,
+                "Maintainability": 1.0,
+                "Flexibility": 1.0,
+            },
+        }
+
+        if feature_weight_groups:
+            for section, weights in feature_weight_groups.items():
+                default_feature_weight_groups.setdefault(section, {}).update(weights)
+
+        if base_signal_weights:
+            compatibility_map = {
+                "task_match": ("essential", "task"),
+                "domain_match": ("essential", "domain"),
+                "author_match": ("essential", "author"),
+                "tag_match": ("preference", "license_name"),
+                "functional_match": ("functional", "functional_item"),
+                "quality_match": ("quality", "Functional_Suitability"),
+            }
+            for key, value in base_signal_weights.items():
+                if key in compatibility_map:
+                    section, name = compatibility_map[key]
+                    default_feature_weight_groups.setdefault(section, {})[name] = float(value)
+                else:
+                    default_feature_weight_groups.setdefault("legacy", {})[key] = float(value)
+
+        self.feature_weight_groups = default_feature_weight_groups
+        self.base_signal_weights = {
+            "tag_match": self.feature_weight_groups["preference"]["license_name"],
+            "author_match": self.feature_weight_groups["essential"]["author"],
+            "task_match": self.feature_weight_groups["essential"]["task"],
+            "domain_match": self.feature_weight_groups["essential"]["domain"],
+            "functional_match": self.feature_weight_groups["functional"]["functional_item"],
+            "quality_match": self.feature_weight_groups["quality"]["Functional_Suitability"],
+        }
+
+        self.priority_multipliers = priority_multipliers or {
+            "must": 1.6,
+            "strong_prefer": 1.3,
+            "prefer": 1.0,
+            "avoid": 0.0,
+        }
+
+        default_boost_config: Dict[str, Dict[str, float]] = {
+            "tier": {
+                "start": float(tier_boost_start),
+                "step": float(tier_boost_step),
+            },
+            "rank": {
+                "max": float(rank_max_boost),
+            },
+            "match_mode": {
+                "grams_factor": 0.99,
+            },
+        }
+        if boost_config:
+            for section, cfg in boost_config.items():
+                default_boost_config.setdefault(section, {}).update(cfg)
+        self.boost_config = default_boost_config
+
+        self.synonym_min_conf = float(synonym_min_conf)
+        self.max_synonyms_per_value = int(max_synonyms_per_value)
+
+        self.tier_boost_start = float(self.boost_config["tier"]["start"])
+        self.tier_boost_step = float(self.boost_config["tier"]["step"])
+        self.rank_max_boost = float(self.boost_config["rank"]["max"])
+        match_mode_cfg = self.boost_config.get("match_mode", {}) or {}
+        self.grams_factor = float(match_mode_cfg.get("grams_factor") or 0.99)
+
+        # ranking signals (optional “global” popularity/quality)
+        self.rank_field_weights = dict(self.feature_weight_groups.get("rank", {}))
+        self.rank_functions: List[Dict[str, Any]] = self._default_rank_functions()
+
+    # ----------------------------
+    # Mapping helpers
+    # ----------------------------
+
+    def _fields(self, field_key: str) -> List[str]:
+        v = self.mapping.get(field_key)
+        if v is None:
+            raise KeyError(f"Missing mapping for field_key={field_key!r}")
+        return [v] if isinstance(v, str) else list(v)
+
+    def _first_field(self, field_key: str) -> str:
+        return self._fields(field_key)[0]
+
+    def _priority_weight(self, priority: PreferencePriority, base: float) -> float:
+        return float(base) * float(self.priority_multipliers.get(priority, 1.0))
+
+    def _value_key(self, value: Any) -> str:
+        return _normalize_value_key(value)
+
+    def _functional_candidate_field_keys(self) -> List[str]:
+        configured = self.mapping.get("functional_search_fields") or self.mapping.get("functional_fields")
+        if configured is not None:
+            return list(configured) if isinstance(configured, list) else [configured]
+
+        return [
+            "task_field",
+            "domain_field",
+            "author_field",
+            "objective_field",
+            "license_field",
+            "library_name_field",
+            "basemodels_field",
+            "datasets_field",
+            "language_field",
+            "metrics_field",
+        ]
+
+    def _functional_feature_fields(self) -> List[str]:
+        fields: List[str] = []
+        seen = set()
+        for key in self._functional_candidate_field_keys():
+            if key not in self.mapping:
+                continue
+            for field in self._fields(key):
+                if field not in seen:
+                    fields.append(field)
+                    seen.add(field)
+        return fields
+
+    def _quality_feature_specs(self) -> List[Tuple[str, str, float]]:
+        specs: List[Tuple[str, str, float]] = []
+        for attr_name, weight in self.feature_weight_groups.get("quality", {}).items():
+            mapping_key = _quality_attr_to_mapping_key(attr_name)
+            default_path = _quality_attr_to_default_path(attr_name)
+            field_path = self.mapping.get(mapping_key, default_path)
+            specs.append((attr_name, field_path, float(weight)))
+        return specs
+
+    def _rank_signal_specs(self) -> List[Tuple[str, str, Optional[str], float, float]]:
+        specs: List[Tuple[str, str, Optional[str], float, float]] = []
+
+        likes_field = self.mapping.get("likes_field", "Metadata.likes")
+        downloads_30d_field = self.mapping.get("downloads_30d_field", "Metadata.downloads_last_30_days")
+
+        if self.rank_field_weights.get("likes", 0.0) > 0:
+            specs.append(("likes", likes_field, "log1p", 0.0, float(self.rank_field_weights["likes"])))
+        if self.rank_field_weights.get("downloads_last_30_days", 0.0) > 0:
+            specs.append(("downloads_last_30_days", downloads_30d_field, "log1p", 0.0, float(self.rank_field_weights["downloads_last_30_days"])))
+
+        for attr_name, _, _ in self._quality_feature_specs():
+            weight = float(self.rank_field_weights.get(attr_name, 0.0))
+            if weight <= 0:
+                continue
+            field_path = self.mapping.get(_quality_attr_to_mapping_key(attr_name), _quality_attr_to_default_path(attr_name))
+            specs.append((attr_name, field_path, None, 0.0, weight))
+
+        return specs
+
+    # ----------------------------
+    # GRAMS/SYNS BY VALUE
+    # ----------------------------
+    def _flat_grams(self, fg: FeatureGroup) -> List[str]:
+        out: List[str] = []
+        for v in fg.include:
+            out.extend(fg.grams_by_value.get(v, []))
+        # optional dedupe
+        return list(dict.fromkeys(out))
+    
+
+    def _flat_syns(self, fg: FeatureGroup) -> List[str]:
+        out: List[str] = []
+        for v in fg.include:
+            for s, _ in fg.syn_by_value.get(v, []):
+                out.append(s)
+        return list(dict.fromkeys(out))
+
+    def _add_value_candidates(
+        self,
+        *,
+        value_key: str,
+        value_queries: Dict[str, List[Dict[str, Any]]],
+        fg: FeatureGroup,
+        val: str,
+        feat_weight: float,
+        mode: Literal["best", "canonical_only", "grams_only", "synonyms_only"],
+        grams_factor: Optional[float] = None,
+    ):
+        """
+        Add scoring candidates for a single (feature group, user value) into the GLOBAL bucket for that value.
+        Later we wrap each bucket into one dis_max => value contributes once total.
+        """
+
+        if feat_weight <= 0:
+            return
+
+        # Canonical
+        if mode in ("best", "canonical_only"):
+            value_queries[value_key].append(
+                _wrap_constant_score(_terms_many(fg.fields, [val], k=1), feat_weight)
+            )
+
+        # Grams (per value)
+        if mode in ("best", "grams_only"):
+            grams_list = fg.grams_by_value.get(val, [])
+            if grams_list:
+                value_queries[value_key].append(
+                    _wrap_constant_score(_terms_many(fg.fields, grams_list, k=1), feat_weight * float(grams_factor if grams_factor is not None else self.grams_factor))
+                )
+
+        # Synonyms (per value, scaled by similarity)
+        if mode in ("best", "synonyms_only"):
+            syn_list = fg.syn_by_value.get(val, [])
+            for syn, sim in syn_list[: self.max_synonyms_per_value]:
+                value_queries[value_key].append(
+                    _wrap_constant_score(_terms_many(fg.fields, [syn], k=1), feat_weight * float(sim))
+                )
+
+    def _global_value_shoulds(self, groups: List[FeatureGroup]) -> List[Dict[str, Any]]:
+        """
+        Build ONE dis_max per user value across ALL features.
+        Prevents cross-feature double counting for the same value.
+        """
+        value_queries: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+
+        for fg in groups:
+            if not fg.include:
+                continue
+            if fg.priority == "avoid":
+                continue
+            if fg.level >= 4:
+                continue
+
+            level_pen = float(self.LEVEL_PENALTY.get(int(fg.level), 0.0))
+            feat_weight = self._priority_weight(fg.priority, fg.base_weight) * level_pen
+            if feat_weight <= 0:
+                continue
+
+            # Decide scoring mode for this feature at this level
+            # (Keep your intent: must->should: grams first then syns, prefer is "best")
+            if fg.priority in ("must", "strong_prefer"):
+                if fg.level == 2:
+                    mode = "grams_only"
+                elif fg.level == 3:
+                    mode = "synonyms_only"
+                else:
+                    mode = "best"
+            else:
+                mode = "best"
+
+            # Add per-(feature,value) candidates into the GLOBAL per-value bucket
+            for val in fg.include:
+                # You can normalize this key if you want case-insensitive grouping:
+                value_key = self._value_key(val)
+                self._add_value_candidates(
+                    value_key=value_key,
+                    value_queries=value_queries,
+                    fg=fg,
+                    val=val,
+                    feat_weight=float(feat_weight),
+                    mode=mode,  # type: ignore[arg-type]
+                )
+
+        # Now wrap each user value bucket in dis_max => value contributes once total
+        shoulds: List[Dict[str, Any]] = []
+        for _, queries in value_queries.items():
+            if not queries:
+                continue
+            shoulds.append(_dis_max_once(queries))
+
+        return shoulds
+
+    from collections import defaultdict
+
+    def display_score_for_hit(
+        self,
+        groups: List[FeatureGroup],
+        hit: Dict[str, Any],
+        *,
+        fixed_max_score: float,
+    ) -> float:
+        """
+        Feature-only normalized score (0..100), matching ES query semantics:
+        - ONE contribution per user value globally (dis_max across all features)
+        - Sum those contributions
+        """
+        source = hit.get("_source", {}) or {}
+
+        best_by_value: Dict[str, float] = defaultdict(float)
+
+        for fg in groups:
+            if not fg.include:
+                continue
+            if fg.priority == "avoid":
+                continue
+            if fg.level >= 4:
+                continue
+
+            level_pen = float(self.LEVEL_PENALTY.get(int(fg.level), 0.0))
+            pr_mult = float(self.priority_multipliers.get(fg.priority, 1.0))
+            feat_weight = float(fg.base_weight) * pr_mult * level_pen
+            if feat_weight <= 0:
+                continue
+
+            # Match your _global_value_shoulds() mode selection
+            if fg.priority in ("must", "strong_prefer"):
+                if fg.level == 2:
+                    mode: Literal["best","canonical_only","grams_only","synonyms_only"] = "grams_only"
+                elif fg.level == 3:
+                    mode = "synonyms_only"
+                else:
+                    mode = "best"
+            else:
+                mode = "best"
+
+            for user_value in fg.include:
+                # IMPORTANT: normalize same way you do in _global_value_shoulds / compute_max_score
+                value_key = self._value_key(user_value)
+
+                score = self._best_match_for_value_mode(
+                    fg, source, user_value, feat_weight, mode
+                )
+                if score > best_by_value[value_key]:
+                    best_by_value[value_key] = score
+
+        feature_total = float(sum(best_by_value.values()))
+        denom = max(1e-6, float(fixed_max_score))
+        return float(min(100.0, (feature_total / denom) * 100.0))
+
+
+    def _feature_total_global_by_value(
+        self,
+        groups: List[FeatureGroup],
+        source: Dict[str, Any],
+    ) -> Tuple[float, Dict[str, Dict[str, Any]]]:
+        """
+        Mirrors ES _global_value_shoulds semantics:
+        - one bucket per user value (normalized key)
+        - each bucket chooses best match across ALL features (dis_max)
+        Returns:
+        (total, winners_by_value_key)
+        """
+        best_score_by_value: Dict[str, float] = defaultdict(float)
+        winners: Dict[str, Dict[str, Any]] = {}
+
+        for fg in groups:
+            if not fg.include or fg.priority == "avoid" or fg.level >= 4:
+                continue
+
+            level_pen = float(self.LEVEL_PENALTY.get(int(fg.level), 0.0))
+            pr_mult = float(self.priority_multipliers.get(fg.priority, 1.0))
+            feat_weight = float(fg.base_weight) * pr_mult * level_pen
+            if feat_weight <= 0:
+                continue
+
+            # Match your query scoring mode logic
+            if fg.priority in ("must", "strong_prefer"):
+                if fg.level == 2:
+                    mode = "grams_only"
+                elif fg.level == 3:
+                    mode = "synonyms_only"
+                else:
+                    mode = "best"
+            else:
+                mode = "best"
+
+            for user_value in fg.include:
+                value_key = self._value_key(user_value)
+
+                # score this fg/value under same mode as ES query
+                score = self._best_match_for_value_mode(
+                    fg, source, user_value, feat_weight, mode  # <- from earlier fix
+                )
+
+                if score > best_score_by_value[value_key]:
+                    best_score_by_value[value_key] = score
+                    winners[value_key] = {
+                        "user_value": user_value,
+                        "feature_key": fg.feature_key,
+                        "priority": fg.priority,
+                        "level": int(fg.level),
+                        "effective_feat_weight": feat_weight,
+                        "mode": mode,
+                        "score": float(score),
+                    }
+
+        total = float(sum(best_score_by_value.values()))
+        return total, winners
+    # ----------------------------
+    # Optional rank functions
+    # ----------------------------
+
+    def _default_rank_functions(self) -> List[Dict[str, Any]]:
+        functions: List[Dict[str, Any]] = []
+        for _, field_path, modifier, missing, weight in self._rank_signal_specs():
+            body: Dict[str, Any] = {"field": field_path, "missing": float(missing)}
+            if modifier:
+                body["modifier"] = modifier
+            functions.append({"field_value_factor": body, "weight": float(weight)})
+        return functions
+
+    # ----------------------------
+    # Build FeatureGroups from your FeatureBundle
+    # ----------------------------
+
+    def build_feature_groups(
+        self,
+        features: Any,  # your FeatureBundle
+    ) -> List[FeatureGroup]:
+        groups: List[FeatureGroup] = []
+
+        task_pref = getattr(getattr(features, "essential", None), "task", None)
+        if task_pref and getattr(task_pref, "include", None):
+            fg = self._make_categorical_group(
+                feature_key="task",
+                field_key="task_field",
+                pref=task_pref,
+                base_weight=self.feature_weight_groups["essential"].get("task", 10.0),
+                relaxable=True,
+                force_priority="must",
+            )
+            groups.append(fg)
+
+        for key, field_key in [
+            ("domain", "domain_field"),
+            ("author", "author_field"),
+            ("objective", "objective_field"),
+        ]:
+            pref = getattr(getattr(features, "essential", None), key, None)
+            if pref and getattr(pref, "include", None):
+                groups.append(self._make_categorical_group(
+                    feature_key=key,
+                    field_key=field_key,
+                    pref=pref,
+                    base_weight=self.feature_weight_groups["essential"].get(key, 1.0),
+                    relaxable=True,
+                ))
+
+        for key, field_key in [
+            ("license_name", "license_field"),
+            ("library_name", "library_name_field"),
+            ("basemodels", "basemodels_field"),
+            ("datasets", "datasets_field"),
+            ("language", "language_field"),
+            ("metrics", "metrics_field"),
+            ("gated", "gated_field"),
+        ]:
+            pref = getattr(getattr(features, "preferences", None), key, None)
+            if pref and (getattr(pref, "include", None) or getattr(pref, "exclude", None)):
+                groups.append(self._make_categorical_group(
+                    feature_key=key,
+                    field_key=field_key,
+                    pref=pref,
+                    base_weight=self.feature_weight_groups["preference"].get(key, 1.0),
+                    relaxable=True,
+                ))
+
+        functional = getattr(features, "functional", None)
+        functional_items = list(getattr(functional, "F_features", None) or [])
+        functional_fields = self._functional_feature_fields()
+        if functional_items and functional_fields:
+            for idx, item in enumerate(functional_items):
+                groups.append(self._make_direct_group(
+                    feature_key=f"functional_{idx}",
+                    include=[item],
+                    fields=functional_fields,
+                    priority="prefer",
+                    base_weight=self.feature_weight_groups["functional"].get("functional_item", 1.0),
+                    relaxable=True,
+                ))
+
+        quality = getattr(features, "quality", None)
+        if quality is not None:
+            for attr_name, field_path, weight in self._quality_feature_specs():
+                raw_value = getattr(quality, attr_name, None)
+                if raw_value is None:
+                    continue
+                groups.append(self._make_direct_group(
+                    feature_key=attr_name,
+                    include=[raw_value],
+                    fields=[field_path],
+                    priority="prefer",
+                    base_weight=weight,
+                    relaxable=True,
+                ))
+
+        return groups
+
+    def build_tier_filter(self, groups: List[FeatureGroup]) -> Dict[str, Any]:
+        """
+        Build a query clause representing the *eligibility constraints* of the current tier.
+        Used only for tier boosting, not for retrieval.
+        """
+        flt: List[Dict[str, Any]] = []
+        must_not: List[Dict[str, Any]] = []
+
+        # same exclude handling as build_query
+        for fg in groups:
+            if fg.exclude:
+                ex_grams = self.resolver.resolve_grams(
+                    [s.partition(".")[2] or s for s in fg.fields],
+                    fg.exclude
+                )
+                if ex_grams:
+                    must_not.append(_terms_any(fg.fields, ex_grams))
+
+        # same must/strong_prefer “required constraints” logic as build_query
+        for fg in groups:
+            if not fg.include:
+                continue
+
+            if fg.priority in ("must", "strong_prefer") and fg.level in (0, 1):
+                must_variants = [_terms_many(fg.fields, fg.include, k=1)]
+
+                flat_grams: List[str] = []
+                for v in fg.include:
+                    flat_grams.extend(fg.grams_by_value.get(v, []))
+                if flat_grams:
+                    flat_grams = list(dict.fromkeys(flat_grams))
+                    must_variants.append(_terms_many(fg.fields, flat_grams, k=1))
+
+                if fg.level >= 1:
+                    flat_syns: List[str] = []
+                    for v in fg.include:
+                        for s, _ in fg.syn_by_value.get(v, []):
+                            flat_syns.append(s)
+                    if flat_syns:
+                        flat_syns = list(dict.fromkeys(flat_syns))
+                        must_variants.append(_terms_many(fg.fields, flat_syns, k=1))
+
+                flt.append(_bool_should(must_variants, msm=1))
+
+        tier_q: Dict[str, Any] = {"bool": {}}
+        if flt:
+            tier_q["bool"]["filter"] = flt
+        if must_not:
+            tier_q["bool"]["must_not"] = must_not
+        return tier_q
+
+    def _make_categorical_group(
+        self,
+        *,
+        feature_key: str,
+        field_key: str,
+        pref: Any,
+        base_weight: float,
+        relaxable: bool,
+        force_priority: Optional[PreferencePriority] = None,
+    ) -> FeatureGroup:
+        pr: PreferencePriority = force_priority or getattr(pref, "priority", "prefer")
+        include = list(getattr(pref, "include", None) or [])
+        exclude = list(getattr(pref, "exclude", None) or [])
+        fields = self._fields(field_key)
+
+        # Resolve grams and synonyms using your resolver contract.
+        # Resolve grams and synonyms using grouped resolver outputs (per user value).
+        candidates_sources = [s.partition(".")[2] or s for s in fields]
+
+        grams_by_value: Dict[str, List[str]] = {}
+        syn_by_value: Dict[str, List[Tuple[str, float]]] = {}
+
+        if include:
+            grams_by_value = self.resolver.resolve_grams_grouped(candidates_sources, include)
+            syn_by_value = self.resolver.resolve_syns_grouped(candidates_sources, include)
+
+            # Add lightweight lexical/canonical variants so schema quirks and tag prefixes still match.
+            for v in include:
+                base_variants = _feature_value_variants(feature_key, v)
+                existing_grams = list(grams_by_value.get(v, []))
+                existing_grams.extend(x for x in base_variants if _normalize_text(x) != _normalize_text(v))
+                grams_by_value[v] = list(dict.fromkeys(existing_grams))
+
+                existing_syns = list(syn_by_value.get(v, []))
+                seen_syn_norms = {_normalize_text(s) for s, _ in existing_syns}
+                for variant in base_variants:
+                    norm_variant = _normalize_text(variant)
+                    if norm_variant and norm_variant != _normalize_text(v) and norm_variant not in seen_syn_norms:
+                        existing_syns.append((variant, 0.97))
+                        seen_syn_norms.add(norm_variant)
+                syn_by_value[v] = existing_syns
+
+            # Apply synonym_min_conf filtering here (AliasResolver may not know your threshold)
+            if self.synonym_min_conf > 0:
+                filtered: Dict[str, List[Tuple[str, float]]] = {}
+                for v in include:
+                    pairs = syn_by_value.get(v, [])
+                    filtered[v] = [(s, float(w)) for (s, w) in pairs if float(w) >= self.synonym_min_conf]
+                syn_by_value = filtered
+
+
+
+        return FeatureGroup(
+            feature_key=feature_key,
+            priority=pr,
+            include=include,
+            exclude=exclude,
+            fields=fields,
+            grams_by_value=grams_by_value,
+            syn_by_value=syn_by_value,  # <--- changed
+            level=0,
+            relaxable=relaxable,
+            base_weight=float(base_weight),
+        )
+
+
+    def _make_direct_group(
+        self,
+        *,
+        feature_key: str,
+        include: List[Any],
+        fields: List[str],
+        priority: PreferencePriority = "prefer",
+        base_weight: float = 1.0,
+        relaxable: bool = True,
+        exclude: Optional[List[Any]] = None,
+    ) -> FeatureGroup:
+        return FeatureGroup(
+            feature_key=feature_key,
+            priority=priority,
+            include=list(include or []),
+            exclude=list(exclude or []),
+            fields=list(fields),
+            grams_by_value={},
+            syn_by_value={},
+            level=0,
+            relaxable=relaxable,
+            base_weight=float(base_weight),
+        )
+
+    # SCORE REASONING
+
+    SCORE_BREAKDOWN_TOLERANCE = 1e-6
+
+    def _collect_needed_source_paths(self, groups: List[FeatureGroup]) -> List[str]:
+        paths: List[str] = []
+        for fg in groups:
+            paths.extend(fg.fields)
+
+        for _, field_path, _, _, _ in self._rank_signal_specs():
+            paths.append(field_path)
+
+        seen = set()
+        out = []
+        for p in paths:
+            if p and p not in seen:
+                out.append(p)
+                seen.add(p)
+        return out
+    
+    def _get_docvalue(self, hit: Dict[str, Any], field_path: str) -> Any:
+        fields = hit.get("fields") or {}
+        v = fields.get(field_path)
+        if isinstance(v, list):
+            return v[0] if v else None
+        return v
+
+
+
+    def _rank_function_contribs_from_hit(self, hit: Dict[str, Any]) -> Tuple[float, List[Dict[str, Any]]]:
+        breakdown: List[Dict[str, Any]] = []
+        total = 0.0
+
+        def fvf(signal_name: str, field_path: str, weight: float, modifier: Optional[str], missing: float) -> None:
+            nonlocal total, breakdown
+
+            raw = self._get_docvalue(hit, field_path)
+            if raw is None:
+                source = hit.get("_source", {}) or {}
+                raw = _get_by_dotted_path(source, field_path)
+
+            val = float(raw) if raw is not None else float(missing)
+
+            if modifier == "log1p":
+                modded = math.log1p(max(0.0, val))
+            else:
+                modded = val
+
+            contrib = modded * float(weight)
+            total += contrib
+
+            breakdown.append({
+                "type": "field_value_factor",
+                "signal": signal_name,
+                "field": field_path,
+                "raw_value": raw,
+                "missing_used": (raw is None),
+                "modifier": modifier or "none",
+                "after_modifier": modded,
+                "weight": float(weight),
+                "contribution": contrib,
+            })
+
+        for signal_name, field_path, modifier, missing, weight in self._rank_signal_specs():
+            fvf(signal_name, field_path, weight=weight, modifier=modifier, missing=missing)
+
+        return total, breakdown
+
+
+    def _doc_has_term_in_any_field(self, source: Dict[str, Any], fields: List[str], term: str) -> bool:
+        term_variants = set(_canonical_compare_variants(term))
+        term_variants.update(_normalize_text(v) for v in _lexical_variants(term))
+        term_variants = {v for v in term_variants if v}
+
+        for f in fields:
+            v = _get_by_dotted_path(source, f)
+            vals = _as_list(v)
+            for candidate in vals:
+                candidate_variants = set(_canonical_compare_variants(candidate))
+                candidate_variants.update(_normalize_text(v) for v in _lexical_variants(candidate))
+                candidate_variants = {v for v in candidate_variants if v}
+                if candidate_variants & term_variants:
+                    return True
+        return False
+
+    def _best_match_for_value(
+        self,
+        fg: FeatureGroup,
+        source: Dict[str, Any],
+        user_value: str,
+        feat_weight: float,
+        *,
+        grams_factor: Optional[float] = None,
+    ) -> Tuple[float, Dict[str, Any]]:
+        candidates: List[Tuple[float, Dict[str, Any]]] = []
+        effective_grams_factor = self.grams_factor if grams_factor is None else float(grams_factor)
+        """
+        Recompute the dis_max best-of for ONE user value:
+          canonical: feat_weight
+          grams: feat_weight * grams_factor (if any gram matches)
+          synonyms: feat_weight * sim (best sim among matching syns)
+        Return (best_score, detail).
+        """
+        candidates: List[Tuple[float, Dict[str, Any]]] = []
+
+        # canonical
+        if self._doc_has_term_in_any_field(source, fg.fields, user_value):
+            candidates.append((feat_weight, {
+                "match_type": "canonical",
+                "matched_term": user_value,
+                "factor": 1.0,
+                "score": feat_weight,
+            }))
+
+        # grams (note: your current query allows grams from the whole feature, not per value)
+        # We'll mirror your current implementation: if ANY gram matches, it can win this value's dis_max.
+        # If you later change to grams-per-value, update this accordingly.
+        # grams (PER VALUE)
+        grams_list = fg.grams_by_value.get(user_value, [])
+        effective_grams_factor = (
+            self.grams_factor if grams_factor is None else float(grams_factor)
+        )
+
+        for g in grams_list:
+            if self._doc_has_term_in_any_field(source, fg.fields, g):
+                s = feat_weight * effective_grams_factor
+                candidates.append((s, {
+                    "match_type": "grams",
+                    "matched_term": g,
+                    "factor": effective_grams_factor,
+                    "score": s,
+                }))
+                break
+
+        # synonyms (your fg.syn_pairs is global — this can double count in ES today, but here we pick best)
+        # synonyms (PER VALUE): pick best similarity among synonyms that match this doc
+        best_syn: Optional[Tuple[str, float]] = None
+        syn_list = fg.syn_by_value.get(user_value, [])
+
+        for syn, sim in syn_list[: self.max_synonyms_per_value]:
+            if self._doc_has_term_in_any_field(source, fg.fields, syn):
+                sim_f = float(sim)
+                if best_syn is None or sim_f > best_syn[1]:
+                    best_syn = (syn, sim_f)
+
+        if best_syn is not None:
+            syn, sim_f = best_syn
+            s = feat_weight * sim_f
+            candidates.append((s, {
+                "match_type": "synonym",
+                "matched_term": syn,
+                "factor": sim_f,
+                "score": s,
+            }))
+
+
+        if not candidates:
+            return 0.0, {
+                "match_type": "none",
+                "matched_term": None,
+                "factor": 0.0,
+                "score": 0.0,
+            }
+
+        best_score, best_detail = max(candidates, key=lambda x: x[0])
+        return best_score, best_detail
+
+    def score_breakdown_for_hit(self,groups: List[FeatureGroup],hit: Dict[str, Any],*,fixed_max_score: float, ) -> Dict[str, Any]:
+
+        """
+        Build a full score breakdown for a single ES hit.
+        """
+        source = hit.get("_source", {}) or {}
+        es_score = float(hit.get("_score") or 0.0)
+
+        feature_rows: List[Dict[str, Any]] = []
+
+        for fg in groups:
+            if not fg.include:
+                continue
+            if fg.priority == "avoid":
+                continue
+            if fg.level >= 4:
+                continue
+
+            level_pen = float(self.LEVEL_PENALTY.get(int(fg.level), 0.0))
+            pr_mult = float(self.priority_multipliers.get(fg.priority, 1.0))
+            base = float(fg.base_weight)
+
+            feat_weight = base * pr_mult * level_pen
+
+            # if weight is 0, it contributes nothing
+            per_value: List[Dict[str, Any]] = []
+            feat_sum = 0.0
+
+            for user_value in fg.include:
+                best_score, best_detail = self._best_match_for_value(
+                    fg, source, user_value, feat_weight
+                )
+                feat_sum += best_score
+                per_value.append({
+                    "user_value": user_value,
+                    "best": best_detail,
+                })
+
+            feature_total_global, winners = self._feature_total_global_by_value(groups, source)
+            feature_rows.append({
+                "feature_key": fg.feature_key,
+                "priority": fg.priority,
+                "level": int(fg.level),
+                "multipliers": {
+                    "base_weight": base,
+                    "priority_multiplier": pr_mult,
+                    "level_penalty": level_pen,
+                },
+                "effective_feat_weight": feat_weight,
+                "per_value_dismax": per_value,
+                "feature_contribution": feat_sum,
+            })
+
+        # global rank function contributions
+        rank_total, rank_rows = self._rank_function_contribs_from_hit(hit)
+
+        raw_est = feature_total_global + rank_total
+                
+        denom = max(1e-6, float(fixed_max_score))
+        feature_score_0_100 = min(100.0, (feature_total_global / denom) * 100.0)
+
+
+        # # --- STEP 7: sanity check (temporary) ---
+        # if abs(raw_est - es_score) > 1e-3:
+        #     print(
+        #         "WARNING: score breakdown mismatch",
+        #         {
+        #             "es_score": es_score,
+        #             "estimated_raw_score": raw_est,
+        #             "feature_total_est": feature_total_global,
+        #             "rank_total_est": rank_total,
+        #         }
+        #     )
+
+        return {
+            "es_score": es_score,
+            "estimated_raw_score": raw_est,
+            "feature_score_0_100": feature_score_0_100,
+            "feature_total_est": feature_total_global,          # <- ES-matching
+            "value_winners": winners,    
+            "rank_total_est": rank_total,
+            "features": feature_rows,
+            "rank_functions": rank_rows,
+            "notes": {
+                "estimation": "Computed from _source values using the same multipliers/penalties as query builder. ES _score may differ if docvalues/_source differ, analyzers differ, or if ES scoring differs from our assumptions.",
+            }
+        }
+
+    # ----------------------------
+    # Build ES query from current FeatureGroup states
+    # ----------------------------
+
+    def build_query(self, groups: List[FeatureGroup], *, include_explain: bool = False,
+                    tier_filters: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+
+
+
+        """
+        Returns an ES query dict.
+        Uses:
+          - strict constraints (must/filter) per feature level rules
+          - should scoring with dis_max per user value to avoid double counting
+          - function_score for global ranking signals
+          - optional script_score normalization to 0..100
+        """
+
+        must: List[Dict[str, Any]] = []
+        flt: List[Dict[str, Any]] = []
+        should: List[Dict[str, Any]] = []
+        must_not: List[Dict[str, Any]] = []
+
+        # 1) Excludes always must_not (safe)
+        for fg in groups:
+            if fg.exclude:
+                # gram-based exclude (safe-ish)
+                ex_grams = self.resolver.resolve_grams(
+                    [s.partition(".")[2] or s for s in fg.fields],
+                    fg.exclude
+                )
+                if ex_grams:
+                    must_not.append(_terms_any(fg.fields, ex_grams))
+
+        # 2) Feature constraints + scoring
+        for fg in groups:
+            if not fg.include:
+                continue
+
+            pr = fg.priority
+            if pr == "avoid":
+                flat = self._flat_grams(fg)
+                if flat:
+                    must_not.append(_terms_any(fg.fields, flat))
+
+
+            # Feature-level weight for scoring (decays by relaxation level)
+            level_pen = self.LEVEL_PENALTY.get(int(fg.level), 0.0)
+
+            # --- Required constraints for must/strong_prefer in level 0..1 ---
+            if pr in ("must", "strong_prefer") and fg.level in (0, 1):
+                must_variants = [_terms_many(fg.fields, fg.include, k=1)]
+
+                # flatten grams across values
+                flat_grams: List[str] = []
+                for v in fg.include:
+                    flat_grams.extend(fg.grams_by_value.get(v, []))
+                if flat_grams:
+                    flat_grams = list(dict.fromkeys(flat_grams))  # optional dedupe
+                    must_variants.append(_terms_many(fg.fields, flat_grams, k=1))
+
+                # flatten synonyms across values (for MUST feasibility only)
+                if fg.level >= 1:
+                    flat_syns: List[str] = []
+                    for v in fg.include:
+                        for s, _ in fg.syn_by_value.get(v, []):
+                            flat_syns.append(s)
+                    if flat_syns:
+                        flat_syns = list(dict.fromkeys(flat_syns))  # optional dedupe
+                        must_variants.append(_terms_many(fg.fields, flat_syns, k=1))
+
+                flt.append(_bool_should(must_variants, msm=1))
+        should = self._global_value_shoulds(groups)
+
+        bool_query: Dict[str, Any] = {"bool": {}}
+        if must: bool_query["bool"]["must"] = must
+        if flt: bool_query["bool"]["filter"] = flt
+        if should: bool_query["bool"]["should"] = should
+        if must_not: bool_query["bool"]["must_not"] = must_not
+        bool_query["bool"]["minimum_should_match"] = 0
+
+        # inner: rank signals with a hard cap
+        rank_query: Dict[str, Any] = {
+            "function_score": {
+                "query": bool_query,
+                "score_mode": "sum",
+                "boost_mode": "sum",
+                "functions": self.rank_functions,
+                "max_boost": self.rank_max_boost,   # NEW: cap likes/downloads/quality impact
+            }
+        }
+
+        # outer: tier boosts (uncapped or lightly capped)
+        tier_filters = tier_filters or []
+        if tier_filters:
+            tier_funcs: List[Dict[str, Any]] = []
+            for i, tf in enumerate(tier_filters):
+                w = self.tier_boost_start - (i * self.tier_boost_step)
+                if w <= 0:
+                    break
+                tier_funcs.append({"filter": tf, "weight": float(w)})
+
+            base_query: Dict[str, Any] = {
+                "function_score": {
+                    "query": rank_query,
+                    "score_mode": "sum",
+                    "boost_mode": "sum",
+                    "functions": tier_funcs,
+                }
+            }
+        else:
+            base_query = rank_query
+
+
+        docvalue_fields = [field_path for _, field_path, _, _, _ in self._rank_signal_specs()]
+
+        query = {
+            "explain": bool(include_explain),
+            "size": self.size,
+            "_source": {"includes": self._collect_needed_source_paths(groups)},
+            "docvalue_fields": docvalue_fields,
+            "query": base_query,
+            "sort": [{"_score": {"order": "desc"}}],
+        }
+        return query
+    # ----------------------------
+    # Max-score computation (normalized scoring)
+    # ----------------------------
+
+    def compute_max_score(self, groups: List[FeatureGroup]) -> float:
+        # max contribution per VALUE across all features
+        best_by_value: Dict[str, float] = {}
+
+        for fg in groups:
+            if not fg.include:
+                continue
+            if fg.priority == "avoid":
+                continue
+            if fg.level >= 4:
+                continue
+
+            # "max possible from given query features"
+            # use strict fidelity baseline (penalty=1.0), and priority multiplier
+            base = self._priority_weight(fg.priority, fg.base_weight) * self.LEVEL_PENALTY[0]
+
+            for val in fg.include:
+                # if the value appears in multiple features, take the max (global dis_max semantics)
+                key = self._value_key(val)
+                if key not in best_by_value or base > best_by_value[key]:
+                    best_by_value[key] = float(base)
+
+        return float(sum(best_by_value.values()))
+
+
+    # ----------------------------
+    # Feasibility tests (relax only what cannot match)
+    # ----------------------------
+
+    def _best_match_for_value_mode(
+        self,
+        fg: FeatureGroup,
+        source: Dict[str, Any],
+        user_value: str,
+        feat_weight: float,
+        mode: Literal["best", "canonical_only", "grams_only", "synonyms_only"],
+        *,
+        grams_factor: Optional[float] = None,
+    ) -> float:
+        """
+        Recompute the same candidate set your ES query would create for this fg/value at current mode,
+        then return the best (dis_max behavior).
+        """
+        best = 0.0
+
+        # canonical
+        if mode in ("best", "canonical_only"):
+            if self._doc_has_term_in_any_field(source, fg.fields, user_value):
+                best = max(best, float(feat_weight))
+
+        # grams (PER VALUE)
+        if mode in ("best", "grams_only"):
+            grams_list = fg.grams_by_value.get(user_value, [])
+            if grams_list:
+                for g in grams_list:
+                    if self._doc_has_term_in_any_field(source, fg.fields, g):
+                        best = max(best, float(feat_weight) * float(grams_factor if grams_factor is not None else self.grams_factor))
+                        break
+
+        # synonyms (PER VALUE, scaled)
+        if mode in ("best", "synonyms_only"):
+            syn_list = fg.syn_by_value.get(user_value, [])
+            for syn, sim in syn_list[: self.max_synonyms_per_value]:
+                if self._doc_has_term_in_any_field(source, fg.fields, syn):
+                    best = max(best, float(feat_weight) * float(sim))
+
+        return float(best)
+
+
+    def _base_constraints_query(self, groups: List[FeatureGroup]) -> Dict[str, Any]:
+        """
+        Base constraints that we keep fixed while testing feasibility.
+        Usually: any explicitly non-relaxable essentials you decide to keep fixed.
+        """
+        must: List[Dict[str, Any]] = []
+        must_not: List[Dict[str, Any]] = []
+
+        for fg in groups:
+            if not fg.include:
+                continue
+            if not fg.relaxable and fg.priority in ("must", "strong_prefer"):
+                variants = [_terms_many(fg.fields, fg.include, k=1)]
+
+                flat_grams = self._flat_grams(fg)
+                if flat_grams:
+                    variants.append(_terms_many(fg.fields, flat_grams, k=1))
+
+                if fg.feature_key == "task" and fg.level >= 1:
+                    flat_syns = self._flat_syns(fg)
+                    if flat_syns:
+                        variants.append(_terms_many(fg.fields, flat_syns, k=1))
+
+                must.append(_bool_should(variants, msm=1))
+
+
+            # keeps your excludes too
+            if fg.exclude:
+                ex_grams = self.resolver.resolve_grams(
+                    [s.partition(".")[2] or s for s in fg.fields],
+                    fg.exclude
+                )
+                if ex_grams:
+                    must_not.append(_terms_any(fg.fields, ex_grams))
+
+        q: Dict[str, Any] = {"bool": {}}
+        if must:
+            q["bool"]["must"] = must
+        if must_not:
+            q["bool"]["must_not"] = must_not
+        q["bool"]["minimum_should_match"] = 0
+        return q
+
+    def feasibility_counts(
+        self,
+        es_client: Any,
+        index: str,
+        groups: List[FeatureGroup],
+    ) -> Dict[str, Dict[str, int]]:
+        """
+        Returns per-feature counts for strict and synonym feasibility under base constraints.
+
+        Output:
+          {
+            "license_name": {"strict": 12, "syn": 34, "grams": 10},
+            ...
+          }
+        """
+        base_q = self._base_constraints_query(groups)
+
+        # Use msearch for performance (works on ES python client: es.msearch(body=...))
+        # We'll do count queries as search with size=0 for compatibility.
+        mbody: List[Dict[str, Any]] = []
+        keys: List[Tuple[str, str]] = []
+
+        def add_count(feature_key: str, label: str, extra_must: Dict[str, Any]):
+            keys.append((feature_key, label))
+            mbody.append({"index": index})
+            mbody.append({
+                "size": 0,
+                "track_total_hits": True,
+                "query": {
+                    "bool": {
+                        "must": [base_q, extra_must],
+                        "minimum_should_match": 0,
+                    }
+                }
+            })
+
+
+        for fg in groups:
+            if not fg.include:
+                continue
+
+            if not fg.relaxable and fg.feature_key != "task":
+                continue
+            if fg.priority not in ("must", "strong_prefer"):
+                continue
+
+            terms = [_terms_many(fg.fields, fg.include, k=1)]
+            flat_grams = self._flat_grams(fg)
+            if flat_grams:
+                terms.append(_terms_many(fg.fields, flat_grams, k=1))
+            add_count(fg.feature_key, "strict", _bool_should(terms, msm=1))
+
+            # grams alone (useful for level 2)
+            flat_grams = self._flat_grams(fg)
+            if flat_grams:
+                add_count(fg.feature_key, "grams", _terms_many(fg.fields, flat_grams, k=1))
+            else:
+                add_count(fg.feature_key, "grams", _terms_many(fg.fields, fg.include, k=1))
+
+
+            # synonyms (for level 1 and 3)
+            syn_terms: List[str] = []
+            for v in fg.include:
+                for s, _ in fg.syn_by_value.get(v, []):
+                    syn_terms.append(s)
+
+            flat_syns = self._flat_syns(fg)
+            if flat_syns:
+                add_count(fg.feature_key, "syn", _terms_many(fg.fields, flat_syns, k=1))
+            else:
+                add_count(fg.feature_key, "syn", _terms_many(fg.fields, fg.include, k=1))
+
+
+
+        if not mbody:
+            return {}
+
+        resp = es_client.msearch(body=mbody)
+        out: Dict[str, Dict[str, int]] = {}
+
+        for (feature_key, label), r in zip(keys, resp.get("responses", [])):
+            total = r.get("hits", {}).get("total", 0)
+            value = total.get("value", total) if isinstance(total, dict) else total
+            out.setdefault(feature_key, {})[label] = int(value)
+
+        return out
+
+    # ----------------------------
+    # Choose next feature to relax (feature-by-feature)
+    # ----------------------------
+
+    def pick_next_relaxation(
+        self,
+        groups: List[FeatureGroup],
+        feas: Dict[str, Dict[str, int]],
+    ) -> Optional[FeatureGroup]:
+        """
+        Pick ONE feature to relax next, prioritizing:
+          - only features that have no matches at their *current* required state
+          - strong_prefer before must
+          - lower base_weight first (cheaper to relax)
+        """
+        candidates: List[FeatureGroup] = []
+
+        for fg in groups:
+            if not fg.relaxable:
+                continue
+            if fg.priority not in ("must", "strong_prefer"):
+                continue
+            if fg.level >= 4:
+                continue
+
+            f = feas.get(fg.feature_key, {})
+            strict_cnt = f.get("strict", 0)
+            syn_cnt = f.get("syn", 0)
+            grams_cnt = f.get("grams", 0)
+
+            # Determine infeasibility at current level
+            infeasible = False
+            if fg.level == 0:
+                infeasible = (strict_cnt == 0)
+            elif fg.level == 1:
+                infeasible = (syn_cnt == 0)
+            elif fg.level == 2:
+                infeasible = (grams_cnt == 0)
+            elif fg.level == 3:
+                infeasible = (syn_cnt == 0)
+
+            if infeasible:
+                candidates.append(fg)
+
+        if not candidates:
+            return None
+
+        def sort_key(fg: FeatureGroup):
+            # strong_prefer first
+            pr_rank = 0 if fg.priority == "strong_prefer" else 1
+            return (pr_rank, fg.base_weight)
+
+        candidates.sort(key=sort_key)
+        return candidates[0]
+
+    # ----------------------------
+    # Main search loop: adaptive relaxation
+    # ----------------------------
+
+    def _ensure_dict(self, resp):
+        # Elasticsearch 8.x returns ObjectApiResponse
+        if hasattr(resp, "body"):
+            return resp.body
+        return resp
+
+    def search(self, es_client: Any, index: str, features: Any, *, include_score_breakdown: bool = False, include_explain: bool = False, ):
+        groups = self.build_feature_groups(features)
+        # FIXED denominator for the entire run: based on initial (strict-intent) groups
+        fixed_max_score = self.compute_max_score(groups)
+        fixed_max_score = max(1e-6, float(fixed_max_score))
+        print("DEBUG fixed_max_score:", fixed_max_score)  # optional
+
+
+
+        best_resp: Optional[Dict[str, Any]] = None
+        best_q: Optional[Dict[str, Any]] = None
+        best_total = -1
+
+        tier_filters: List[Dict[str, Any]] = []
+        for step in range(self.max_relax_steps):
+            q = self.build_query(groups, include_explain=include_explain, tier_filters=tier_filters,)
+            resp = es_client.search(index=index, body=q)
+            resp_dict = self._ensure_dict(resp)
+
+            hits_list = resp_dict.get("hits", {}).get("hits", [])
+
+
+            for i, h in enumerate(hits_list):
+                raw_id = h.get("_id")
+
+                pretty_id = None
+                if raw_id:
+                    pretty_id = raw_id.replace("__", "/")
+                    if pretty_id.endswith(".json"):
+                        pretty_id = pretty_id[:-5]
+
+                display_score = round(self.display_score_for_hit(groups, h, fixed_max_score=fixed_max_score),2)
+                new_hit = {}
+                if "_id" in h:
+                    new_hit["_id"] = h["_id"]
+                if pretty_id is not None:
+                    new_hit["pretty_id"] = pretty_id
+                if "_score" in h:
+                    new_hit["_score"] = h["_score"]
+                new_hit["display_score"] = display_score
+                for k, v in h.items():
+                    if k in ("_id", "_score", "_source"):
+                        continue
+                    new_hit[k] = v
+                if "_source" in h:
+                    new_hit["_source"] = h["_source"]
+                hits_list[i] = new_hit
+
+
+            # Only attach breakdown if requested
+            if include_score_breakdown:
+                for h in hits_list:
+                    h["_score_breakdown"] = self.score_breakdown_for_hit(
+                        groups,
+                        h,
+                        fixed_max_score=fixed_max_score,
+                    )
+            else:
+                for h in hits_list:
+                    h.pop("_score_breakdown", None)
+
+            # Only keep ES explain if requested
+            if not include_explain:
+                for h in hits_list:
+                    h.pop("_explanation", None)
+
+            # FIX: read totals from resp_dict (not resp)
+            hits_obj = resp_dict.get("hits", {})
+            total_obj = hits_obj.get("total", 0)
+            total = total_obj.get("value", total_obj) if isinstance(total_obj, dict) else total_obj
+
+            if total > best_total:
+                best_total, best_resp, best_q = int(total), resp_dict, q
+
+            if total >= self.target_hits:
+                return resp_dict, q, groups
+            # if total > 0:
+            #     return resp_dict, q, groups
+
+            feas = self.feasibility_counts(es_client, index, groups)
+            next_fg = self.pick_next_relaxation(groups, feas)
+            tier_filters.append(self.build_tier_filter(groups))
+
+            if next_fg is None:
+                # Nothing clearly infeasible at current level.
+                # Last resort: relax something remaining (strong_prefer then must), feature-by-feature.
+                fallback = self._pick_last_resort(groups)
+                if fallback is None:
+                    break
+                fallback.level = min(4, fallback.level + 1)
+                continue
+
+            # Relax that feature by one step
+            next_fg.level = min(4, next_fg.level + 1)
+
+        # If loop ends, return best attempt (likely 0 hits) for diagnostics
+        return best_resp or {"hits": {"total": {"value": 0}, "hits": []}}, best_q or {}, groups
+
+    def _pick_last_resort(self, groups: List[FeatureGroup]) -> Optional[FeatureGroup]:
+        """
+        When feasibility can't decide, relax remaining relaxables conservatively:
+          strong_prefer -> must, lowest weight first, one step.
+        """
+        cands = [
+            fg for fg in groups
+            if fg.relaxable
+            and fg.priority in ("must", "strong_prefer")
+            and fg.level < 4
+        ]
+        if not cands:
+            return None
+
+        def sort_key(fg: FeatureGroup):
+            pr_rank = 0 if fg.priority == "strong_prefer" else 1
+            return (pr_rank, fg.base_weight, fg.level)
+
+        cands.sort(key=sort_key)
+        return cands[0]

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI4RSE Ontology Viewer — IEEE Taxonomy (compact, white)</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/n3@1.17.4/browser/n3.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #ffffff;
+            --panel: #f7f9fc;
+            --stage: #ffffff;
+            --text: #0b1220;
+            --muted: #5b657a;
+            --grid: #eef2f7;
+            --domain: #f59e0b; /* AI4RSE diamond */
+            --top: #7aa2ff; /* top-level (oval) */
+            --inter: #34d399; /* intermediate (hex) */
+            --fine: #7dd3fc; /* fine-grained (capsule) */
+            --lowest: #ffd58a; /* lowest-level (pill) */
+            --inst: #f6c85f; /* instances (cylinder) */
+            --concept: #b388ff; /* concept (rounded rect) */
+
+            --link: #b9c2d3;
+            --linkInst: #e0a41a;
+            --sel: #10b981;
+            --active: #2563eb;
+            --outline: #9aa5b1;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 12px/1.35 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial
+        }
+
+        .app {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            min-height: 100%
+        }
+
+        header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--panel);
+            border-bottom: 1px solid #e6ebf2;
+        }
+
+            header h1 {
+                margin: 0;
+                font-size: 14px;
+                font-weight: 600;
+                letter-spacing: .2px
+            }
+
+        .sep {
+            flex: 1
+        }
+
+        .btn, .file-label, input[type="text"] {
+            background: #ffffff;
+            border: 1px solid #dbe2ee;
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer
+        }
+
+            .btn:hover, .file-label:hover {
+                background: #f8fbff
+            }
+
+        input[type="text"] {
+            min-width: 260px
+        }
+
+        input[type=file] {
+            display: none
+        }
+
+        .hint {
+            color: var(--muted)
+        }
+
+        .legendbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            background: #fff;
+            border-bottom: 1px solid #e6ebf2;
+        }
+
+        .tag {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px solid #e6ebf2;
+            border-radius: 12px;
+            background: #fff;
+            padding: 4px 8px;
+            font-size: 12px
+        }
+
+        .swatch {
+            width: 14px;
+            height: 10px;
+            border-radius: 999px
+        }
+
+        .filt {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center
+        }
+
+            .filt input {
+                accent-color: #2563eb
+            }
+
+        .stage-wrap {
+            position: relative;
+            background: var(--stage)
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: 100vh
+        }
+
+        .grid line {
+            stroke: var(--grid);
+            stroke-opacity: 1;
+            shape-rendering: crispEdges
+        }
+
+        .link {
+            stroke: var(--link);
+            stroke-opacity: .95
+        }
+
+            .link.instances {
+                stroke: var(--linkInst);
+                stroke-opacity: 1
+            }
+
+            .link.highlight {
+                stroke: var(--active);
+                stroke-width: 2;
+                stroke-opacity: 1
+            }
+
+        .node {
+            cursor: pointer;
+            filter: url(#softShadow)
+        }
+
+            .node .label {
+                pointer-events: none;
+                font-size: 10px;
+                fill: var(--text)
+            }
+
+            .node.selected .outline {
+                stroke: var(--sel);
+                stroke-width: 1.6
+            }
+
+            .node.expanded .outline {
+                stroke: var(--active);
+                stroke-width: 1.6
+            }
+
+        .toggle {
+            pointer-events: all;
+            cursor: pointer;
+            user-select: none;
+            font-size: 11px;
+            fill: #1f2937;
+            stroke: #cbd5e1;
+            stroke-width: .8;
+            paint-order: stroke;
+        }
+
+        .dock {
+            border-top: 1px solid #e6ebf2;
+            background: var(--panel);
+            padding: 10px 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            flex-wrap: wrap
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e6ebf2;
+            border-radius: 14px;
+            padding: 12px;
+            min-width: 260px;
+            max-width: 56vw
+        }
+
+            .card h3 {
+                margin: 0 0 6px 0;
+                font-size: 14px
+            }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 92px 1fr;
+            gap: 6px 10px
+        }
+
+            .kv div {
+                min-width: 0
+            }
+
+        .def {
+            white-space: pre-wrap
+        }
+
+        .pill {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            border: 1px solid #e6ebf2;
+            background: #f8fbff;
+            color: #0b1220
+        }
+
+        .toast {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            background: #ffffff;
+            border: 1px solid #e6ebf2;
+            padding: 8px 10px;
+            border-radius: 10px;
+            color: var(--text);
+            box-shadow: 0 8px 20px rgba(15,23,42,.08);
+        }
+        .outline {
+            vector-effect: non-scaling-stroke;
+            stroke-width: 1;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>AI4RSE Ontology Viewer</h1>
+            <span class="hint">IEEE Taxonomy + Instances + Concepts</span>
+            <div class="sep"></div>
+            <label class="file-label">
+                <input id="file" type="file" accept=".ttl,.n3,.txt" />
+                Load TTL
+            </label>
+            <input id="search" type="text" placeholder="Search labels… (Enter to reveal)" />
+            <button id="btnReveal" class="btn">Reveal</button>
+            <button id="btnFit" class="btn">Fit</button>
+            <button id="btnCollapse" class="btn">Collapse all</button>
+        </header>
+
+        <!-- Legend + Filters -->
+        <div class="legendbar">
+            <span class="tag"><span class="swatch" style="background:var(--domain)"></span> Domain (AI4RSE)</span>
+            <span class="tag"><span class="swatch" style="background:var(--top)"></span> Top-level</span>
+            <span class="tag"><span class="swatch" style="background:var(--inter)"></span> Intermediate</span>
+            <span class="tag"><span class="swatch" style="background:var(--fine)"></span> Fine-grained</span>
+            <span class="tag"><span class="swatch" style="background:var(--lowest)"></span> Lowest-level</span>
+            <span class="tag"><span class="swatch" style="background:var(--inst)"></span> Instances</span>
+            <span class="tag"><span class="swatch" style="background:var(--concept)"></span> Concept</span>
+            <span style="width:18px"></span>
+            <label class="filt"><input type="checkbox" data-k="Top" checked> Top</label>
+            <label class="filt"><input type="checkbox" data-k="SuperCluster" checked> Intermediate</label>
+            <label class="filt"><input type="checkbox" data-k="Cluster" checked> Fine-grained</label>
+            <label class="filt"><input type="checkbox" data-k="LowestCluster" checked> Lowest</label>
+            <label class="filt"><input type="checkbox" data-k="Instances" checked> Instances</label>
+            <label class="filt"><input type="checkbox" data-k="Concept" checked> Concepts</label>
+        </div>
+
+        <div class="stage-wrap" id="stageWrap">
+            <svg id="stage">
+                <defs>
+                    <!-- Soft shadow for elegance -->
+                    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#000" flood-opacity="0.15" />
+                    </filter>
+
+                    <!-- unit shapes (we scale to ~30px visually); outline class is stroked for selected/expanded -->
+                    <g id="shape-diamond"><polygon class="outline" fill="var(--domain)" stroke="#ad6a00" points="0,-1 1,0 0,1 -1,0"></polygon></g>
+                    <g id="shape-oval"><rect class="outline" x="-1.2" y="-0.8" width="2.4" height="1.6" rx="0.8" ry="0.8" fill="var(--top)" stroke="#6e8fe0"></rect></g>
+                    <g id="shape-hex"><polygon class="outline" fill="var(--inter)" stroke="#1aa76f" points="-1,-0.8 1,-0.8 1.3,0 1,0.8 -1,0.8 -1.3,0"></polygon></g>
+                    <g id="shape-capsule"><rect class="outline" x="-1.2" y="-0.8" width="2.4" height="1.6" rx="0.8" ry="0.8" fill="var(--fine)" stroke="#39b6d6"></rect></g>
+                    <g id="shape-pill"><rect class="outline" x="-1.2" y="-0.7" width="2.4" height="1.4" rx="0.7" ry="0.7" fill="var(--lowest)" stroke="#e6b85b"></rect></g>
+                    <g id="shape-concept"><rect class="outline" x="-1.1" y="-0.7" width="2.2" height="1.4" rx="0.4" ry="0.4" fill="var(--concept)" stroke="#8359ff"></rect></g>
+                    <g id="shape-cylinder" stroke="var(--outline)">
+                        <ellipse cx="0" cy="-0.5" rx="1" ry="0.4" fill="var(--inst)"></ellipse>
+                        <rect x="-1" y="-0.5" width="2" height="1" rx="0.3" ry="0.3" fill="var(--inst)"></rect>
+                        <ellipse cx="0" cy="0.5" rx="1" ry="0.4" fill="none"></ellipse>
+                    </g>
+
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#95a3b8"></path>
+                    </marker>
+                    <marker id="arrowInst" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#e0a41a"></path>
+                    </marker>
+                </defs>
+                <g class="grid"></g>
+                <g class="links"></g>
+                <g class="nodes"></g>
+            </svg>
+            <div id="toast" class="toast" style="display:none;"></div>
+        </div>
+
+        <div class="dock">
+            <div class="card" id="summary">
+                <h3>Selection</h3>
+                <div class="muted">Click any node to see details here. Use the small [+]/[–] or double-click to expand/collapse. Children orbit their parent and remain linked.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // ---------- Namespaces / Predicates ----------
+            const NS = {
+                skos: "http://www.w3.org/2004/02/skos/core#",
+                rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+                dct: "http://purl.org/dc/terms/",
+                rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+                ex: "http://example.org/onto/"
+            };
+            const PRED = {
+                broader: NS.skos + "broader",
+                prefLabel: NS.skos + "prefLabel",
+                label: NS.rdfs + "label",
+                definition: NS.skos + "definition",
+                comment: NS.rdfs + "comment",
+                description: NS.dct + "description",
+                type: NS.rdf + "type",
+                hasInstancesGroup: NS.ex + "hasInstancesGroup",
+                memberOf: NS.ex + "memberOf"
+            };
+            const TYPES = {
+                Domain: "Domain", Top: "Top", SuperCluster: "SuperCluster",
+                Cluster: "Cluster", LowestCluster: "LowestCluster", Instances: "Instances", Concept: "Concept"
+            };
+
+            // Visual size (~30px icons). Collision/layout use this value as a “diameter-ish” proxy.
+            const ICON = { px: 10, scale: 7.5 }; // unit shapes × 15 ≈ 30px
+            const COLLIDE_PAD = 3;
+
+            // Filters
+            const FILTER = { Top: true, SuperCluster: true, Cluster: true, LowestCluster: true, Instances: true, Concept: true };
+
+            // ---------- State ----------
+            const IDX = {
+                nodes: new Map(),
+                children: new Map(),
+                parent: new Map(),
+                links: [],
+                instancesOf: new Map(),
+                ai4rse: null
+            };
+            const VIS = { nodes: new Map(), links: [], expanded: new Set(), selected: null };
+
+            // ---------- DOM ----------
+            const elFile = document.getElementById("file");
+            const elSearch = document.getElementById("search");
+            const elReveal = document.getElementById("btnReveal");
+            const elFit = document.getElementById("btnFit");
+            const elCollapse = document.getElementById("btnCollapse");
+            const elStage = d3.select("#stage");
+            const gGrid = elStage.select(".grid");
+            const gLinks = elStage.select(".links");
+            const gNodes = elStage.select(".nodes");
+            const elToast = document.getElementById("toast");
+            const elSummary = document.getElementById("summary");
+
+            document.querySelectorAll('.filt input').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    FILTER[cb.dataset.k] = cb.checked;
+                    render(); syncSim();
+                });
+            });
+
+            // ---------- Grid ----------
+            drawGrid();
+            function drawGrid() {
+                const step = 60, w = 4000, h = 4000, ox = -2000, oy = -2000;
+                gGrid.selectAll(".gx").data(d3.range(ox, ox + w + 1, step)).join("line")
+                    .attr("class", "gx").attr("x1", d => d).attr("y1", oy).attr("x2", d => d).attr("y2", oy + h);
+                gGrid.selectAll(".gy").data(d3.range(oy, oy + h + 1, step)).join("line")
+                    .attr("class", "gy").attr("x1", ox).attr("y1", d => d).attr("x2", ox + w).attr("y2", d => d);
+            }
+
+            // ---------- Zoom ----------
+            const zoom = d3.zoom().scaleExtent([0.08, 4]).on("zoom", (ev) => {
+                const t = ev.transform;
+                gGrid.attr("transform", t);
+                gLinks.attr("transform", t);
+                gNodes.attr("transform", t);
+            });
+            elStage.call(zoom);
+
+            // ---------- Simulation ----------
+            const sim = d3.forceSimulation()
+                .alphaDecay(0.05)
+                .velocityDecay(0.3)
+                .force("charge", d3.forceManyBody().strength(-35))
+                .force("collide", d3.forceCollide().radius(() => ICON.scale + COLLIDE_PAD))
+                .force("link", d3.forceLink().id(d => d.id).distance(40).strength(0.08))
+                .force("center", d3.forceCenter(0, 0))
+                .on("tick", ticked);
+
+            function forceOrbit(alpha) {
+                for (const id of VIS.expanded) {
+                    const p = VIS.nodes.get(id); if (!p) continue;
+                    const kids = (p.childIds || []).filter(cid => VIS.nodes.has(cid)).map(cid => VIS.nodes.get(cid));
+                    if (!kids.length) continue;
+
+                    // radius so circumference >= sum of diameters (~ICON.px), keeps ring tidy
+                    const dAvg = ICON.px + 10;
+                    const R = Math.max(90, (kids.length * dAvg) / (2 * Math.PI));
+                    for (let i = 0; i < kids.length; i++) {
+                        const k = kids[i];
+                        const ang = (i / kids.length) * Math.PI * 2 + (p._rot || 0);
+                        const tx = p.x + R * Math.cos(ang);
+                        const ty = p.y + R * Math.sin(ang);
+                        k.vx += (tx - k.x) * 0.08 * alpha;
+                        k.vy += (ty - k.y) * 0.08 * alpha;
+                    }
+                    p._rot = (p._rot || 0) + 0.0016 * alpha;
+                }
+            }
+            sim.force("orbit", forceOrbit);
+
+            function ticked() {
+                gLinks.selectAll("line")
+                    .attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                gNodes.selectAll("g.node").attr("transform", d => `translate(${d.x},${d.y})`);
+            }
+
+            // ---------- IO ----------
+            elFile.addEventListener("change", async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const text = await file.text();
+                loadTTL(text);
+            });
+
+            async function loadTTL(ttlText) {
+                try {
+                    resetAll();
+                    const parser = new N3.Parser();
+                    const quads = parser.parse(ttlText);
+
+                    for (const q of quads) {
+                        const s = term(q.subject), p = term(q.predicate), o = q.object;
+                        ensureNode(s);
+
+                        if (p === PRED.prefLabel || p === PRED.label) {
+                            const label = literalValue(o); // clean, no @lang
+                            IDX.nodes.get(s).label = label || short(s);
+                        }
+                        if (p === PRED.definition || p === PRED.comment || p === PRED.description) {
+                            const def = literalValue(o);
+                            if (def) { const n = IDX.nodes.get(s); (n.definitions || (n.definitions = [])).push(def); }
+                        }
+                        if (p === PRED.type) {
+                            const n = IDX.nodes.get(s); (n.types || (n.types = new Set())).add(local(term(o)));
+                        }
+                    }
+                    for (const q of quads) {
+                        const s = term(q.subject), p = term(q.predicate), o = term(q.object);
+                        if (p === PRED.broader) { ensureNode(o); addEdge(o, s, "hier"); }
+                        if (p === PRED.hasInstancesGroup) { ensureNode(o); addEdge(s, o, "hier"); }
+                        if (p === PRED.memberOf) { ensureNode(o); addEdge(o, s, "member"); addInst(o, s); }
+                    }
+
+                    // finalize nodes
+                    for (const [id, n] of IDX.nodes) {
+                        n.id = id; n.label = n.label || short(id); n.types = n.types || new Set();
+                        n.kind = classify(n);
+                        n.childIds = [...(IDX.children.get(id) || [])];
+                    }
+
+                    // detect root (AI4RSE)
+                    const rootId = [...IDX.nodes.values()].find(n => /(^|\b)ai4rse\b/i.test(n.label) || /AI4RSE$/i.test(short(n.id)))?.id;
+                    if (rootId) IDX.ai4rse = rootId;
+                    else {
+                        const pick = prompt("AI4RSE root not found. Enter the exact label/ID of root:");
+                        if (!pick) return;
+                        const hit = [...IDX.nodes.values()].find(n => n.label === pick || n.id === pick);
+                        if (!hit) { alert("Root not found."); return; }
+                        IDX.ai4rse = hit.id;
+                    }
+
+                    // prune to routes that reach Instances having Concepts (plus those concepts)
+                    const keep = new Set([IDX.ai4rse]);
+                    for (const [inst, members] of IDX.instancesOf) {
+                        if (members.size) {
+                            includeWithAncestors(inst, keep);
+                            for (const c of members) keep.add(c);
+                        }
+                    }
+                    pruneToKeep(keep);
+
+                    // seed scene
+                    addVisible(IDX.ai4rse, { x: 0, y: 0 });
+                    expandNode(IDX.ai4rse, true);
+                    render();
+                    sim.nodes([...VIS.nodes.values()]); sim.force("link").links(VIS.links);
+                    for (let i = 0; i < 50; i++) sim.tick();
+                    render(); fitToView();
+                    sim.alpha(0.3).restart();
+                    toast("Loaded. Compact icons (30×30), cleaned labels.");
+                } catch (err) {
+                    console.error(err);
+                    toast("Parse error. See console.");
+                }
+            }
+
+            function addInst(inst, concept) {
+                let s = IDX.instancesOf.get(inst); if (!s) { s = new Set(); IDX.instancesOf.set(inst, s); }
+                s.add(concept);
+            }
+            function includeWithAncestors(id, keep) {
+                let cur = id; keep.add(cur);
+                while (IDX.parent.has(cur)) { cur = IDX.parent.get(cur); keep.add(cur); if (cur === IDX.ai4rse) break; }
+            }
+            function pruneToKeep(keep) {
+                for (const id of [...IDX.nodes.keys()]) if (!keep.has(id)) IDX.nodes.delete(id);
+                for (const [p, set] of [...IDX.children.entries()]) {
+                    if (!keep.has(p)) { IDX.children.delete(p); continue; }
+                    const f = new Set([...set].filter(c => keep.has(c)));
+                    if (f.size) IDX.children.set(p, f); else IDX.children.delete(p);
+                }
+                for (const [c, p] of [...IDX.parent.entries()]) if (!(keep.has(c) && keep.has(p))) IDX.parent.delete(c);
+                IDX.links = IDX.links.filter(e => keep.has(e.source) && keep.has(e.target));
+                for (const [id, n] of IDX.nodes) n.childIds = [...(IDX.children.get(id) || [])];
+            }
+
+            // ---------- Visible graph ----------
+            function addVisible(id, pos) {
+                if (VIS.nodes.has(id)) return VIS.nodes.get(id);
+                const base = IDX.nodes.get(id); if (!base) return;
+                const n = Object.assign({}, base);
+                n.x = (pos && pos.x) || Math.random() * 400 - 200; n.y = (pos && pos.y) || Math.random() * 240 - 120;
+                VIS.nodes.set(id, n); return n;
+            }
+            function addVisibleLink(srcId, tgtId, kind) {
+                const s = VIS.nodes.get(srcId), t = VIS.nodes.get(tgtId); if (!s || !t) return;
+                if (!VIS.links.find(e => ((e.source.id || e.source) === srcId) && ((e.target.id || e.target) === tgtId)))
+                    VIS.links.push({ source: s, target: t, kind });
+            }
+            function expandNode(id, initial = false) {
+                const node = VIS.nodes.get(id); if (!node) return;
+                const kids = (node.childIds || []);
+                const ang0 = Math.random() * Math.PI * 2;
+
+                for (let i = 0; i < kids.length; i++) {
+                    const cid = kids[i];
+                    const ang = ang0 + (i / kids.length) * Math.PI * 2;
+                    const r0 = 120;
+                    const pos = { x: node.x + r0 * Math.cos(ang), y: node.y + r0 * Math.sin(ang) };
+                    addVisible(cid, pos);
+                    const kind = IDX.links.find(e => e.source === id && e.target === cid)?.kind || "hier";
+                    addVisibleLink(id, cid, kind);
+                }
+                VIS.expanded.add(id);
+                node.expanded = true;
+                render();
+                if (!initial) syncSim();
+            }
+            function collapseNode(id) {
+                const toRemove = new Set();
+                const q = [...(IDX.children.get(id) || [])];
+                while (q.length) {
+                    const cur = q.pop();
+                    toRemove.add(cur);
+                    const ch = IDX.children.get(cur); if (ch) q.push(...ch);
+                }
+                for (const nid of toRemove) { VIS.nodes.delete(nid); VIS.expanded.delete(nid); }
+                VIS.links = [];
+                for (const [nid, n] of VIS.nodes)
+                    for (const cid of (n.childIds || []))
+                        if (VIS.nodes.has(cid)) {
+                            const k = IDX.links.find(e => e.source === nid && e.target === cid)?.kind || "hier";
+                            addVisibleLink(nid, cid, k);
+                        }
+                VIS.expanded.delete(id);
+                const node = VIS.nodes.get(id); if (node) node.expanded = false;
+                render(); syncSim();
+            }
+            function toggleNode(id) { VIS.expanded.has(id) ? collapseNode(id) : expandNode(id); }
+
+            // ---------- Render ----------
+            function render() {
+                // LINKS (respect filters)
+                const visibleLinks = VIS.links.filter(l => passType(l.source.kind) && passType(l.target.kind));
+                const L = gLinks.selectAll("line").data(visibleLinks, d => d.source.id + "->" + d.target.id);
+                L.join(
+                    enter => enter.append("line")
+                        .attr("class", d => "link " + (d.kind === "member" ? "instances" : ""))
+                        .attr("marker-end", d => d.kind === "member" ? "url(#arrowInst)" : "url(#arrow)"),
+                    update => update,
+                    exit => exit.remove()
+                );
+
+                // NODES
+                const nodesData = [...VIS.nodes.values()].filter(n => passType(n.kind));
+                const N = gNodes.selectAll("g.node").data(nodesData, d => d.id);
+
+                const enter = N.enter().append("g")
+                    .attr("class", d => "node " + d.kind.toLowerCase())
+                    .call(d3.drag()
+                        .on("start", (ev, d) => { if (!ev.active) sim.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; })
+                        .on("drag", (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+                        .on("end", (ev, d) => { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+                    )
+                    .on("click", (ev, d) => { selectNode(d.id); ev.stopPropagation(); })
+                    .on("dblclick", (ev, d) => { toggleNode(d.id); ev.stopPropagation(); });
+
+                // draw icon + label + toggle on enter
+                enter.each(function (d) {
+                    const g = d3.select(this);
+
+                    // icon (keeps your current ICON.scale)
+                    const s = g.append("g").attr("transform", `scale(${ICON.scale})`);
+                    const kind = (d.id === IDX.ai4rse || d.kind === "Domain") ? "diamond" :
+                        d.kind === "Top" ? "oval" :
+                            d.kind === "SuperCluster" ? "hex" :
+                                d.kind === "Cluster" ? "capsule" :
+                                    d.kind === "LowestCluster" ? "pill" :
+                                        d.kind === "Instances" ? "cylinder" : "concept";
+                    s.append("use").attr("href", `#shape-${kind}`);
+
+                    // label
+                    g.append("text")
+                        .attr("class", "label")
+                        .attr("y", -(ICON.scale) - 4)
+                        .attr("text-anchor", "middle")
+                        .text(cleanLabel(d.label));
+
+                    // toggle (initial symbol; visibility handled below too)
+                    const hasKids = (d.childIds && d.childIds.length > 0);
+                    g.append("text")
+                        .attr("class", "toggle")
+                        .attr("x", (ICON.scale) + 8)
+                        .attr("y", (ICON.scale) + 5)
+                        .style("display", hasKids ? null : "none")
+                        .text(hasKids ? (VIS.expanded.has(d.id) ? "–" : "+") : "")
+                        .on("click", (ev) => {
+                            ev.stopPropagation();
+                            toggleNode(d.id); // expand/collapse, then render() runs and flips the symbol
+                        });
+                });
+
+                // update selection: flip +/- and hide toggle for leaves
+                N.merge(enter)
+                    .attr("class", d => "node " + d.kind.toLowerCase() + (d.expanded ? " expanded" : "") + (VIS.selected === d.id ? " selected" : ""))
+                    .each(function (d) {
+                        const hasKids = (d.childIds && d.childIds.length > 0);
+                        const t = d3.select(this).select("text.toggle");
+                        t.style("display", hasKids ? null : "none")
+                            .text(hasKids ? (VIS.expanded.has(d.id) ? "–" : "+") : "");
+                    });
+
+                N.exit().remove();
+            }
+
+
+            function passType(kind) { return (kind === "Domain") ? true : !!FILTER[kind]; }
+
+            function syncSim() {
+                sim.nodes([...VIS.nodes.values()].filter(n => passType(n.kind)));
+                const linkSet = VIS.links.filter(l => passType(l.source.kind) && passType(l.target.kind));
+                sim.force("link").links(linkSet);
+                sim.alpha(0.6).restart();
+            }
+
+            // ---------- Selection ----------
+            function selectNode(id) {
+                VIS.selected = id; render();
+                const n = IDX.nodes.get(id);
+                const defs = (n.definitions || []).join("\n\n");
+                const path = collectPath(n.id).map(pid => cleanLabel(IDX.nodes.get(pid)?.label || pid)).join("  ›  ");
+                elSummary.innerHTML = `
+          <h3>${esc(cleanLabel(n.label))}</h3>
+          <div class="kv">
+            <div class="muted">Type</div><div><span class="pill">${esc(n.id === IDX.ai4rse ? "Domain" : n.kind || "Node")}</span></div>
+            <div class="muted">ID</div><div class="muted">${esc(n.id)}</div>
+            <div class="muted">Path</div><div class="muted">${esc(path || "(root)")}</div>
+          </div>
+          ${defs ? `<div style="height:8px"></div><div class="pill">${esc(n.kind === "Concept" ? "Definition" : "Description")}</div><div class="def" style="margin-top:8px">${esc(defs)}</div>` : `<div style="height:8px"></div><div class="muted">No definition/description found.</div>`}
+        `;
+                highlightPath(id);
+            }
+            function collectPath(id) {
+                const path = []; let cur = id;
+                while (IDX.parent.has(cur)) { const p = IDX.parent.get(cur); path.unshift(p); cur = p; }
+                return path;
+            }
+            function highlightPath(id) {
+                const chain = new Set([id, ...collectPath(id)]);
+                gLinks.selectAll("line").classed("highlight", d => chain.has(d.source.id) && chain.has(d.target.id));
+                setTimeout(() => gLinks.selectAll("line").classed("highlight", false), 1200);
+            }
+
+            // ---------- Search ----------
+            elReveal.addEventListener("click", runSearch);
+            elSearch.addEventListener("keydown", e => { if (e.key === "Enter") runSearch(); });
+            function runSearch() {
+                const q = elSearch.value.trim().toLowerCase();
+                if (!q) { toast("Cleared search."); return; }
+                const hits = [];
+                for (const [id, n] of IDX.nodes) if (n.label && cleanLabel(n.label).toLowerCase().includes(q)) hits.push(id);
+                if (!hits.length) { toast("No matches."); return; }
+                toast(`Found ${hits.length}. Revealing first 50…`);
+                const m = Math.min(50, hits.length);
+                for (let i = 0; i < m; i++) revealNode(hits[i]);
+                render(); syncSim();
+            }
+            function revealNode(id) {
+                const path = [...collectPath(id), id];
+                for (const pid of path) {
+                    if (!VIS.nodes.has(pid)) {
+                        const par = IDX.parent.get(pid);
+                        addVisible(pid, VIS.nodes.get(par) || { x: 0, y: 0 });
+                    }
+                    if (IDX.parent.has(pid)) {
+                        const par = IDX.parent.get(pid);
+                        addVisibleLink(par, pid, (IDX.links.find(e => e.source === par && e.target === pid)?.kind || "hier"));
+                    }
+                }
+                for (const pid of path.slice(0, -1)) expandNode(pid);
+            }
+
+            // ---------- Fit / Collapse ----------
+            elFit.addEventListener("click", fitToView);
+            elCollapse.addEventListener("click", () => {
+                const root = IDX.ai4rse;
+                VIS.nodes.clear(); VIS.links = []; VIS.expanded.clear(); VIS.selected = null;
+                addVisible(root, { x: 0, y: 0 });
+                expandNode(root, true);
+                render();
+                sim.nodes([...VIS.nodes.values()]); sim.force("link").links(VIS.links);
+                for (let i = 0; i < 40; i++) sim.tick();
+                fitToView();
+                sim.alpha(0.3).restart();
+            });
+
+            function fitToView() {
+                const nodes = [...VIS.nodes.values()].filter(n => passType(n.kind));
+                if (!nodes.length) return;
+                const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const minY = Math.min(...ys), maxY = Math.max(...ys);
+                const w = (maxX - minX) || 1, h = (maxY - minY) || 1;
+                const { width: vw, height: vh } = document.getElementById("stage").getBoundingClientRect();
+                const scale = Math.max(0.1, Math.min(3, 0.92 * Math.min(vw / w, vh / h)));
+                const tx = (vw - scale * (minX + maxX)) / 2;
+                const ty = (vh - scale * (minY + maxY)) / 2;
+                elStage.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+            }
+
+            // ---------- Background clear ----------
+            elStage.on("click", () => {
+                VIS.selected = null; render();
+                elSummary.innerHTML = `<h3>Selection</h3><div class="muted">Click a node to see details. Use [+]/[–] to expand/collapse.</div>`;
+            });
+
+            // ---------- Utils ----------
+            function term(t) { return t.id || t.value || t; }
+            function literalValue(obj) {
+                // N3 Literal → obj.value; also strip quotes/@lang if a raw string sneaks in
+                if (typeof obj === "string") return cleanLabel(obj);
+                if (obj && obj.termType === "Literal") return obj.value;
+                if (obj && obj.value) return cleanLabel(obj.value);
+                return null;
+            }
+            function cleanLabel(s) {
+                // strip leading/trailing quotes and an optional @lang
+                const str = String(s || "").trim();
+                const m = str.match(/^"(.*)"(?:@[a-zA-Z-]+)?$/);
+                return m ? m[1] : str.replace(/@[a-zA-Z-]+$/, "");
+            }
+            function short(iri) { const i = Math.max(iri.lastIndexOf("#"), iri.lastIndexOf("/")); return iri.slice(i + 1); }
+            function local(iri) { return short(iri); }
+            function esc(s) { return String(s || "").replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+            function ensureNode(id) { if (!IDX.nodes.has(id)) IDX.nodes.set(id, { id, label: short(id), types: new Set() }); }
+            function addEdge(p, c, kind) { if (!IDX.children.has(p)) IDX.children.set(p, new Set()); IDX.children.get(p).add(c); IDX.parent.set(c, p); IDX.links.push({ source: p, target: c, kind }); }
+            function classify(n) {
+                const t = n.types || new Set();
+                if (t.has(TYPES.Domain)) return "Domain";
+                if (t.has(TYPES.Instances)) return "Instances";
+                if (t.has(TYPES.Concept)) return "Concept";
+                if (t.has(TYPES.Top)) return "Top";
+                if (t.has(TYPES.SuperCluster)) return "SuperCluster";
+                if (t.has(TYPES.LowestCluster)) return "LowestCluster";
+                if (t.has(TYPES.Cluster)) return "Cluster";
+                return "Cluster";
+            }
+            function resetAll() {
+                IDX.nodes.clear(); IDX.children.clear(); IDX.parent.clear(); IDX.links = []; IDX.instancesOf.clear(); IDX.ai4rse = null;
+                VIS.nodes.clear(); VIS.links = []; VIS.expanded.clear(); VIS.selected = null;
+                gNodes.selectAll("*").remove(); gLinks.selectAll("*").remove();
+            }
+            function toast(msg) {
+                elToast.textContent = msg; elToast.style.display = "block";
+                clearTimeout(toast._t); toast._t = setTimeout(() => elToast.style.display = "none", 1600);
+            }
+
+            // drag-drop load
+            window.addEventListener("dragover", e => { e.preventDefault(); });
+            window.addEventListener("drop", async e => {
+                e.preventDefault();
+                const file = [...e.dataTransfer.files][0];
+                if (file && /\.ttl$/i.test(file.name)) { loadTTL(await file.text()); }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Ignore ALL dataset files
+*.csv
+*.json
+*.numbers
+*.xlsx
+*.zip
+*.pdf
+*.tar.gz
+
+# Ignore data folders (common setup)
+data/raw/
+data/processed/
+
+# Allow ONLY important datasets
+!ignore_test.json
+!data/keep_this.json
+!data/small_sample.csv
+
+# (Optional) allow a whole folder of safe files
+!data/samples/
+
+# Ignore system / temp files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Python (if you're using it)
+__pycache__/
+*.pyc
+
+# VS / IDE files
+.vs/
+.vscode/
