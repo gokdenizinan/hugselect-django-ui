@@ -24,6 +24,7 @@ OUT_SAMPLE_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/sample_stats_summary.
 OUT_TOP5_DETAIL_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/top_5_experiments_by_family_root_first_rank.csv"
 
 K = 10
+HOWMANYEXPERIMENTS = 4
 KEEP_COLS = ["sample", "paper", "title", "modelID", "year", "venue"]
 ATTR_KEYS = ["family_root", "assigned_modality", "task"]
 
@@ -769,7 +770,7 @@ top_5_experiments = (
         ascending=[True, True, False, False, True],
         na_position="last",
     )
-    .head(20)["experiment"]
+    .head(HOWMANYEXPERIMENTS)["experiment"]
     .tolist()
 )
 

@@ -119,18 +119,26 @@ def load_single_feature_json(folder_path, eval_id):
 # =========================================================
 # CONFIG
 # =========================================================
+#only make recommendaiton
 MAKE_RECOMMENDATION = True
+ONLY_INTENT = False
+EVAL_IDD = "B"
 specific_deneme_count = True
-OUTPUT_LETTER = "H" # yeniler gden basliyor
+OUTPUT_LETTER = "D99" # yeniler gden basliyor
 
 ENABLE_RANK_FUNCTIONS = True
 ENABLE_QUALITY_DIMENSIONS = True
 ENABLE_FEATURE_LOCATIONS = True
+
+INCLUDE_SCORE_BREAKDOWN = True
+INCLUDE_EXPLAIN = True
 # Rotate this key if it's real
 GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 
-SPECIFIC_DENEME = {"9","18", "24", "55", "62", "90", "98", "99", "130", "134", "135", "136", "158"} if specific_deneme_count else None
-
+SPECIFIC_DENEME = {"9"} if specific_deneme_count else None
+# SPECIFIC_DENEME = {"9","18", "62", "90", "130", "136"} if specific_deneme_count else None
+# SPECIFIC_DENEME = {"55", "98", "99", "134", "135" } if specific_deneme_count else None
+# SPECIFIC_DENEME = {"68", "69", "89", "157", "159" }
 feature_folder_q = "8-CRITERIA_SELECTION/user_intent/quality_features"
 feature_folder_e = "8-CRITERIA_SELECTION/user_intent/essential_features"
 feature_folder_p = "8-CRITERIA_SELECTION/user_intent/preference_features"
@@ -147,7 +155,8 @@ INDEX_NAME = "models_t7"
 # =========================================================
 # SEARCH / EXPERIMENT SETTINGS
 # =========================================================
-N_EXPERIMENTS = 486
+# h 486
+N_EXPERIMENTS = 1
 RANDOM_SEED = 42
 EXPERIMENT_PARALLELISM = max(1, min(8, (os.cpu_count() or 4)))
 
@@ -225,62 +234,46 @@ DEFAULT_MINIMUM_SHOULD_MATCH = 5
 DEFAULT_SYNONYM_MIN_CONF = 0.20
 
 
-GRID_OPTIONS = {
-    "functional_group_scale": [1, 1.5, 2.0],
-    "essential_group_scale": [1, 1.5, 2.0],
-    "preference_group_scale": [1, 1.5, 2.0],
-    "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
-    "rank_group_scale": [1, 3, 5],
-    "rank_max": [20, 30, 50, 70],
-    "grams_factor": [0.9],
-    "priority_must": [1.8],
-    "priority_strong_prefer": [1.4],
-    "priority_prefer": [1],
-    "synonym_min_conf": [0.50, 0.70],
-    "minimum_should_match": [1, 3],
-    "target_hits": [150],
-    "size": [100],
-    "vector_rrf_weight": [1.0],
-    "bm25_rrf_weight": [1.0],
-}
-
+# H RUNI
 # GRID_OPTIONS = {
-#     "functional_group_scale": [0.7, 1.5, 2.0],
-#     "essential_group_scale": [0.7, 1.5, 2.0],
-#     "preference_group_scale": [0.7, 1.5],
-#     "quality_group_scale": [1, 4, 10],
-#     "rank_group_scale": [1, 5],
-#     "rank_max": [20, 50, 80],
-#     "synonym_min_conf": [0.5],
-#     "minimum_should_match": [1, 3],
+#     "functional_group_scale": [1, 1.5, 2.0],
+#     "essential_group_scale": [1, 1.5, 2.0],
+#     "preference_group_scale": [1, 1.5, 2.0],
+#     "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
+#     "rank_group_scale": [1, 3, 5],
+#     "rank_max": [20, 30, 50, 70],
 #     "grams_factor": [0.9],
 #     "priority_must": [1.8],
 #     "priority_strong_prefer": [1.4],
 #     "priority_prefer": [1],
+#     "synonym_min_conf": [0.50, 0.70],
+#     "minimum_should_match": [1, 3],
 #     "target_hits": [150],
 #     "size": [100],
 #     "vector_rrf_weight": [1.0],
 #     "bm25_rrf_weight": [1.0],
 # }
 
-# GRID_OPTIONS = {
-#     "functional_group_scale": [1.0, 1.5],
-#     "essential_group_scale": [1.0, 1.5],
-#     "preference_group_scale": [1.0],
-#     "quality_group_scale": [1.0],
-#     "rank_group_scale": [1.0, 3.0],
-#     "rank_max": [20],
-#     "synonym_min_conf": [0.5],
-#     "minimum_should_match": [3],
-#     "grams_factor": [0.9],
-#     "priority_must": [1.8],
-#     "priority_strong_prefer": [1.4],
-#     "priority_prefer": [1.0],
-#     "target_hits": [500],
-#     "size": [300],
-#     "vector_rrf_weight": [1.0],
-#     "bm25_rrf_weight": [1.0],
-# }
+# EXP 177
+GRID_OPTIONS = {
+  "functional_group_scale": [1],
+  "essential_group_scale": [1.5],
+  "preference_group_scale": [1.5],
+  "quality_group_scale": [1.5],
+  "rank_group_scale": [5],
+  "rank_max": [30],
+  "grams_factor": [0.9],
+  "priority_must": [1.8],
+  "priority_strong_prefer": [1.4],
+  "priority_prefer": [1],
+  "synonym_min_conf": [0.7],
+  "minimum_should_match": [1],
+  "target_hits": [50],
+  "size": [30],
+  "vector_rrf_weight": [1.0],
+  "bm25_rrf_weight": [1.0]
+}
+
 FIXED_PARAMS = {
     # "minimum_should_match": 4,
     "target_hits": 50,
@@ -742,8 +735,8 @@ def run_bm25_and_optional_vector_search(
         index=index_name,
         features=features,
         prebuilt_groups=prebuilt_groups,
-        include_score_breakdown=False,
-        include_explain=False,
+        include_score_breakdown=INCLUDE_SCORE_BREAKDOWN,
+        include_explain=INCLUDE_EXPLAIN,
     )
     search_stage_timings["builder_search_bm25_seconds"] = time.perf_counter() - t0
 
@@ -868,7 +861,7 @@ def run_single_experiment(
     }
 
     t0 = time.perf_counter()
-    save_json_file(os.path.join(full_output_dir, "query.json"), final_query)
+    # save_json_file(os.path.join(full_output_dir, "query.json"), final_query)
     save_json_file(os.path.join(full_output_dir, "response.json"), response)
     save_json_file(os.path.join(full_output_dir, "feature_groups.json"), object_to_dict(final_feature_groups))
     if diagnose_error is None:
@@ -940,7 +933,7 @@ for original_key, original_paper in rationale_input.items():
 
     non_null_count += 1
 
-    eval_id = f"A{paper_id}"
+    eval_id = f"{EVAL_IDD}{paper_id}"
     print(f"\n==============================")
     print(f"Processing {eval_id}")
     print(f"==============================")
@@ -1011,7 +1004,8 @@ for original_key, original_paper in rationale_input.items():
         else:
             print(f"Skipping quality extraction, already exists: {eval_path_q}")
 
-        continue
+        if ONLY_INTENT:
+            continue
 
     # =====================================================
     # LOAD SAVED FEATURES ONCE

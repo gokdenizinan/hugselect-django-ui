@@ -23,7 +23,7 @@ user_inputs = ["Give me an image classification model",
                 "Efficient diffusion or transformer-based generative models for text-to-image synthesis that balance visual fidelity and inference speed, include safety filtering components, and can run on consumer-grade GPUs (≤8GB VRAM)."
             ]
 
-with open("11-RECOMMENDATION_EVALUATION/OUTPUT_ZZzz.json", "r") as f:
+with open("11-RECOMMENDATION_EVALUATION/OUTPUT_ZZzz_VVV.json", "r") as f:
     rationale_input_full = json.load(f)
 
 import os

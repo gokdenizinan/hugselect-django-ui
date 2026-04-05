@@ -5,8 +5,6 @@ import math
 import pandas as pd
 import numpy as np
 import re
-import importlib.util
-from typing import Dict, List, Any, Optional
 
 # -----------------------
 # CONFIG
@@ -14,51 +12,33 @@ from typing import Dict, List, Any, Optional
 CSV_PATH = "11-RECOMMENDATION_EVALUATION/paper_model_2/snipped_papers_6.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_G"
+RUN = "experiment_runs_H"
 EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
-
-# Python file containing externally collected recommendation dicts.
-# Expected globals:
-#   CHATGPT_RECOMMENDATIONS = {...}
-#   GEMINI_RECOMMENDATIONS = {...}
-EXTERNAL_RECOMMENDATIONS_PY = "8-CRITERIA_SELECTION/F_Hits_United.py"
 
 # Folder containing model metadata dictionaries
 MODEL_META_DIR = "HF-Models-T7-U"
 
-OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster_multisource/{RUN}"
-OUT_DETAIL_CSV = os.path.join(OUT_DIR, "experiment_sample_stats.csv")
-OUT_EXPERIMENT_CSV = os.path.join(OUT_DIR, "experiment_stats_summary.csv")
-OUT_SAMPLE_CSV = os.path.join(OUT_DIR, "sample_stats_summary.csv")
-OUT_COMPACT_DETAIL_CSV = os.path.join(OUT_DIR, "experiment_sample_stats_compact.csv")
+OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/eval_exp"
+OUT_DETAIL_CSV = f"{OUT_DIR}/experiment_sample_stats.csv"
+OUT_EXPERIMENT_CSV = f"{OUT_DIR}/experiment_stats_summary.csv"
+OUT_SAMPLE_CSV = f"{OUT_DIR}/sample_stats_summary.csv"
+OUT_TOP_BY_FAMILY_ROOT_CSV = f"{OUT_DIR}/best_experiments_per_sample_family_root.csv"
+OUT_TOP_BY_MODELID_CSV = f"{OUT_DIR}/best_experiments_per_sample_modelID.csv"
 
 K = 10
+TOP_MODELID_MISSING_PRINT_KS = [10, 30]
+HOWMANYEXPERIMENTS = 1
 KEEP_COLS = ["sample", "paper", "title", "modelID", "year", "venue"]
 ATTR_KEYS = ["family_root", "assigned_modality", "task"]
-NO_INFO = "NO INFO"
-
-# Detail output mode:
-#   "full"    -> write full detail csv only
-#   "compact" -> write compact detail csv only
-#   "both"    -> write both full and compact csv files
-DETAIL_OUTPUT_MODE = "both"
-
-# Which sources to evaluate.
-# - "recsys" reads response.json files from EXPERIMENT_ROOT
-# - "chatgpt" and "gemini" read dicts from EXTERNAL_RECOMMENDATIONS_PY
-ENABLE_SOURCES = {
-    "recsys": True,
-    "chatgpt": True,
-    "gemini": True,
-}
 
 
 # -----------------------
 # HELPERS
 # -----------------------
-def load_json(path: str):
+def load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 
 def normalize_model_string(x):
@@ -67,6 +47,7 @@ def normalize_model_string(x):
     if isinstance(x, float) and np.isnan(x):
         return None
     return str(x).strip().lower()
+
 
 
 def normalize_sample_key(x):
@@ -86,12 +67,11 @@ def normalize_sample_key(x):
     return s
 
 
+
 def normalize_attr_value(x):
     if x is None:
         return None
     if isinstance(x, float) and np.isnan(x):
-        return None
-    if isinstance(x, str) and x.strip().upper() == NO_INFO:
         return None
 
     if isinstance(x, list):
@@ -101,29 +81,11 @@ def normalize_attr_value(x):
                 continue
             if isinstance(v, float) and np.isnan(v):
                 continue
-            if isinstance(v, str) and v.strip().upper() == NO_INFO:
-                continue
             vals.append(str(v).strip().lower())
         return vals if vals else None
 
     return str(x).strip().lower()
 
-
-def value_or_no_info(x):
-    if x is None:
-        return NO_INFO
-    if isinstance(x, float) and np.isnan(x):
-        return NO_INFO
-    if isinstance(x, list):
-        cleaned = []
-        for v in x:
-            if v is None:
-                continue
-            if isinstance(v, float) and np.isnan(v):
-                continue
-            cleaned.append(v)
-        return cleaned if cleaned else NO_INFO
-    return x
 
 
 def extract_recs_from_eval(eval_data: dict):
@@ -135,21 +97,6 @@ def extract_recs_from_eval(eval_data: dict):
             pretty_ids.append(pretty_id)
     return pretty_ids
 
-
-def normalize_recommendation_list(recs, k=None):
-    if not isinstance(recs, list):
-        return []
-
-    out = []
-    for rec in recs:
-        rec_norm = normalize_model_string(rec)
-        if rec_norm is None:
-            continue
-        out.append(rec_norm)
-
-    if k is not None:
-        return out[:k]
-    return out
 
 
 def find_rank(target_model, recs):
@@ -164,8 +111,10 @@ def find_rank(target_model, recs):
         return np.nan
 
 
+
 def accuracy_at_1(rank):
     return 1.0 if rank == 1 else 0.0
+
 
 
 def precision_at_k(rank, k=10):
@@ -174,10 +123,12 @@ def precision_at_k(rank, k=10):
     return 1.0 / k
 
 
+
 def recall_at_k(rank, k=10):
     if pd.isna(rank) or rank > k:
         return 0.0
     return 1.0
+
 
 
 def ndcg_at_k(rank, k=10):
@@ -186,20 +137,23 @@ def ndcg_at_k(rank, k=10):
     return 1.0 / math.log2(rank + 1)
 
 
+
 def average_precision_at_k(rank, k=10):
     if pd.isna(rank) or rank > k:
         return 0.0
     return 1.0 / rank
 
 
+
 def hit_at_k(rank, k=10):
     return 0.0 if pd.isna(rank) or rank > k else 1.0
+
 
 
 def parse_experiment_path(path):
     """
     Expected:
-      .../8-CRITERIA_SELECTION/experiments/experiment_runs_G/A7/exp_001/response.json
+      .../8-CRITERIA_SELECTION/experiments/experiment_runs_H/A7/exp_001/response.json
     Returns:
       sample='A7', experiment='exp_001'
     """
@@ -216,6 +170,7 @@ def parse_experiment_path(path):
     sample = parts[idx + 1]
     experiment = parts[idx + 2]
     return sample, experiment
+
 
 
 def find_first_dict_with_keys(obj, required_keys):
@@ -237,6 +192,7 @@ def find_first_dict_with_keys(obj, required_keys):
     return None
 
 
+
 def find_clusters_dict(obj):
     if isinstance(obj, dict):
         if "Clusters" in obj and isinstance(obj["Clusters"], dict):
@@ -256,6 +212,7 @@ def find_clusters_dict(obj):
                 return found
 
     return None
+
 
 
 def load_model_metadata_folder(folder_path):
@@ -286,20 +243,22 @@ def load_model_metadata_folder(folder_path):
             clusters = {}
 
         meta[model_id] = {
-            "family_root": value_or_no_info(clusters.get("family_root")),
-            "assigned_modality": value_or_no_info(clusters.get("assigned_modality")),
-            "task": value_or_no_info(clusters.get("task")),
+            "family_root": clusters.get("family_root"),
+            "assigned_modality": clusters.get("assigned_modality"),
+            "task": clusters.get("task"),
         }
 
     print("Loaded model metadata entries:", len(meta))
     return meta
 
 
+
 def get_model_attrs(model_id, model_meta):
     model_id = normalize_model_string(model_id)
     if model_id is None:
-        return {k: NO_INFO for k in ATTR_KEYS}
-    return model_meta.get(model_id, {k: NO_INFO for k in ATTR_KEYS})
+        return {k: None for k in ATTR_KEYS}
+    return model_meta.get(model_id, {k: None for k in ATTR_KEYS})
+
 
 
 def attr_match(gt_val, hit_val):
@@ -319,6 +278,7 @@ def attr_match(gt_val, hit_val):
         return 1.0 if gt_val in hit_val else 0.0
 
     return 1.0 if gt_val == hit_val else 0.0
+
 
 
 def compare_gt_to_recommendations(gt_model_id, recs, model_meta, k=10):
@@ -341,7 +301,7 @@ def compare_gt_to_recommendations(gt_model_id, recs, model_meta, k=10):
                 first_rank = idx
                 break
 
-        out[f"gt_{key}"] = value_or_no_info(gt_val)
+        out[f"gt_{key}"] = gt_val
         out[f"{key}_matches_count"] = int(sum(valid_matches)) if valid_matches else 0
         out[f"{key}_match_rate"] = round(float(np.mean(valid_matches)), 4) if valid_matches else np.nan
         out[f"{key}_first_rank"] = first_rank
@@ -352,6 +312,7 @@ def compare_gt_to_recommendations(gt_model_id, recs, model_meta, k=10):
         out[f"{key}_map@{k}"] = 0.0 if pd.isna(first_rank) or first_rank > k else 1.0 / first_rank
 
     return out
+
 
 
 def summarize_group(df_group, k=10, unique_sample_col=None):
@@ -421,40 +382,168 @@ def summarize_group(df_group, k=10, unique_sample_col=None):
     return out
 
 
-def import_recommendation_module(py_path: str):
-    if not os.path.exists(py_path):
-        raise FileNotFoundError(
-            f"External recommendations file not found: {py_path}. "
-            "Set EXTERNAL_RECOMMENDATIONS_PY to the correct path."
-        )
 
-    module_name = os.path.splitext(os.path.basename(py_path))[0]
-    spec = importlib.util.spec_from_file_location(module_name, py_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Could not import external recommendations module from: {py_path}")
+def add_overall_experiment_metrics(detail_df, experiment_summary_df):
+    overall = experiment_summary_df.rename(columns={
+        "accuracy@1": "overall_accuracy@1",
+        f"hit@{K}": f"overall_hit@{K}",
+        "mean_rank": "overall_mean_rank",
+        "median_rank": "overall_median_rank",
+        "family_root_match_rate": "overall_family_root_match_rate",
+        "family_root_mean_first_rank": "overall_family_root_mean_first_rank",
+        "family_root_median_first_rank": "overall_family_root_median_first_rank",
+        f"family_root_hit@{K}": f"overall_family_root_hit@{K}",
+    }).copy()
 
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    keep_cols = [
+        "experiment",
+        "evaluated_samples",
+        "overall_accuracy@1",
+        f"overall_hit@{K}",
+        "overall_mean_rank",
+        "overall_median_rank",
+        "overall_family_root_match_rate",
+        "overall_family_root_mean_first_rank",
+        "overall_family_root_median_first_rank",
+        f"overall_family_root_hit@{K}",
+    ]
+    return detail_df.merge(overall[keep_cols], on="experiment", how="left")
 
 
-def build_external_source_rows(source_name: str, source_dict: Dict[str, List[str]], eligible_samples: set):
-    rows = []
-    for raw_sample, recs in source_dict.items():
-        sample_norm = normalize_sample_key(raw_sample)
-        if sample_norm not in eligible_samples:
-            continue
 
-        rows.append({
-            "source": source_name,
-            "sample": sample_norm,
-            "experiment": source_name,
-            "response_path": f"{EXTERNAL_RECOMMENDATIONS_PY}:{source_name.upper()}_RECOMMENDATIONS[{raw_sample}]",
-            "recommendations": normalize_recommendation_list(recs, k=K),
-            "num_recommendations": len(normalize_recommendation_list(recs, k=K)),
-            "sample_norm": sample_norm,
-        })
-    return rows
+def build_per_sample_recommendations(detail_df, metric="family_root", howmany=4, k=10):
+    if metric == "family_root":
+        sort_cols = [
+            "sample",
+            "family_root_first_rank",
+            f"family_root_hit@{k}",
+            "family_root_match_rate",
+            "family_root_matches_count",
+            "overall_family_root_mean_first_rank",
+            f"overall_family_root_hit@{k}",
+            "overall_family_root_match_rate",
+            "overall_accuracy@1",
+            "overall_mean_rank",
+            "experiment",
+        ]
+        ascending = [
+            True,
+            True,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            False,
+            True,
+            True,
+        ]
+        primary_cols = [
+            "sample",
+            "family_root_first_rank",
+            f"family_root_hit@{k}",
+            "family_root_match_rate",
+            "family_root_matches_count",
+        ]
+        recommended_cols = [
+            "sample",
+            "experiment_recommendation_rank",
+            "is_tied_on_sample_best",
+            "num_experiments_tied_on_sample_best",
+            "experiment",
+            "paper",
+            "title",
+            "modelID",
+            "family_root_first_rank",
+            f"family_root_hit@{k}",
+            "family_root_match_rate",
+            "family_root_matches_count",
+            "rank",
+            f"hit@{k}",
+            "overall_family_root_mean_first_rank",
+            f"overall_family_root_hit@{k}",
+            "overall_family_root_match_rate",
+            "overall_accuracy@1",
+            "overall_mean_rank",
+            "response_path",
+        ]
+    elif metric == "modelID":
+        sort_cols = [
+            "sample",
+            "rank",
+            f"hit@{k}",
+            "accuracy@1",
+            f"ndcg@{k}",
+            f"map@{k}",
+            "overall_mean_rank",
+            f"overall_hit@{k}",
+            "overall_accuracy@1",
+            "overall_family_root_mean_first_rank",
+            "experiment",
+        ]
+        ascending = [
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+            True,
+            False,
+            False,
+            True,
+            True,
+        ]
+        primary_cols = [
+            "sample",
+            "rank",
+            f"hit@{k}",
+            "accuracy@1",
+            f"ndcg@{k}",
+            f"map@{k}",
+        ]
+        recommended_cols = [
+            "sample",
+            "experiment_recommendation_rank",
+            "is_tied_on_sample_best",
+            "num_experiments_tied_on_sample_best",
+            "experiment",
+            "paper",
+            "title",
+            "modelID",
+            "rank",
+            "accuracy@1",
+            f"hit@{k}",
+            f"ndcg@{k}",
+            f"map@{k}",
+            "family_root_first_rank",
+            f"family_root_hit@{k}",
+            "overall_mean_rank",
+            f"overall_hit@{k}",
+            "overall_accuracy@1",
+            "overall_family_root_mean_first_rank",
+            "response_path",
+        ]
+    else:
+        raise ValueError("metric must be one of: 'family_root', 'modelID'")
+
+    ranked = detail_df.sort_values(by=sort_cols, ascending=ascending, na_position="last").copy()
+    ranked["experiment_recommendation_rank"] = ranked.groupby("sample").cumcount() + 1
+
+    best_primary = ranked.groupby("sample", dropna=False)[primary_cols[1:]].transform("first")
+    tied_mask = pd.Series(True, index=ranked.index)
+    for col in primary_cols[1:]:
+        ranked_col = ranked[col]
+        best_col = best_primary[col]
+        tied_mask &= ((ranked_col == best_col) | (ranked_col.isna() & best_col.isna()))
+
+    ranked["is_tied_on_sample_best"] = tied_mask.astype(int)
+    tie_counts = ranked.groupby("sample")["is_tied_on_sample_best"].transform("sum")
+    ranked["num_experiments_tied_on_sample_best"] = tie_counts
+
+    recommended = ranked.groupby("sample", dropna=False).head(howmany).copy()
+    return recommended[recommended_cols].sort_values(["sample", "experiment_recommendation_rank"])
 
 
 # -----------------------
@@ -498,12 +587,12 @@ model_meta = load_model_metadata_folder(MODEL_META_DIR)
 
 
 # -----------------------
-# 3) LOAD RECSYS EXPERIMENT RESPONSE.JSON FILES
+# 3) LOAD ALL EXPERIMENT RESPONSE.JSON FILES
 # -----------------------
 pattern = os.path.join(EXPERIMENT_ROOT, "*", "*", "response.json")
 eval_paths = sorted(glob.glob(pattern))
 
-print("Found recsys experiment response files:", len(eval_paths))
+print("Found experiment response files:", len(eval_paths))
 
 experiment_rows = []
 
@@ -515,75 +604,41 @@ for path in eval_paths:
 
     try:
         data = load_json(path)
-        recs = normalize_recommendation_list(extract_recs_from_eval(data), k=K)
+        recs = extract_recs_from_eval(data)
     except Exception as e:
         print(f"Could not read {path}: {e}")
         recs = []
 
     experiment_rows.append({
-        "source": "recsys",
         "sample": sample,
         "experiment": experiment,
         "response_path": path,
         "recommendations": recs,
-        "num_recommendations": len(recs),
+        "num_recommendations": len(recs) if isinstance(recs, list) else 0,
     })
 
 exp_df = pd.DataFrame(experiment_rows)
 
 if exp_df.empty:
-    raise ValueError("No recsys experiment response.json files were found.")
+    raise ValueError("No experiment response.json files were found.")
 
 exp_df["sample_norm"] = exp_df["sample"].apply(normalize_sample_key)
-print("Loaded recsys experiment rows:", len(exp_df))
 
-eligible_samples = set(exp_df["sample_norm"].dropna().tolist())
-print("Eligible samples for external source evaluation:", len(eligible_samples))
+print("Loaded experiment rows:", len(exp_df))
 
 
 # -----------------------
-# 4) LOAD CHATGPT / GEMINI RECOMMENDATIONS
+# 4) MERGE EXPERIMENTS WITH GROUND TRUTH CSV
 # -----------------------
-all_results = []
-
-if ENABLE_SOURCES.get("recsys", False):
-    all_results.append(exp_df.copy())
-
-if ENABLE_SOURCES.get("chatgpt", False) or ENABLE_SOURCES.get("gemini", False):
-    ext_module = import_recommendation_module(EXTERNAL_RECOMMENDATIONS_PY)
-
-    if ENABLE_SOURCES.get("chatgpt", False):
-        chatgpt_dict = getattr(ext_module, "CHATGPT_RECOMMENDATIONS", {})
-        chatgpt_rows = build_external_source_rows("chatgpt", chatgpt_dict, eligible_samples)
-        print("Loaded chatgpt rows:", len(chatgpt_rows))
-        all_results.append(pd.DataFrame(chatgpt_rows))
-
-    if ENABLE_SOURCES.get("gemini", False):
-        gemini_dict = getattr(ext_module, "GEMINI_RECOMMENDATIONS", {})
-        gemini_rows = build_external_source_rows("gemini", gemini_dict, eligible_samples)
-        print("Loaded gemini rows:", len(gemini_rows))
-        all_results.append(pd.DataFrame(gemini_rows))
-
-combined_exp_df = pd.concat([x for x in all_results if not x.empty], ignore_index=True)
-
-if combined_exp_df.empty:
-    raise ValueError("No recommendation rows were loaded from any source.")
-
-print("Loaded combined experiment rows:", len(combined_exp_df))
-
-
-# -----------------------
-# 5) MERGE WITH GROUND TRUTH CSV
-# -----------------------
-merged = df.merge(combined_exp_df, on="sample_norm", how="inner", suffixes=("_csv", "_exp"))
+merged = df.merge(exp_df, on="sample_norm", how="inner", suffixes=("_csv", "_exp"))
 merged["sample"] = merged["sample_exp"]
 merged["user_intent"] = merged["sample_norm"].map(intent_map)
 
 print("\nCSV samples:")
 print(sorted(df["sample_norm"].dropna().astype(str).unique().tolist()))
 
-print("\nCombined source samples:")
-print(sorted(combined_exp_df["sample_norm"].dropna().astype(str).unique().tolist()))
+print("\nExperiment samples:")
+print(sorted(exp_df["sample_norm"].dropna().astype(str).unique().tolist()))
 
 merged = merged[
     merged["recommendations"].apply(lambda x: isinstance(x, list) and len(x) > 0)
@@ -592,11 +647,11 @@ merged = merged[
 print("Rows after merging experiments with samples:", len(merged))
 
 if merged.empty:
-    raise ValueError("Merged dataframe is empty. Check sample names, paths, and external recommendation dicts.")
+    raise ValueError("Merged dataframe is empty. Check sample names in CSV and folder structure.")
 
 
 # -----------------------
-# 6) COMPUTE EXACT MODEL METRICS
+# 5) COMPUTE EXACT MODEL METRICS
 # -----------------------
 merged["rank"] = merged.apply(
     lambda row: find_rank(row["modelID"], row["recommendations"]),
@@ -609,10 +664,12 @@ merged[f"recall@{K}"] = merged["rank"].apply(lambda r: recall_at_k(r, K))
 merged[f"ndcg@{K}"] = merged["rank"].apply(lambda r: ndcg_at_k(r, K))
 merged[f"map@{K}"] = merged["rank"].apply(lambda r: average_precision_at_k(r, K))
 merged[f"hit@{K}"] = merged["rank"].apply(lambda r: hit_at_k(r, K))
+for k_print in TOP_MODELID_MISSING_PRINT_KS:
+    merged[f"modelID_hit@{k_print}"] = merged["rank"].apply(lambda r: hit_at_k(r, k_print))
 
 
 # -----------------------
-# 7) COMPUTE ATTRIBUTE-LEVEL MATCH METRICS
+# 6) COMPUTE ATTRIBUTE-LEVEL MATCH METRICS
 # -----------------------
 attr_comparisons = merged.apply(
     lambda row: compare_gt_to_recommendations(
@@ -629,10 +686,9 @@ merged = pd.concat([merged, attr_df], axis=1)
 
 
 # -----------------------
-# 8) DETAIL OUTPUT
+# 7) DETAIL OUTPUT
 # -----------------------
-full_detail_cols = [
-    "source",
+detail_cols = [
     "sample",
     "experiment",
     "paper",
@@ -650,6 +706,8 @@ full_detail_cols = [
     f"ndcg@{K}",
     f"map@{K}",
     f"hit@{K}",
+    "modelID_hit@10",
+    "modelID_hit@30",
 
     "gt_family_root",
     "family_root_matches_count",
@@ -683,44 +741,15 @@ full_detail_cols = [
 
     "response_path",
 ]
-
-detail_df = merged[full_detail_cols].copy()
-
-compact_detail_cols = [
-    "source",
-    "sample",
-    "experiment",
-    "paper",
-    "title",
-    "modelID",
-    "year",
-    "venue",
-    "num_recommendations",
-    "rank",
-    "accuracy@1",
-    f"hit@{K}",
-    f"ndcg@{K}",
-    "gt_family_root",
-    "family_root_first_rank",
-    f"family_root_hit@{K}",
-    "gt_assigned_modality",
-    "assigned_modality_first_rank",
-    f"assigned_modality_hit@{K}",
-    "gt_task",
-    "task_first_rank",
-    f"task_hit@{K}",
-    "response_path",
-]
-compact_detail_df = detail_df[compact_detail_cols].copy()
+detail_df = merged[detail_cols].copy()
 
 
 # -----------------------
-# 9) SUMMARY BY SOURCE + EXPERIMENT
+# 8) SUMMARY BY EXPERIMENT
 # -----------------------
 experiment_summary_rows = []
-for (source, experiment), group in detail_df.groupby(["source", "experiment"]):
+for experiment, group in detail_df.groupby("experiment"):
     stats = summarize_group(group, k=K, unique_sample_col="sample")
-    stats["source"] = source
     stats["experiment"] = experiment
     experiment_summary_rows.append(stats)
 
@@ -728,7 +757,6 @@ experiment_summary_df = pd.DataFrame(experiment_summary_rows)
 
 experiment_summary_df = experiment_summary_df[
     [
-        "source",
         "experiment",
         "evaluated_samples",
 
@@ -768,26 +796,17 @@ experiment_summary_df = experiment_summary_df[
         f"task_map@{K}",
         f"task_hit@{K}",
     ]
-].sort_values(by=["source", "experiment"])
+].sort_values(by=["experiment"])
 
 
 # -----------------------
-# 10) SUMMARY BY SAMPLE + SOURCE
+# 9) SUMMARY BY SAMPLE
 # -----------------------
 sample_summary_rows = []
-for (sample, source), group in detail_df.groupby(["sample", "source"]):
+for sample, group in detail_df.groupby("sample"):
     stats = summarize_group(group, k=K)
     stats["sample"] = sample
-    stats["source"] = source
     stats["num_experiments"] = group["experiment"].nunique()
-
-    gt_model = group["modelID"].iloc[0] if len(group) > 0 else None
-    gt_attrs = get_model_attrs(gt_model, model_meta)
-    stats["gt_modelID"] = gt_model if gt_model else NO_INFO
-    stats["gt_family_root"] = value_or_no_info(gt_attrs.get("family_root"))
-    stats["gt_assigned_modality"] = value_or_no_info(gt_attrs.get("assigned_modality"))
-    stats["gt_task"] = value_or_no_info(gt_attrs.get("task"))
-
     sample_summary_rows.append(stats)
 
 sample_summary_df = pd.DataFrame(sample_summary_rows)
@@ -795,11 +814,6 @@ sample_summary_df = pd.DataFrame(sample_summary_rows)
 sample_summary_df = sample_summary_df[
     [
         "sample",
-        "source",
-        "gt_modelID",
-        "gt_family_root",
-        "gt_assigned_modality",
-        "gt_task",
         "num_experiments",
         "evaluated_samples",
 
@@ -839,7 +853,27 @@ sample_summary_df = sample_summary_df[
         f"task_map@{K}",
         f"task_hit@{K}",
     ]
-].sort_values(by=["sample", "source"])
+].sort_values(by=["sample"])
+
+
+# -----------------------
+# 10) PER-SAMPLE RECOMMENDATIONS
+# -----------------------
+detail_with_overall = add_overall_experiment_metrics(detail_df, experiment_summary_df)
+
+best_by_family_root_df = build_per_sample_recommendations(
+    detail_with_overall,
+    metric="family_root",
+    howmany=HOWMANYEXPERIMENTS,
+    k=K,
+)
+
+best_by_modelid_df = build_per_sample_recommendations(
+    detail_with_overall,
+    metric="modelID",
+    howmany=HOWMANYEXPERIMENTS,
+    k=K,
+)
 
 
 # -----------------------
@@ -847,16 +881,26 @@ sample_summary_df = sample_summary_df[
 # -----------------------
 os.makedirs(OUT_DIR, exist_ok=True)
 
-if DETAIL_OUTPUT_MODE in {"full", "both"}:
-    detail_df.to_csv(OUT_DETAIL_CSV, index=False, encoding="utf-8")
-    print(f"Saved full detail CSV to: {OUT_DETAIL_CSV}")
-
-if DETAIL_OUTPUT_MODE in {"compact", "both"}:
-    compact_detail_df.to_csv(OUT_COMPACT_DETAIL_CSV, index=False, encoding="utf-8")
-    print(f"Saved compact detail CSV to: {OUT_COMPACT_DETAIL_CSV}")
-
+detail_df.to_csv(OUT_DETAIL_CSV, index=False, encoding="utf-8")
 experiment_summary_df.to_csv(OUT_EXPERIMENT_CSV, index=False, encoding="utf-8")
 sample_summary_df.to_csv(OUT_SAMPLE_CSV, index=False, encoding="utf-8")
+best_by_family_root_df.to_csv(OUT_TOP_BY_FAMILY_ROOT_CSV, index=False, encoding="utf-8")
+best_by_modelid_df.to_csv(OUT_TOP_BY_MODELID_CSV, index=False, encoding="utf-8")
 
+print(f"\nSaved detail CSV to: {OUT_DETAIL_CSV}")
 print(f"Saved experiment summary CSV to: {OUT_EXPERIMENT_CSV}")
 print(f"Saved sample summary CSV to: {OUT_SAMPLE_CSV}")
+print(f"Saved per-sample family_root recommendations to: {OUT_TOP_BY_FAMILY_ROOT_CSV}")
+print(f"Saved per-sample modelID recommendations to: {OUT_TOP_BY_MODELID_CSV}")
+
+
+# -----------------------
+# 12) PRINT SAMPLES WITH NO MODELID MATCH IN TOP 10 / TOP 30 ACROSS ALL EXPERIMENTS
+# -----------------------
+for k_print in TOP_MODELID_MISSING_PRINT_KS:
+    col = f"modelID_hit@{k_print}"
+    no_match_samples = sorted(
+        detail_df.groupby("sample", dropna=False)[col].max().loc[lambda s: s == 0.0].index.tolist()
+    )
+    print(f"\nSamples with NO modelID match in top {k_print} across all experiments ({len(no_match_samples)}):")
+    print(set(no_match_samples))
