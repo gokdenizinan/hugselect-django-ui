@@ -10,7 +10,7 @@ import importlib.util
 # -----------------------
 # CONFIG
 # -----------------------
-CSV_PATH = "11-RECOMMENDATION_EVALUATION/paper_model_2/snipped_papers_6.csv"
+CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
 RUN = "experiment_runs_H"
@@ -22,7 +22,8 @@ MODEL_META_DIR = "HF-Models-T7-U"
 # External recommendation python file
 EXTERNAL_RECOMMENDATIONS_PY = "8-CRITERIA_SELECTION/F_Hits_United.py"
 
-OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster_multisource/{RUN}"
+OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/multisource"
+os.makedirs(OUT_DIR, exist_ok=True)
 OUT_DETAIL_CSV = os.path.join(OUT_DIR, "experiment_sample_stats.csv")
 OUT_COMPACT_CSV = os.path.join(OUT_DIR, "experiment_sample_stats_compact.csv")
 OUT_EXPERIMENT_CSV = os.path.join(OUT_DIR, "experiment_stats_summary.csv")

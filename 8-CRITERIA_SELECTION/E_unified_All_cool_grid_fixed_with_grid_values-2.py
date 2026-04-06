@@ -120,20 +120,23 @@ def load_single_feature_json(folder_path, eval_id):
 # CONFIG
 # =========================================================
 #only make recommendaiton
-MAKE_RECOMMENDATION = True
-ONLY_INTENT = False
-EVAL_IDD = "B"
-specific_deneme_count = True
-OUTPUT_LETTER = "D99" # yeniler gden basliyor
+MAKE_RECOMMENDATION = False
+ONLY_INTENT = True
+EVAL_IDD = "A"
+specific_deneme_count = False
+OUTPUT_LETTER = "H" # yeniler gden basliyor
 
 ENABLE_RANK_FUNCTIONS = True
 ENABLE_QUALITY_DIMENSIONS = True
 ENABLE_FEATURE_LOCATIONS = True
 
-INCLUDE_SCORE_BREAKDOWN = True
-INCLUDE_EXPLAIN = True
+INCLUDE_SCORE_BREAKDOWN = False
+INCLUDE_EXPLAIN = False
 # Rotate this key if it's real
+# GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+# GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+# GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 
 SPECIFIC_DENEME = {"9"} if specific_deneme_count else None
 # SPECIFIC_DENEME = {"9","18", "62", "90", "130", "136"} if specific_deneme_count else None
@@ -156,7 +159,10 @@ INDEX_NAME = "models_t7"
 # SEARCH / EXPERIMENT SETTINGS
 # =========================================================
 # h 486
-N_EXPERIMENTS = 1
+# full experiment runliycakstan hyi baska bisey yap eger bir tane deniyceksen extra experimenti true yap
+N_EXPERIMENTS = 486 
+EXTRA_EXPERIMENT = False
+EXTRA_EXPERIMENT_NUMBER = 487
 RANDOM_SEED = 42
 EXPERIMENT_PARALLELISM = max(1, min(8, (os.cpu_count() or 4)))
 
@@ -235,44 +241,86 @@ DEFAULT_SYNONYM_MIN_CONF = 0.20
 
 
 # H RUNI
-# GRID_OPTIONS = {
-#     "functional_group_scale": [1, 1.5, 2.0],
-#     "essential_group_scale": [1, 1.5, 2.0],
-#     "preference_group_scale": [1, 1.5, 2.0],
-#     "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
-#     "rank_group_scale": [1, 3, 5],
-#     "rank_max": [20, 30, 50, 70],
-#     "grams_factor": [0.9],
-#     "priority_must": [1.8],
-#     "priority_strong_prefer": [1.4],
-#     "priority_prefer": [1],
-#     "synonym_min_conf": [0.50, 0.70],
-#     "minimum_should_match": [1, 3],
-#     "target_hits": [150],
-#     "size": [100],
-#     "vector_rrf_weight": [1.0],
-#     "bm25_rrf_weight": [1.0],
-# }
-
-# EXP 177
 GRID_OPTIONS = {
-  "functional_group_scale": [1],
-  "essential_group_scale": [1.5],
-  "preference_group_scale": [1.5],
-  "quality_group_scale": [1.5],
-  "rank_group_scale": [5],
-  "rank_max": [30],
-  "grams_factor": [0.9],
-  "priority_must": [1.8],
-  "priority_strong_prefer": [1.4],
-  "priority_prefer": [1],
-  "synonym_min_conf": [0.7],
-  "minimum_should_match": [1],
-  "target_hits": [50],
-  "size": [30],
-  "vector_rrf_weight": [1.0],
-  "bm25_rrf_weight": [1.0]
+    "functional_group_scale": [1, 1.5, 2.0],
+    "essential_group_scale": [1, 1.5, 2.0],
+    "preference_group_scale": [1, 1.5, 2.0],
+    "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
+    "rank_group_scale": [1, 3, 5],
+    "rank_max": [20, 30, 50, 70],
+    "grams_factor": [0.9],
+    "priority_must": [1.8],
+    "priority_strong_prefer": [1.4],
+    "priority_prefer": [1],
+    "synonym_min_conf": [0.50, 0.70],
+    "minimum_should_match": [1, 3],
+    "target_hits": [150],
+    "size": [100],
+    "vector_rrf_weight": [1.0],
+    "bm25_rrf_weight": [1.0],
 }
+def build_single_experiment_487(number):
+    #exp 111
+    GRID_OPTIONS = {
+        "functional_group_scale": [1],
+        "essential_group_scale": [1],
+        "preference_group_scale": [1],
+        "quality_group_scale": [4.0],
+        "rank_group_scale": [5],
+        "rank_max": [70],
+        "grams_factor": [0.9],
+        "priority_must": [1.8],
+        "priority_strong_prefer": [1.4],
+        "priority_prefer": [1],
+        "synonym_min_conf": [0.5],
+        "minimum_should_match": [1],
+        "target_hits": [50],
+        "size": [30],
+        "vector_rrf_weight": [1.0],
+        "bm25_rrf_weight": [1.0]
+        },
+
+    return [make_experiment_config(number, GRID_OPTIONS)]
+
+# # EXP 111
+# GRID_OPTIONS = {
+#   "functional_group_scale": [1],
+#   "essential_group_scale": [1],
+#   "preference_group_scale": [1],
+#   "quality_group_scale": [4.0],
+#   "rank_group_scale": [5],
+#   "rank_max": [70],
+#   "grams_factor": [0.9],
+#   "priority_must": [1.8],
+#   "priority_strong_prefer": [1.4],
+#   "priority_prefer": [1],
+#   "synonym_min_conf": [0.5],
+#   "minimum_should_match": [1],
+#   "target_hits": [50],
+#   "size": [30],
+#   "vector_rrf_weight": [1.0],
+#   "bm25_rrf_weight": [1.0]
+# },
+
+# # 133
+# GRID_OPTIONS = {
+#   "functional_group_scale": [1],
+#   "essential_group_scale": [1],
+#   "preference_group_scale": [1.5],
+#   "quality_group_scale": [10.0],
+#   "rank_group_scale": [5],
+#   "rank_max": [50],
+#   "grams_factor": [0.9],
+#   "priority_must": [1.8],
+#   "priority_strong_prefer": [1.4],
+#   "priority_prefer": [1],
+#   "synonym_min_conf": [0.7],
+#   "minimum_should_match": [1],
+#   "target_hits": [50],
+#   "size": [30],
+#   "vector_rrf_weight": [1.0],
+#   "bm25_rrf_weight": [1.0]
+# },
 
 FIXED_PARAMS = {
     # "minimum_should_match": 4,
@@ -325,6 +373,7 @@ def apply_group_scales(feature_weights, combo_dict):
         feature_weights["rank"], combo_dict["rank_group_scale"]
     )
     return feature_weights
+
 
 
 @dataclass
@@ -891,7 +940,10 @@ def run_single_experiment(
 # =========================================================
 # PREPARE EXPERIMENTS
 # =========================================================
-experiment_configs = build_experiment_configs()
+if not EXTRA_EXPERIMENT:
+    experiment_configs = build_experiment_configs()
+else:
+    experiment_configs = build_single_experiment_487(number=EXTRA_EXPERIMENT_NUMBER)
 print(f"Prepared {len(experiment_configs)} unique experiment configurations.")
 
 # Aggregate outputs
@@ -985,21 +1037,21 @@ for original_key, original_paper in rationale_input.items():
     if not MAKE_RECOMMENDATION:
         if not os.path.exists(eval_path_e):
             print(f"Running EssentialFeaturesExtractor for {sample_key}...")
-            time.sleep(60)
+            time.sleep(10)
             Eextractor.extract(user_text)
         else:
             print(f"Skipping essential extraction, already exists: {eval_path_e}")
 
         if not os.path.exists(eval_path_p):
             print(f"Running PreferenceFeaturesExtractor for {sample_key}...")
-            time.sleep(60)
+            time.sleep(10)
             Pextractor.extract(user_text)
         else:
             print(f"Skipping preference extraction, already exists: {eval_path_p}")
 
         if not os.path.exists(eval_path_q):
             print(f"Running QualityFeaturesExtractor for {sample_key}...")
-            time.sleep(60)
+            time.sleep(10)
             Qextractor.extract(user_text)
         else:
             print(f"Skipping quality extraction, already exists: {eval_path_q}")

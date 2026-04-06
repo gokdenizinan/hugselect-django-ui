@@ -6,7 +6,7 @@ papers_path = "11-RECOMMENDATION_EVALUATION/OUTPUT_ZZZZ_VVV.json"
 likes_path = "1-MODEL_FILTERING/N_sorted_model_likes_P9.json"
 output_path = "11-RECOMMENDATION_EVALUATION/OUTPUT_ZZZZ_VVVVV.json"
 csv_path = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
-model_to_year_path = "11-RECOMMENDATION_EVALUATION/model_to_year_more.json"
+model_to_year_path = "11-RECOMMENDATION_EVALUATION/model_to_year_united.json"
 
 # --------------------------------------------------
 # Choose the output key order here

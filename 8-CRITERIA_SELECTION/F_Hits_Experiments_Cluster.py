@@ -9,10 +9,10 @@ import re
 # -----------------------
 # CONFIG
 # -----------------------
-CSV_PATH = "11-RECOMMENDATION_EVALUATION/paper_model_2/snipped_papers_6.csv"
+CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_D99"
+RUN = "experiment_runs_H"
 EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
 
 # Folder containing model metadata dictionaries
