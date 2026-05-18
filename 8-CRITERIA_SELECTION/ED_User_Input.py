@@ -23,7 +23,7 @@ user_inputs = ["Give me an image classification model",
                 "Efficient diffusion or transformer-based generative models for text-to-image synthesis that balance visual fidelity and inference speed, include safety filtering components, and can run on consumer-grade GPUs (≤8GB VRAM)."
             ]
 
-with open("11-RECOMMENDATION_EVALUATION/OUTPUT_ZZZZ_VVV.json", "r") as f:
+with open("11-RECOMMENDATION_EVALUATION/OUTPUT_ZZZZ_VVVVV.json", "r") as f:
     rationale_input_full = json.load(f)
 
 import os
@@ -35,13 +35,13 @@ rationale_input = {}
 reasons = ["no", "introduced", "baseline", "comparison", 
            "experiment (benchmarkish)", "no (embeddings)", "no (backbone popular)", "no (evaluation)" ] # "no (backbone popular)", "component"  # Define the reasons to check for
 for paper_key, paper in rationale_input_full.items():
-
     if not paper:
         continue
+    paper.pop("user_intent_old", None)
+
     if paper.get("manuel_check", "").lower() in reasons:
         continue  
     if paper.get("manuel_check", "").lower() == "":
-        if paper.get("in approach", "").lower() == "no":
             continue  
     try:
         paper_id = paper_key.split("_")[1]

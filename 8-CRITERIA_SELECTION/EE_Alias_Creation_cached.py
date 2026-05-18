@@ -277,6 +277,8 @@ def make_embedding_provider_factory(
 
 
 if __name__ == "__main__":
+
+    # TEX TOT TEXT ILE T5 MATCHI VAR NEDEN OLUYOR BU?
     resolver = AliasResolver(
         synonym_provider_factory=make_embedding_provider_factory(min_similarity=0.2),
         max_synonyms=100,

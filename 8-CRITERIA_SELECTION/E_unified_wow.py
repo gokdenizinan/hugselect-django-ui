@@ -59,9 +59,17 @@ from EC_PreferenceFeatureExtractor import (
 )
 
 from elasticsearch import Elasticsearch
-from EE_Query_Builder_All_relax_modified_cached_lastmod_fixed_v2 import ESQueryBuilderAdaptive
-from EE_Query_Builder_All_relax_modified_cached_lastmod_fixed_v2 import query_mapping
+# from EE_Query_Builder_All_relax_modified_cached_lastmod_fixed_v2 import ESQueryBuilderAdaptive
+# from EE_Query_Builder_All_relax_modified_cached_lastmod_fixed_v2 import query_mapping
 
+# from EE_Query_Builder_Clean_modified_v2 import ESQueryBuilderAdaptive
+# from EE_Query_Builder_Clean_modified_v2 import query_mapping
+
+# from EE_Query_Builder_Clean_modified_v2_bm25 import ESQueryBuilderAdaptive
+# from EE_Query_Builder_Clean_modified_v2_bm25 import query_mapping
+
+from EE_Query_Builder_Clean_modified_v3_dedupfix import ESQueryBuilderAdaptive
+from EE_Query_Builder_Clean_modified_v3_dedupfix import query_mapping
 # =========================================================
 # OPTIONAL VECTOR ENCODER
 # =========================================================
@@ -120,28 +128,40 @@ def load_single_feature_json(folder_path, eval_id):
 # CONFIG
 # =========================================================
 #only make recommendaiton
-MAKE_RECOMMENDATION = False
+MAKE_RECOMMENDATION = True
 ONLY_INTENT = True
 EVAL_IDD = "A"
+# EVAL_IDD = "D" # bunu runlayip bi baksana biseyler gelismis mi diye? 
+
 specific_deneme_count = False
-OUTPUT_LETTER = "H" # yeniler gden basliyor
+OUTPUT_LETTER = "XX_ABL_QAFF" # yeniler gden basliyor
+# OUTPUT_LETTER = "H"
 
 ENABLE_RANK_FUNCTIONS = True
-ENABLE_QUALITY_DIMENSIONS = True
-ENABLE_FEATURE_LOCATIONS = True
+ENABLE_QUALITY_DIMENSIONS = False
+ENABLE_FEATURE_LOCATIONS = False
 
 INCLUDE_SCORE_BREAKDOWN = False
 INCLUDE_EXPLAIN = False
 # Rotate this key if it's real
 # GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+# GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 # GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
-# GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
 
-SPECIFIC_DENEME = {"9"} if specific_deneme_count else None
-# SPECIFIC_DENEME = {"9","18", "62", "90", "130", "136"} if specific_deneme_count else None
-# SPECIFIC_DENEME = {"55", "98", "99", "134", "135" } if specific_deneme_count else None
-# SPECIFIC_DENEME = {"68", "69", "89", "157", "159" }
+# SPECIFIC_DENEME = {"9"} if specific_deneme_count else None
+# SPECIFIC_DENEME = {
+#     "9", "18", "62", "86", "90", "96",
+#     "116", "130", "136", "146", "177",
+#     "178", "179", "184", "212", "213",
+#     "223", "224", "86","229", "230"
+# } if specific_deneme_count else None
+
+SPECIFIC_DENEME = {"136", "184", "179", "268", "290", "293", 
+} if specific_deneme_count else None
+
+# SPECIFIC_DENEME = {"55", "98", "99", "134", "135" } if specific_deneme_count else None # orta iyi olanlr
+# SPECIFIC_DENEME = {"68", "69", "89", "157", "159" } # no (backbone popular) icin test
 feature_folder_q = "8-CRITERIA_SELECTION/user_intent/quality_features"
 feature_folder_e = "8-CRITERIA_SELECTION/user_intent/essential_features"
 feature_folder_p = "8-CRITERIA_SELECTION/user_intent/preference_features"
@@ -159,8 +179,9 @@ INDEX_NAME = "models_t7"
 # SEARCH / EXPERIMENT SETTINGS
 # =========================================================
 # h 486
+# c48
 # full experiment runliycakstan hyi baska bisey yap eger bir tane deniyceksen extra experimenti true yap
-N_EXPERIMENTS = 486 
+N_EXPERIMENTS =    1
 EXTRA_EXPERIMENT = False
 EXTRA_EXPERIMENT_NUMBER = 487
 RANDOM_SEED = 42
@@ -240,25 +261,25 @@ DEFAULT_MINIMUM_SHOULD_MATCH = 5
 DEFAULT_SYNONYM_MIN_CONF = 0.20
 
 
-# H RUNI
-GRID_OPTIONS = {
-    "functional_group_scale": [1, 1.5, 2.0],
-    "essential_group_scale": [1, 1.5, 2.0],
-    "preference_group_scale": [1, 1.5, 2.0],
-    "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
-    "rank_group_scale": [1, 3, 5],
-    "rank_max": [20, 30, 50, 70],
-    "grams_factor": [0.9],
-    "priority_must": [1.8],
-    "priority_strong_prefer": [1.4],
-    "priority_prefer": [1],
-    "synonym_min_conf": [0.50, 0.70],
-    "minimum_should_match": [1, 3],
-    "target_hits": [150],
-    "size": [100],
-    "vector_rrf_weight": [1.0],
-    "bm25_rrf_weight": [1.0],
-}
+# # # H RUNI 486 tane
+# GRID_OPTIONS = {
+#     "functional_group_scale": [1, 1.5, 2.0],
+#     "essential_group_scale": [1, 1.5, 2.0],
+#     "preference_group_scale": [1, 1.5, 2.0],
+#     "quality_group_scale": [1, 1.5, 2.0, 4.0, 10.0],  
+#     "rank_group_scale": [1, 3, 5],
+#     "rank_max": [20, 30, 50, 70],
+#     "grams_factor": [0.9],
+#     "priority_must": [1.8],
+#     "priority_strong_prefer": [1.4],
+#     "priority_prefer": [1],
+#     "synonym_min_conf": [0.50, 0.70],
+#     "minimum_should_match": [1, 3],
+#     "target_hits": [150],
+#     "size": [100],
+#     "vector_rrf_weight": [1.0],
+#     "bm25_rrf_weight": [1.0],
+# }
 def build_single_experiment_487(number):
     #exp 111
     GRID_OPTIONS = {
@@ -278,29 +299,49 @@ def build_single_experiment_487(number):
         "size": [30],
         "vector_rrf_weight": [1.0],
         "bm25_rrf_weight": [1.0]
-        },
+        }
 
-    return [make_experiment_config(number, GRID_OPTIONS)]
+#     return [make_experiment_config(number, GRID_OPTIONS)]
 
-# # EXP 111
+# exp 447 D runi H kirmasi en iyi
+GRID_OPTIONS = {
+    "functional_group_scale": [2.0],
+    "essential_group_scale": [1],
+    "preference_group_scale": [1],
+    "quality_group_scale": [10.0],
+    "rank_group_scale": [5],
+    "rank_max": [70],
+    "grams_factor": [0.9],
+    "priority_must": [1.8],
+    "priority_strong_prefer": [1.4],
+    "priority_prefer": [1],
+    "synonym_min_conf": [0.5],
+    "minimum_should_match": [1],
+    "target_hits": [50],
+    "size": [30],
+    "vector_rrf_weight": [1.0],
+    "bm25_rrf_weight": [1.0]
+}
+
+# EXP 111 -c runi
 # GRID_OPTIONS = {
 #   "functional_group_scale": [1],
 #   "essential_group_scale": [1],
-#   "preference_group_scale": [1],
+#   "preference_group_scale": [1,1.5, 2],
 #   "quality_group_scale": [4.0],
-#   "rank_group_scale": [5],
+#   "rank_group_scale": [5, 10],
 #   "rank_max": [70],
 #   "grams_factor": [0.9],
-#   "priority_must": [1.8],
-#   "priority_strong_prefer": [1.4],
+#   "priority_must": [1.4, 1.8],
+#   "priority_strong_prefer": [1, 1.4],
 #   "priority_prefer": [1],
-#   "synonym_min_conf": [0.5],
+#   "synonym_min_conf": [0.5 , 0.7],
 #   "minimum_should_match": [1],
 #   "target_hits": [50],
 #   "size": [30],
 #   "vector_rrf_weight": [1.0],
 #   "bm25_rrf_weight": [1.0]
-# },
+# }
 
 # # 133
 # GRID_OPTIONS = {
@@ -784,7 +825,7 @@ def run_bm25_and_optional_vector_search(
         index=index_name,
         features=features,
         prebuilt_groups=prebuilt_groups,
-        include_score_breakdown=INCLUDE_SCORE_BREAKDOWN,
+        # include_score_breakdown=INCLUDE_SCORE_BREAKDOWN,
         include_explain=INCLUDE_EXPLAIN,
     )
     search_stage_timings["builder_search_bm25_seconds"] = time.perf_counter() - t0

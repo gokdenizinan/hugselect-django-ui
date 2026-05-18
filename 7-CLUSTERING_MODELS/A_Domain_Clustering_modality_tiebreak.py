@@ -773,6 +773,7 @@ def assign_domains(
             "boosts_json": json.dumps(boosts, ensure_ascii=False),
             "all_scores_json": json.dumps(final_scores, ensure_ascii=False),
             "explanations_json": json.dumps(explanations, ensure_ascii=False),
+            "base_model": safe_str(row.get("basemodels", "")),
         })
 
     out = pd.DataFrame(rows)

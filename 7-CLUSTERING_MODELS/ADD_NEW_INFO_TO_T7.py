@@ -4,7 +4,7 @@ from pathlib import Path
 
 # --- paths ---
 DICT_FOLDER = Path("HF-Models-T7-U")
-CSV_PATH = Path("7-CLUSTERING_MODELS/clusters_improved/family_assignments_organized.csv")
+CSV_PATH = Path("7-CLUSTERING_MODELS/clusters_improved_2/family_assignments_organized.csv")
 
 # Change these if needed
 DICT_KEY = "modelID"
@@ -12,8 +12,7 @@ CSV_KEY = "model_id"
 
 # Use the exact CSV column names here
 CLUSTER_COLUMNS = [
-    "assigned_modality",
-    "task",
+    "assigned_domain",
     "family_root",
     "family_child",
 ]
@@ -42,22 +41,54 @@ def add_clusters_to_dict(data, lookup):
     Handles:
     - a single dictionary
     - a list of dictionaries
+
+    Logic:
+    - Remove existing "Clusters"
+    - Add new one only if lookup match exists
     """
-    if isinstance(data, dict):
-        model_id = str(data.get(DICT_KEY, "")).strip()
-        if model_id in lookup:
-            data["Clusters"] = lookup[model_id]
-        return data
 
+    def process_item(item):
+        if not isinstance(item, dict):
+            return item
+
+        model_id = str(item.get(DICT_KEY, "")).strip()
+
+        existing_clusters = item.get("Clusters", {})
+
+        if not isinstance(existing_clusters, dict):
+            existing_clusters = {}
+
+        # Keep task exactly as it already is
+        existing_task = existing_clusters.get("task")
+
+        # Remove modality from existing Clusters
+        existing_clusters.pop("assigned_modality", None)
+
+        if model_id in lookup and lookup[model_id]:
+            new_data = lookup[model_id].copy()
+
+            # Rename assigned_domain -> domain
+            if "assigned_domain" in new_data:
+                new_data["domain"] = new_data.pop("assigned_domain")
+
+            # Do not overwrite task
+            if existing_task is not None:
+                new_data["task"] = existing_task
+
+            item["Clusters"] = {**existing_clusters, **new_data}
+        else:
+            item["Clusters"] = existing_clusters
+
+        return item
+    
+        # ✅ APPLY FUNCTION
     if isinstance(data, list):
-        for item in data:
-            if isinstance(item, dict):
-                model_id = str(item.get(DICT_KEY, "")).strip()
-                if model_id in lookup:
-                    item["Clusters"] = lookup[model_id]
+        return [process_item(item) for item in data]
+    elif isinstance(data, dict):
+        return process_item(data)
+    else:
         return data
 
-    return data
 
 
 def main():

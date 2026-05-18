@@ -7,27 +7,39 @@ import numpy as np
 import re
 import importlib.util
 
+# COMPACT FAMILY ROOT MEANINE GORE EXPERIMENT SECIYOR
 # -----------------------
 # CONFIG
 # -----------------------
 CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_H"
-EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
+PRIMARY_RUN = "experiment_runs_XX_dedup"
+FALLBACK_RUN = "experiment_runs_XX_dedup"
+
+EXPERIMENT_ROOT_D = f"8-CRITERIA_SELECTION/experiments/{PRIMARY_RUN}"
+EXPERIMENT_ROOT_H = f"8-CRITERIA_SELECTION/experiments/{FALLBACK_RUN}"
+
+RUN_LABEL = f"{PRIMARY_RUN}_with_fallback_{FALLBACK_RUN}"
+
+# -----------------------
+# MANUAL EXPERIMENT OVERRIDE
+# -----------------------
+MANUAL_EXPERIMENT = None  # None  # e.g. "exp_3" or "experiment_12"
 
 # Folder containing model metadata dictionaries
 MODEL_META_DIR = "HF-Models-T7-U"
 
 # External recommendation python file
-EXTERNAL_RECOMMENDATIONS_PY = "8-CRITERIA_SELECTION/F_Hits_United.py"
+EXTERNAL_RECOMMENDATIONS_PY = "8-CRITERIA_SELECTION/F_Hits_United/F_Hits_United.py"
 
-OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/multisource"
+OUT_DIR = f"8-CRITERIA_SELECTION/hits_cluster/{RUN_LABEL}/multisource"
 os.makedirs(OUT_DIR, exist_ok=True)
 OUT_DETAIL_CSV = os.path.join(OUT_DIR, "experiment_sample_stats.csv")
 OUT_COMPACT_CSV = os.path.join(OUT_DIR, "experiment_sample_stats_compact.csv")
 OUT_EXPERIMENT_CSV = os.path.join(OUT_DIR, "experiment_stats_summary.csv")
 OUT_SAMPLE_CSV = os.path.join(OUT_DIR, "sample_stats_summary.csv")
+OUT_METHOD_TOTALS_CSV = os.path.join(OUT_DIR, "method_total_stats_summary.csv")
 
 K = 10
 KEEP_COLS = ["sample", "paper", "title", "modelID", "year", "venue"]
@@ -38,6 +50,8 @@ ENABLE_SOURCES = {
     "recsys": True,
     "chatgpt": True,
     "gemini": True,
+    "claude": True,
+    "perplexity": True,
 }
 
 # Metrics to remove from compact output across exact / family / modality / task
@@ -71,17 +85,22 @@ def normalize_sample_key(x):
     if pd.isna(x):
         return None
 
-    s = str(x).strip()
+    s = str(x).strip().lower()
+    s = re.sub(r"\s+", "", s)
 
-    m = re.fullmatch(r"sample[_-]?(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    patterns = [
+        r"sample[_-]?(\d+)$",   # sample1, sample_1, sample-1
+        r"[a-z](\d+)$",         # a1, d1, z12
+        r"[a-z]+[_-]?(\d+)$",   # trial1, run_2, group-7
+        r"(\d+)$",              # 1, 12
+    ]
 
-    m = re.fullmatch(r"A(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    for p in patterns:
+        m = re.fullmatch(p, s, flags=re.IGNORECASE)
+        if m:
+            return f"A{int(m.group(1))}"
 
-    return s
+    return str(x).strip()
 
 
 def denormalize_sample_key(sample_norm):
@@ -145,6 +164,30 @@ def find_rank(target_model, recs):
         return np.nan
 
 
+def normalize_recommendation_list(recs, k=10):
+    if not isinstance(recs, list):
+        return []
+    out = []
+    for x in recs[:k]:
+        norm = normalize_model_string(x)
+        if norm is not None:
+            out.append(norm)
+    return out
+
+
+def overlap_ratio_against_reference(reference_recs, other_recs, k=10):
+    ref_topk = normalize_recommendation_list(reference_recs, k=k)
+    other_topk = normalize_recommendation_list(other_recs, k=k)
+
+    if len(ref_topk) == 0:
+        return np.nan
+
+    ref_set = set(ref_topk)
+    other_set = set(other_topk)
+
+    return len(ref_set & other_set) / len(ref_set)
+
+
 def accuracy_at_1(rank):
     return 1.0 if rank == 1 else 0.0
 
@@ -181,15 +224,22 @@ def parse_experiment_path(path):
     norm = os.path.normpath(path)
     parts = norm.split(os.sep)
 
-    if RUN not in parts:
+    run_candidates = [PRIMARY_RUN, FALLBACK_RUN]
+    run_idx = None
+
+    for run_name in run_candidates:
+        if run_name in parts:
+            run_idx = parts.index(run_name)
+            break
+
+    if run_idx is None:
         return None, None
 
-    idx = parts.index(RUN)
-    if len(parts) <= idx + 2:
+    if len(parts) <= run_idx + 2:
         return None, None
 
-    sample = parts[idx + 1]
-    experiment = parts[idx + 2]
+    sample = parts[run_idx + 1]
+    experiment = parts[run_idx + 2]
     return sample, experiment
 
 
@@ -383,7 +433,7 @@ def summarize_group(df_group, k=10, unique_sample_col=None):
 def load_external_recommendations(py_path):
     if not os.path.exists(py_path):
         print(f"External recommendation file not found: {py_path}")
-        return {}, {}
+        return {}, {}, {}, {}
 
     spec = importlib.util.spec_from_file_location("f_hits_united_module", py_path)
     module = importlib.util.module_from_spec(spec)
@@ -391,7 +441,10 @@ def load_external_recommendations(py_path):
 
     chatgpt = getattr(module, "CHATGPT_RECOMMENDATIONS", {}) or {}
     gemini = getattr(module, "GEMINI_RECOMMENDATIONS", {}) or {}
-    return chatgpt, gemini
+    claude = getattr(module, "CLAUDE_RECOMMENDATIONS", {}) or {}
+    perplexity = getattr(module, "PERPLEXITY_RECOMMENDATIONS", {}) or {}
+
+    return chatgpt, gemini, claude, perplexity
 
 
 def build_external_rows(source_name, rec_dict, valid_sample_norms):
@@ -412,6 +465,43 @@ def build_external_rows(source_name, rec_dict, valid_sample_norms):
             "num_recommendations": len(recs),
         })
     return pd.DataFrame(rows)
+
+
+def load_recsys_run(experiment_root, run_name):
+    pattern = os.path.join(experiment_root, "*", "*", "response.json")
+    eval_paths = sorted(glob.glob(pattern))
+    print(f"Found experiment response files in {run_name}:", len(eval_paths))
+
+    experiment_rows = []
+    for path in eval_paths:
+        sample, experiment = parse_experiment_path(path)
+        if sample is None or experiment is None:
+            print(f"Skipping unrecognized path: {path}")
+            continue
+
+        try:
+            data = load_json(path)
+            recs = extract_recs_from_eval(data)
+        except Exception as e:
+            print(f"Could not read {path}: {e}")
+            recs = []
+
+        experiment_rows.append({
+            "sample": sample,
+            "experiment": experiment,
+            "response_path": path,
+            "recommendations": recs,
+            "num_recommendations": len(recs) if isinstance(recs, list) else 0,
+            "source": "recsys",
+            "run_source": run_name,
+        })
+
+    exp_df = pd.DataFrame(experiment_rows)
+    if not exp_df.empty:
+        exp_df["sample_norm"] = exp_df["sample"].apply(normalize_sample_key)
+
+    print(f"Loaded recsys experiment rows from {run_name}:", len(exp_df))
+    return exp_df
 
 
 def choose_best_experiment(detail_df):
@@ -447,6 +537,148 @@ def add_no_info_strings(sample_summary_df):
     return sample_summary_df
 
 
+def select_one_row_per_sample_for_source(df_source):
+    if df_source.empty:
+        return df_source.copy()
+
+    if "source" in df_source.columns and df_source["source"].eq("recsys").all():
+        return df_source.copy()
+
+    return (
+        df_source.sort_values(by=["sample_norm", "experiment", "num_recommendations"], ascending=[True, True, False])
+        .drop_duplicates(subset=["sample_norm"], keep="first")
+        .copy()
+    )
+
+
+def build_method_total_summary(merged_df, detail_df, all_sample_norms, k=10):
+    rows = []
+
+    all_possible_items = set(
+        merged_df["modelID"].dropna().apply(normalize_model_string).dropna().unique().tolist()
+    )
+
+    if MANUAL_EXPERIMENT is not None:
+        best_experiment = MANUAL_EXPERIMENT
+        print(f"Using manually selected experiment: {best_experiment}")
+    else:
+        best_experiment = choose_best_experiment(detail_df)
+        print(f"Auto-selected best experiment: {best_experiment}")
+
+    if best_experiment is None:
+        raise ValueError("Could not determine best recsys experiment for method total summary.")
+
+    recsys_reference = merged_df[
+        (merged_df["source"] == "recsys") &
+        (merged_df["experiment"] == best_experiment)
+    ].copy()
+
+    recsys_reference = (
+        recsys_reference.sort_values(by=["sample_norm"])
+        .drop_duplicates(subset=["sample_norm"], keep="first")
+        [["sample_norm", "recommendations"]]
+        .rename(columns={"recommendations": "recsys_recommendations"})
+    )
+
+    source_names = ["recsys", "chatgpt", "gemini", "claude", "perplexity"]
+    source_names = [s for s in source_names if s in merged_df["source"].dropna().unique().tolist()]
+
+    all_samples_df = pd.DataFrame({"sample_norm": sorted(list(all_sample_norms))})
+    all_samples_df = all_samples_df.merge(recsys_reference, on="sample_norm", how="left")
+
+    for source_name in source_names:
+        if source_name == "recsys":
+            source_df = merged_df[
+                (merged_df["source"] == "recsys") &
+                (merged_df["experiment"] == best_experiment)
+            ].copy()
+        else:
+            source_df = merged_df[merged_df["source"] == source_name].copy()
+            source_df = select_one_row_per_sample_for_source(source_df)
+
+        source_df = (
+            source_df.sort_values(by=["sample_norm"])
+            .drop_duplicates(subset=["sample_norm"], keep="first")
+            [[
+                "sample_norm",
+                "recommendations",
+                "num_recommendations",
+                "rank",
+                f"hit@{k}",
+                f"family_root_precision@{k}",
+                f"family_root_recall@{k}",
+                f"family_root_ndcg@{k}",
+                f"family_root_hit@{k}",
+                f"assigned_modality_hit@{k}",
+                f"task_hit@{k}",
+            ]]
+            .rename(columns={
+                "recommendations": "method_recommendations",
+                "num_recommendations": "method_num_recommendations",
+            })
+        )
+
+        joined = all_samples_df.merge(source_df, on="sample_norm", how="left")
+
+        joined[f"hit@{k}"] = joined[f"hit@{k}"].fillna(0.0)
+        joined[f"family_root_precision@{k}"] = joined[f"family_root_precision@{k}"].fillna(0.0)
+        joined[f"family_root_recall@{k}"] = joined[f"family_root_recall@{k}"].fillna(0.0)
+        joined[f"family_root_ndcg@{k}"] = joined[f"family_root_ndcg@{k}"].fillna(0.0)
+        joined[f"family_root_hit@{k}"] = joined[f"family_root_hit@{k}"].fillna(0.0)
+        joined[f"assigned_modality_hit@{k}"] = joined[f"assigned_modality_hit@{k}"].fillna(0.0)
+        joined[f"task_hit@{k}"] = joined[f"task_hit@{k}"].fillna(0.0)
+        joined["method_num_recommendations"] = joined["method_num_recommendations"].fillna(0)
+
+        joined[f"overlap_with_recsys@{k}"] = joined.apply(
+            lambda row: overlap_ratio_against_reference(
+                row["recsys_recommendations"],
+                row["method_recommendations"],
+                k=k,
+            ) if isinstance(row["recsys_recommendations"], list) else np.nan,
+            axis=1,
+        )
+        joined[f"overlap_with_recsys@{k}"] = joined[f"overlap_with_recsys@{k}"].fillna(0.0)
+
+        all_recommended_items = set()
+        for recs in joined["method_recommendations"]:
+            if isinstance(recs, list):
+                for r in recs:
+                    norm = normalize_model_string(r)
+                    if norm is not None:
+                        all_recommended_items.add(norm)
+
+        overall_coverage = len(all_recommended_items)
+        overall_coverage_rate = (
+            overall_coverage / len(all_possible_items)
+            if len(all_possible_items) > 0 else np.nan
+        )
+
+        rows.append({
+            "source": source_name,
+            "reference_recsys_experiment": best_experiment,
+            "total_samples": int(len(all_sample_norms)),
+            "samples_with_recommendations": int((joined["method_num_recommendations"] > 0).sum()),
+            "recommendation_availability_rate": round(float((joined["method_num_recommendations"] > 0).mean()), 4),
+            f"coverage@{k}": round(float(joined[f"hit@{k}"].mean()), 4),
+            f"family_root_precision@{k}": round(float(joined[f"family_root_precision@{k}"].mean()), 4),
+            f"family_root_recall@{k}": round(float(joined[f"family_root_recall@{k}"].mean()), 4),
+            f"family_root_ndcg@{k}": round(float(joined[f"family_root_ndcg@{k}"].mean()), 4),
+            f"family_root_coverage@{k}": round(float(joined[f"family_root_hit@{k}"].mean()), 4),
+            f"assigned_modality_coverage@{k}": round(float(joined[f"assigned_modality_hit@{k}"].mean()), 4),
+            f"task_coverage@{k}": round(float(joined[f"task_hit@{k}"].mean()), 4),
+            f"overlap_with_recsys@{k}": round(float(joined[f"overlap_with_recsys@{k}"].mean()), 4),
+            "mean_rank_on_available_samples": round(float(joined["rank"].dropna().mean()), 4) if joined["rank"].notna().any() else np.nan,
+            "median_rank_on_available_samples": round(float(joined["rank"].dropna().median()), 4) if joined["rank"].notna().any() else np.nan,
+            "overall_coverage": int(overall_coverage),
+            "overall_coverage_rate": round(float(overall_coverage_rate), 4) if not np.isnan(overall_coverage_rate) else np.nan,
+        })
+
+    out_df = pd.DataFrame(rows)
+    if not out_df.empty:
+        out_df = out_df.sort_values(by=["source"]).reset_index(drop=True)
+    return out_df
+
+
 # -----------------------
 # 1) LOAD BASE CSV
 # -----------------------
@@ -474,6 +706,7 @@ if os.path.exists(FILTER_JSON_PATH):
     df = df[df["sample_norm"].isin(valid_samples)].copy()
 
 print("Rows after CSV/filter load:", len(df))
+all_ground_truth_sample_norms = set(df["sample_norm"].dropna().unique().tolist())
 
 # -----------------------
 # 2) LOAD MODEL METADATA
@@ -482,41 +715,28 @@ model_meta = load_model_metadata_folder(MODEL_META_DIR)
 
 # -----------------------
 # 3) LOAD RECSYS EXPERIMENTS
+#    Priority: D first, fallback to H for missing samples
 # -----------------------
 recsys_frames = []
 if ENABLE_SOURCES.get("recsys", False):
-    pattern = os.path.join(EXPERIMENT_ROOT, "*", "*", "response.json")
-    eval_paths = sorted(glob.glob(pattern))
-    print("Found experiment response files:", len(eval_paths))
+    exp_df_d = load_recsys_run(EXPERIMENT_ROOT_D, PRIMARY_RUN)
+    exp_df_h = load_recsys_run(EXPERIMENT_ROOT_H, FALLBACK_RUN)
 
-    experiment_rows = []
-    for path in eval_paths:
-        sample, experiment = parse_experiment_path(path)
-        if sample is None or experiment is None:
-            print(f"Skipping unrecognized path: {path}")
-            continue
+    samples_in_d = set(exp_df_d["sample_norm"].dropna().unique()) if not exp_df_d.empty else set()
 
-        try:
-            data = load_json(path)
-            recs = extract_recs_from_eval(data)
-        except Exception as e:
-            print(f"Could not read {path}: {e}")
-            recs = []
+    if not exp_df_h.empty:
+        exp_df_h_fallback = exp_df_h[~exp_df_h["sample_norm"].isin(samples_in_d)].copy()
+    else:
+        exp_df_h_fallback = pd.DataFrame()
 
-        experiment_rows.append({
-            "sample": sample,
-            "experiment": experiment,
-            "response_path": path,
-            "recommendations": recs,
-            "num_recommendations": len(recs) if isinstance(recs, list) else 0,
-            "source": "recsys",
-        })
+    exp_df = pd.concat([exp_df_d, exp_df_h_fallback], ignore_index=True)
 
-    exp_df = pd.DataFrame(experiment_rows)
+    print("Samples covered by D:", len(samples_in_d))
+    print("Fallback H rows kept:", len(exp_df_h_fallback))
+    print("Combined recsys rows:", len(exp_df))
+
     if not exp_df.empty:
-        exp_df["sample_norm"] = exp_df["sample"].apply(normalize_sample_key)
         recsys_frames.append(exp_df)
-    print("Loaded recsys experiment rows:", len(exp_df))
 else:
     exp_df = pd.DataFrame()
 
@@ -528,17 +748,24 @@ valid_recsys_sample_norms = set(exp_df["sample_norm"].dropna().unique().tolist()
 # -----------------------
 # 4) LOAD EXTERNAL RECOMMENDATIONS
 # -----------------------
-chatgpt_dict, gemini_dict = load_external_recommendations(EXTERNAL_RECOMMENDATIONS_PY)
+chatgpt_dict, gemini_dict, claude_dict, perplexity_dict = load_external_recommendations(EXTERNAL_RECOMMENDATIONS_PY)
 external_frames = []
 
 if ENABLE_SOURCES.get("chatgpt", False):
     external_frames.append(build_external_rows("chatgpt", chatgpt_dict, valid_recsys_sample_norms))
+
 if ENABLE_SOURCES.get("gemini", False):
     external_frames.append(build_external_rows("gemini", gemini_dict, valid_recsys_sample_norms))
 
+if ENABLE_SOURCES.get("claude", False):
+    external_frames.append(build_external_rows("claude", claude_dict, valid_recsys_sample_norms))
+
+if ENABLE_SOURCES.get("perplexity", False):
+    external_frames.append(build_external_rows("perplexity", perplexity_dict, valid_recsys_sample_norms))
+
 all_eval_frames = recsys_frames + [f for f in external_frames if f is not None and not f.empty]
 if not all_eval_frames:
-    raise ValueError("No evaluation data found across recsys/chatgpt/gemini.")
+    raise ValueError("No evaluation data found across recsys/chatgpt/gemini/claude/perplexity.")
 
 all_eval_df = pd.concat(all_eval_frames, ignore_index=True)
 all_eval_df = all_eval_df[all_eval_df["recommendations"].apply(lambda x: isinstance(x, list) and len(x) > 0)].copy()
@@ -587,6 +814,7 @@ detail_cols = [
     "sample",
     "sample_norm",
     "source",
+    "run_source",
     "experiment",
     "paper",
     "title",
@@ -631,6 +859,7 @@ detail_cols = [
     f"task_hit@{K}",
     "response_path",
 ]
+detail_cols = [c for c in detail_cols if c in merged.columns]
 detail_df = merged[detail_cols].copy()
 
 # -----------------------
@@ -761,10 +990,15 @@ if not sample_summary_df.empty:
 # -----------------------
 # 11) BUILD COMPACT SIDE-BY-SIDE OUTPUT
 #   - keep only best recsys experiment by overall family_root_first_rank
-#   - chatgpt and gemini become their own columns
+#   - llm methods become their own columns
 #   - drop accuracy/precision/recall/ndcg/map/hit for exact + family + modality + task
 # -----------------------
-best_experiment = choose_best_experiment(detail_df)
+if MANUAL_EXPERIMENT is not None:
+    best_experiment = MANUAL_EXPERIMENT
+    print(f"Using manually selected experiment: {best_experiment}")
+else:
+    best_experiment = choose_best_experiment(detail_df)
+    print(f"Auto-selected best experiment: {best_experiment}")
 print("Best recsys experiment by family_root_first_rank overall:", best_experiment)
 
 compact_source_frames = []
@@ -798,7 +1032,7 @@ if best_experiment is not None:
         recsys_best_df = recsys_best_df.rename(columns={c: f"recsys_{c}" for c in source_metric_cols})
         compact_source_frames.append(recsys_best_df)
 
-for source_name in ["chatgpt", "gemini"]:
+for source_name in ["chatgpt", "gemini", "claude", "perplexity"]:
     src_df = detail_df[detail_df["source"] == source_name].copy()
     if src_df.empty:
         continue
@@ -820,7 +1054,6 @@ for col in ["gt_family_root", "gt_assigned_modality", "gt_task"]:
 
 compact_df = compact_df.sort_values(by=["sample"]).reset_index(drop=True)
 
-# Reorder compact columns so each stat is grouped side-by-side across recsys/chatgpt/gemini
 compact_column_order = [
     "sample",
     "paper",
@@ -835,31 +1068,47 @@ compact_column_order = [
     "recsys_num_recommendations",
     "chatgpt_num_recommendations",
     "gemini_num_recommendations",
+    "claude_num_recommendations",
+    "perplexity_num_recommendations",
 
     "recsys_rank",
     "chatgpt_rank",
     "gemini_rank",
+    "claude_rank",
+    "perplexity_rank",
 
     "recsys_family_root_first_rank",
     "chatgpt_family_root_first_rank",
     "gemini_family_root_first_rank",
+    "claude_family_root_first_rank",
+    "perplexity_family_root_first_rank",
     "recsys_family_root_match_rate",
     "chatgpt_family_root_match_rate",
     "gemini_family_root_match_rate",
+    "claude_family_root_match_rate",
+    "perplexity_family_root_match_rate",
 
     "recsys_assigned_modality_first_rank",
     "chatgpt_assigned_modality_first_rank",
     "gemini_assigned_modality_first_rank",
+    "claude_assigned_modality_first_rank",
+    "perplexity_assigned_modality_first_rank",
     "recsys_assigned_modality_match_rate",
     "chatgpt_assigned_modality_match_rate",
     "gemini_assigned_modality_match_rate",
+    "claude_assigned_modality_match_rate",
+    "perplexity_assigned_modality_match_rate",
 
     "recsys_task_first_rank",
     "chatgpt_task_first_rank",
     "gemini_task_first_rank",
+    "claude_task_first_rank",
+    "perplexity_task_first_rank",
     "recsys_task_match_rate",
     "chatgpt_task_match_rate",
     "gemini_task_match_rate",
+    "claude_task_match_rate",
+    "perplexity_task_match_rate",
 ]
 
 existing_compact_cols = [c for c in compact_column_order if c in compact_df.columns]
@@ -867,16 +1116,53 @@ remaining_compact_cols = [c for c in compact_df.columns if c not in existing_com
 compact_df = compact_df[existing_compact_cols + remaining_compact_cols]
 
 # -----------------------
+# 11.5) BUILD METHOD TOTAL SUMMARY
+#   - one row per source / method
+#   - coverage across all samples
+#   - overlap with best recsys top-k
+# -----------------------
+method_total_summary_df = build_method_total_summary(
+    merged_df=merged,
+    detail_df=detail_df,
+    all_sample_norms=all_ground_truth_sample_norms,
+    k=K,
+)
+
+# -----------------------
 # 12) SAVE
 # -----------------------
 os.makedirs(OUT_DIR, exist_ok=True)
 
-detail_df.to_csv(OUT_DETAIL_CSV, index=False, encoding="utf-8")
-experiment_summary_df.to_csv(OUT_EXPERIMENT_CSV, index=False, encoding="utf-8")
-sample_summary_df.to_csv(OUT_SAMPLE_CSV, index=False, encoding="utf-8")
+# Uncomment if you want to save all outputs too
+# detail_df = detail_df.sort_values(
+#     by="sample",
+#     key=lambda col: col.str.extract(r"(\d+)").astype(int)
+# )
+# detail_df.to_csv(OUT_DETAIL_CSV, index=False, encoding="utf-8")
+# experiment_summary_df.to_csv(OUT_EXPERIMENT_CSV, index=False, encoding="utf-8")
+# sample_summary_df.to_csv(OUT_SAMPLE_CSV, index=False, encoding="utf-8")
+
+import pandas as pd
+
+
+# Extract letter and number
+compact_df["letter"] = compact_df["sample"].str.extract(r"([A-Z])")
+compact_df["number"] = compact_df["sample"].str.extract(r"(\d+)").astype(int)
+
+# Sort so that later letters come first (D > A)
+compact_df = compact_df.sort_values(by=["number", "letter"], ascending=[True, False])
+
+# Drop duplicates based on number, keeping the first (highest letter)
+compact_df = compact_df.drop_duplicates(subset="number", keep="first")
+
+# Optional: clean up helper columns
+compact_df = compact_df.drop(columns=["letter", "number"])
+
 compact_df.to_csv(OUT_COMPACT_CSV, index=False, encoding="utf-8")
+method_total_summary_df.to_csv(OUT_METHOD_TOTALS_CSV, index=False, encoding="utf-8")
 
 print(f"Saved detail CSV to: {OUT_DETAIL_CSV}")
 print(f"Saved compact CSV to: {OUT_COMPACT_CSV}")
 print(f"Saved experiment summary CSV to: {OUT_EXPERIMENT_CSV}")
 print(f"Saved sample summary CSV to: {OUT_SAMPLE_CSV}")
+print(f"Saved method total summary CSV to: {OUT_METHOD_TOTALS_CSV}")

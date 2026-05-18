@@ -1,8 +1,10 @@
 import pandas as pd
+import os
 
-INPUT_FILE = "7-CLUSTERING_MODELS/clusters_improved/family_assignments_organized.csv"
-OUTPUT_FILE = "7-CLUSTERING_MODELS/clusters_improved/organizedd/family_assignments_organized_again.csv"
-
+INPUT_FILE = "7-CLUSTERING_MODELS/clusters_improved_2/family_assignments_organized.csv"
+OURPUT_DIR = "7-CLUSTERING_MODELS/clusters_improved_2/organized/"
+OUTPUT_FILE = F"{OURPUT_DIR}family_assignments_organized_again.csv"
+os.makedirs(OURPUT_DIR, exist_ok=True)
 SORT_ORDER = [
     "assigned_modality",
     "task",

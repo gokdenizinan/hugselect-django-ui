@@ -2877,7 +2877,7 @@ def looks_like_child_not_root(c: str) -> bool:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_csv", required=True, help="CSV with Level 1 modalities already assigned")
-    parser.add_argument("--out_assignments", default="family_assignments.csv")
+    parser.add_argument("--out_assignments", default="family_assignmecnts.csv")
     parser.add_argument("--out_relations", default="family_relations.csv")
     parser.add_argument("--out_candidates", default="discovered_family_candidates.csv")
     parser.add_argument("--min_count_global", type=int, default=12)

@@ -306,7 +306,7 @@ def extract_name_snippet_tokens(text, name, max_tokens=512):
 PHASE = 0
 if PHASE == 0: 
 
-    MENTIONED_FOLDER = "5-REVIEW_COLLECTION/united_f5"
+    MENTIONED_FOLDER = "united_mentioned_reviews"
     mentioned = load_mentioned_from_folder(MENTIONED_FOLDER)
 
     keys = ["reddit", "hf", "stack"]
@@ -401,6 +401,6 @@ if PHASE ==11:
     print(diff_rows)
 
     print(df)
-    df_unique.to_csv("6-REVIEW_SENTIMENT_ANALYSIS/llm_check_meaning/preprocessing_sentiment_go.csv", index=False)
+    # df_unique.to_csv("6-REVIEW_SENTIMENT_ANALYSIS/llm_check_meaning/preprocessing_sentiment_go.csv", index=False)
 
 print("done!")

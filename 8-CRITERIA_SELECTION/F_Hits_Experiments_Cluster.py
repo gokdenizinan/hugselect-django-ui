@@ -12,7 +12,7 @@ import re
 CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_H"
+RUN = "experiment_runs_D"  # e.g. "experiment_runs_H" or "experiment_runs_BM25"
 EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
 
 # Folder containing model metadata dictionaries

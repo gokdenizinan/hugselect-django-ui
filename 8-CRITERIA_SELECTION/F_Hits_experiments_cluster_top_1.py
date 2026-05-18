@@ -12,7 +12,7 @@ import re
 CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_H"
+RUN = "experiment_runs_H_mixed"
 EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
 
 # Folder containing model metadata dictionaries
@@ -51,17 +51,22 @@ def normalize_sample_key(x):
     if pd.isna(x):
         return None
 
-    s = str(x).strip()
+    s = str(x).strip().lower()
+    s = re.sub(r"\s+", "", s)
 
-    m = re.fullmatch(r"sample[_-]?(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    patterns = [
+        r"sample[_-]?(\d+)$",   # sample1, sample_1, sample-1
+        r"[a-z](\d+)$",         # a1, d1, z12
+        r"[a-z]+[_-]?(\d+)$",   # trial1, run_2, group-7
+        r"(\d+)$",              # 1, 12
+    ]
 
-    m = re.fullmatch(r"A(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    for p in patterns:
+        m = re.fullmatch(p, s, flags=re.IGNORECASE)
+        if m:
+            return f"A{int(m.group(1))}"
 
-    return s
+    return str(x).strip()
 
 
 def normalize_attr_value(x):
@@ -516,6 +521,11 @@ merged = merged[
 ].copy()
 
 print("Rows after merging experiments with samples:", len(merged))
+
+print("Rows in df after filtering:", len(df))
+print("Unique CSV sample_norm:", sorted(df["sample_norm"].dropna().unique().tolist())[:20])
+
+print("Valid samples from filter:", sorted(list(valid_samples))[:20])
 
 if merged.empty:
     raise ValueError("Merged dataframe is empty. Check sample names in CSV and folder structure.")

@@ -9,10 +9,15 @@ import re
 # -----------------------
 # CONFIG
 # -----------------------
-CSV_PATH = "11-RECOMMENDATION_EVALUATION/paper_model_2/snipped_papers_6.csv"
+
+K = 10
+HOWMANYEXPERIMENTS = 4
+
+CSV_PATH = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/merged_2.csv"
 FILTER_JSON_PATH = "11-RECOMMENDATION_EVALUATION/OUTPUT_F.json"
 
-RUN = "experiment_runs_H"
+
+RUN = "experiment_runs_XX_mixed_BM255"  # for development/debugging
 EXPERIMENT_ROOT = f"8-CRITERIA_SELECTION/experiments/{RUN}"
 
 # Folder containing model metadata dictionaries
@@ -22,9 +27,12 @@ OUT_DETAIL_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/experiment_sample_sta
 OUT_EXPERIMENT_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/experiment_stats_summary.csv"
 OUT_SAMPLE_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/sample_stats_summary.csv"
 OUT_TOP5_DETAIL_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/top_5_experiments_by_family_root_first_rank.csv"
+OUT_TOP_BY_RANK_DETAIL_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/top_experiments_by_exact_rank_with_common_tiebreak.csv"
 
-K = 10
-HOWMANYEXPERIMENTS = 4
+
+OUT_PER_SAMPLE_TOP_RANK_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/per_sample_top_{HOWMANYEXPERIMENTS}_exact_rank.csv"
+OUT_PER_SAMPLE_TOP_FAMILY_CSV = f"8-CRITERIA_SELECTION/hits_cluster/{RUN}/per_sample_top_{HOWMANYEXPERIMENTS}_family_root_rank.csv"
+
 KEEP_COLS = ["sample", "paper", "title", "modelID", "year", "venue"]
 ATTR_KEYS = ["family_root", "assigned_modality", "task"]
 
@@ -49,19 +57,22 @@ def normalize_sample_key(x):
     if pd.isna(x):
         return None
 
-    s = str(x).strip()
+    s = str(x).strip().lower()
+    s = re.sub(r"\s+", "", s)
 
-    m = re.fullmatch(r"sample[_-]?(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    patterns = [
+        r"sample[_-]?(\d+)$",   # sample1, sample_1, sample-1
+        r"[a-z](\d+)$",         # a1, d1, z12
+        r"[a-z]+[_-]?(\d+)$",   # trial1, run_2, group-7
+        r"(\d+)$",              # 1, 12
+    ]
 
-    m = re.fullmatch(r"A(\d+)", s, flags=re.IGNORECASE)
-    if m:
-        return f"A{int(m.group(1))}"
+    for p in patterns:
+        m = re.fullmatch(p, s, flags=re.IGNORECASE)
+        if m:
+            return f"A{int(m.group(1))}"
 
-    return s
-
-
+    return str(x).strip()
 def normalize_attr_value(x):
     if x is None:
         return None
@@ -803,14 +814,291 @@ top_5_detail_df = top_5_detail_df.sort_values(
 )
 
 # -----------------------
+# 12) TOP EXPERIMENTS BY EXACT RANK
+#     Tie-break: experiments that are most often among the best
+#     across all samples
+# -----------------------
+
+# For each sample, find the best (lowest) exact rank achieved by any experiment
+sample_best_rank = (
+    detail_df.groupby("sample", dropna=False)["rank"]
+    .min()
+    .reset_index()
+    .rename(columns={"rank": "sample_best_rank"})
+)
+
+# Mark rows where the experiment is tied for best rank within that sample
+best_rank_rows = detail_df.merge(sample_best_rank, on="sample", how="left")
+best_rank_rows["is_best_for_sample"] = (
+    best_rank_rows["rank"].notna() &
+    best_rank_rows["sample_best_rank"].notna() &
+    (best_rank_rows["rank"] == best_rank_rows["sample_best_rank"])
+)
+
+# Count how often each experiment is one of the best-ranked experiments across samples
+experiment_best_rank_frequency = (
+    best_rank_rows[best_rank_rows["is_best_for_sample"]]
+    .groupby("experiment", dropna=False)
+    .agg(best_rank_sample_count=("sample", "nunique"))
+    .reset_index()
+)
+
+# Build experiment ranking table using exact rank as primary criterion
+experiment_exact_rank_ranking = (
+    detail_df.groupby("experiment", dropna=False)
+    .agg(
+        rank_mean=("rank", lambda s: s.dropna().mean() if s.notna().any() else np.nan),
+        rank_median=("rank", lambda s: s.dropna().median() if s.notna().any() else np.nan),
+        rank_valid_count=("rank", lambda s: int(s.notna().sum())),
+        hit_rate=(f"hit@{K}", "mean"),
+        family_root_first_rank_mean=("family_root_first_rank", lambda s: s.dropna().mean() if s.notna().any() else np.nan),
+        family_root_first_rank_median=("family_root_first_rank", lambda s: s.dropna().median() if s.notna().any() else np.nan),
+        family_root_hit_rate=(f"family_root_hit@{K}", "mean"),
+        evaluated_rows=("experiment", "size"),
+    )
+    .reset_index()
+)
+
+experiment_exact_rank_ranking = experiment_exact_rank_ranking.merge(
+    experiment_best_rank_frequency,
+    on="experiment",
+    how="left",
+)
+
+experiment_exact_rank_ranking["best_rank_sample_count"] = (
+    experiment_exact_rank_ranking["best_rank_sample_count"].fillna(0).astype(int)
+)
+
+# Select top experiments:
+# 1) lower mean exact rank is better
+# 2) lower median exact rank is better
+# 3) if tied, choose experiments that are most often best across samples
+# 4) then use hit rate and evaluated rows
+top_rank_experiments = (
+    experiment_exact_rank_ranking.sort_values(
+        by=[
+            "rank_mean",
+            "rank_median",
+            "best_rank_sample_count",
+            "hit_rate",
+            "evaluated_rows",
+            "experiment",
+        ],
+        ascending=[True, True, False, False, False, True],
+        na_position="last",
+    )
+    .head(HOWMANYEXPERIMENTS)["experiment"]
+    .tolist()
+)
+
+top_rank_detail_df = (
+    detail_df[detail_df["experiment"].isin(top_rank_experiments)]
+    .copy()
+)
+
+top_rank_detail_df["experiment_rank_by_exact_rank"] = pd.Categorical(
+    top_rank_detail_df["experiment"],
+    categories=top_rank_experiments,
+    ordered=True,
+).codes + 1
+
+top_rank_detail_df = top_rank_detail_df.merge(
+    experiment_exact_rank_ranking,
+    on="experiment",
+    how="left",
+)
+
+# Put rank and family_root_first_rank as 3rd and 4th columns
+front_cols = [
+    "sample",
+    "experiment",
+    "rank",
+    "family_root_first_rank",
+]
+
+remaining_cols = [c for c in top_rank_detail_df.columns if c not in front_cols]
+top_rank_detail_df = top_rank_detail_df[front_cols + remaining_cols]
+
+top_rank_detail_df = top_rank_detail_df.sort_values(
+    by=[
+        "experiment_rank_by_exact_rank",
+        "rank_mean",
+        "rank_median",
+        "sample",
+        "paper",
+        "title",
+    ]
+)
+
+# -----------------------
+# 13) PER-SAMPLE TOP-N EXPERIMENTS
+#     N = HOWMANYEXPERIMENTS
+#     Metrics:
+#       - exact rank
+#       - family_root_first_rank
+#     Tie-break:
+#       experiment most often best across all samples
+# -----------------------
+
+def sort_samples_naturally(df_in, sample_col="sample"):
+    return df_in.sort_values(
+        by=sample_col,
+        key=lambda col: col.astype(str).str.extract(r"(\d+)")[0].astype(int)
+    )
+
+def reorder_rank_columns(df_in):
+    preferred_front = ["sample", "experiment", "rank", "family_root_first_rank"]
+    existing_front = [c for c in preferred_front if c in df_in.columns]
+    remaining = [c for c in df_in.columns if c not in existing_front]
+    return df_in[existing_front + remaining]
+
+def add_global_frequency_for_best(df_in, metric_col, freq_col_name):
+    best_per_sample = (
+        df_in.groupby("sample", dropna=False)[metric_col]
+        .min()
+        .reset_index()
+        .rename(columns={metric_col: f"best_{metric_col}"})
+    )
+
+    out = df_in.merge(best_per_sample, on="sample", how="left")
+
+    out["_is_best_for_sample"] = (
+        out[metric_col].notna() &
+        out[f"best_{metric_col}"].notna() &
+        (out[metric_col] == out[f"best_{metric_col}"])
+    )
+
+    freq_df = (
+        out[out["_is_best_for_sample"]]
+        .groupby("experiment", dropna=False)
+        .agg(**{freq_col_name: ("sample", "nunique")})
+        .reset_index()
+    )
+
+    out = out.merge(freq_df, on="experiment", how="left")
+    out[freq_col_name] = out[freq_col_name].fillna(0).astype(int)
+
+    return out
+
+def build_per_sample_top_n(df_in, metric_col, freq_col_name, rank_label_col, n):
+    """
+    For each sample:
+      - sort experiments by:
+          1) metric (lower is better)
+          2) global frequency (higher is better)
+          3) rank
+          4) family_root_first_rank
+      - take top n experiments
+    """
+
+    work = add_global_frequency_for_best(df_in.copy(), metric_col, freq_col_name)
+
+    work = work.sort_values(
+        by=[
+            "sample",
+            metric_col,               # primary
+            freq_col_name,            # tie-break
+            "rank",
+            "family_root_first_rank",
+            "experiment",
+        ],
+        ascending=[True, True, False, True, True, True],
+        na_position="last"
+    )
+
+    # take top N per sample
+    out = (
+        work.groupby("sample", as_index=False)
+        .head(n)
+        .copy()
+    )
+
+    # assign rank within sample (1..N)
+    out[rank_label_col] = (
+        out.groupby("sample", sort=False).cumcount() + 1
+    )
+
+    out = reorder_rank_columns(out)
+
+    out = out.sort_values(
+        by=[
+            "sample",
+            rank_label_col,
+            metric_col,
+            "experiment",
+        ],
+        na_position="last"
+    )
+
+    return sort_samples_naturally(out)
+
+
+# ---- A) TOP-N PER SAMPLE BY EXACT RANK ----
+per_sample_top_rank_df = build_per_sample_top_n(
+    detail_df,
+    metric_col="rank",
+    freq_col_name="best_exact_rank_sample_count",
+    rank_label_col="per_sample_exact_rank_position",
+    n=HOWMANYEXPERIMENTS
+)
+
+# ---- B) TOP-N PER SAMPLE BY FAMILY ROOT FIRST RANK ----
+per_sample_top_family_df = build_per_sample_top_n(
+    detail_df,
+    metric_col="family_root_first_rank",
+    freq_col_name="best_family_root_rank_sample_count",
+    rank_label_col="per_sample_family_root_position",
+    n=HOWMANYEXPERIMENTS
+)
+# -----------------------
 # 11) SAVE
 # -----------------------
 os.makedirs(os.path.dirname(OUT_DETAIL_CSV), exist_ok=True)
 
+# ---- DETAIL ----
+detail_df = detail_df.sort_values(
+    by="sample",
+    key=lambda col: col.astype(str).str.extract(r"(\d+)")[0].astype(int)
+)
 detail_df.to_csv(OUT_DETAIL_CSV, index=False, encoding="utf-8")
+
+# ---- EXPERIMENT SUMMARY ----
 experiment_summary_df.to_csv(OUT_EXPERIMENT_CSV, index=False, encoding="utf-8")
+
+# ---- SAMPLE SUMMARY ----
+sample_summary_df = sample_summary_df.sort_values(
+    by="sample",
+    key=lambda col: col.astype(str).str.extract(r"(\d+)")[0].astype(int)
+)
 sample_summary_df.to_csv(OUT_SAMPLE_CSV, index=False, encoding="utf-8")
+
+# ---- TOP EXPERIMENTS DETAIL ----
+top_5_detail_df = top_5_detail_df.sort_values(
+    by="sample",
+    key=lambda col: col.astype(str).str.extract(r"(\d+)")[0].astype(int)
+)
 top_5_detail_df.to_csv(OUT_TOP5_DETAIL_CSV, index=False, encoding="utf-8")
+
+# ---- TOP EXPERIMENTS BY EXACT RANK DETAIL ----
+top_rank_detail_df = top_rank_detail_df.sort_values(
+    by="sample",
+    key=lambda col: col.astype(str).str.extract(r"(\d+)")[0].astype(int)
+)
+top_rank_detail_df.to_csv(OUT_TOP_BY_RANK_DETAIL_CSV, index=False, encoding="utf-8")
+
+
+per_sample_top_rank_df.to_csv(
+    OUT_PER_SAMPLE_TOP_RANK_CSV,
+    index=False,
+    encoding="utf-8"
+)
+
+per_sample_top_family_df.to_csv(
+    OUT_PER_SAMPLE_TOP_FAMILY_CSV,
+    index=False,
+    encoding="utf-8"
+)
+
 
 # print("\n=== DETAIL (sample + experiment) ===")
 # print(detail_df.head(20).to_string(index=False))
@@ -824,3 +1112,6 @@ top_5_detail_df.to_csv(OUT_TOP5_DETAIL_CSV, index=False, encoding="utf-8")
 print(f"\nSaved detail CSV to: {OUT_DETAIL_CSV}")
 print(f"Saved experiment summary CSV to: {OUT_EXPERIMENT_CSV}")
 print(f"Saved sample summary CSV to: {OUT_SAMPLE_CSV}")
+print(f"Saved top-by-rank detail CSV to: {OUT_TOP_BY_RANK_DETAIL_CSV}")
+print(f"Saved per-sample TOP-{HOWMANYEXPERIMENTS} exact-rank CSV to: {OUT_PER_SAMPLE_TOP_RANK_CSV}")
+print(f"Saved per-sample TOP-{HOWMANYEXPERIMENTS} family-root CSV to: {OUT_PER_SAMPLE_TOP_FAMILY_CSV}")

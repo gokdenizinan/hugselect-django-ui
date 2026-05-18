@@ -191,7 +191,7 @@ def _save_confusion_matrix_png(
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111)
     im = ax.imshow(cm, interpolation="nearest")
-    ax.set_title(title)
+    # ax.set_title(title)
     plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
     ax.set_xticks(np.arange(len(labels)))
@@ -381,6 +381,7 @@ def evaluate_quality_predictions(
     os.makedirs(output_dir, exist_ok=True)
 
     df = read_table_robust(input_path, preferred_sep=preferred_sep)
+    df.columns = df.columns.str.replace("\ufeff", "", regex=False).str.strip()
 
     # Sanity print (optional; keep if helpful)
     print("Loaded shape:", df.shape)
@@ -508,6 +509,7 @@ def build_sample_evaluation_output(
     because c1 == "T" implies the prediction matches the agreed ChatGPT/Gemini label.
     """
     df = read_table_robust(input_path, preferred_sep=preferred_sep)
+    df.columns = df.columns.str.replace("\ufeff", "", regex=False).str.strip()
 
     required = ["ModelID", "Review_Processed", "chatgpt_primary", "gemini_primary", prediction_col]
     missing = [c for c in required if c not in df.columns]
@@ -557,8 +559,8 @@ def build_sample_evaluation_output(
 # =========================
 if __name__ == "__main__":
     outputs = evaluate_quality_predictions(
-        input_path="12-EVALUATION_QUAL/quality_sample_B.csv",          # <-- change me
-        output_dir="12-EVALUATION_QUAL/quality_results",              # <-- change me
+        input_path="12-EVALUATION_QUAL/quality_sample_X.csv",          # <-- change me
+        output_dir="12-EVALUATION_QUAL/quality_results_Z",              # <-- change me
         prediction_col="predicted",     # <-- matches your columns
         preferred_sep="\t",             # <-- IMPORTANT: your file is tab-separated
         use_secondary_as_truth=True,    # <-- toggle True/False
@@ -566,8 +568,8 @@ if __name__ == "__main__":
     )
 
     build_sample_evaluation_output(
-        input_path="12-EVALUATION_QUAL/quality_sample_B.csv",
-        output_path="12-EVALUATION_QUAL/quality_results/sample_evaluation.csv",
+        input_path="12-EVALUATION_QUAL/quality_sample_X.csv",
+        output_path="12-EVALUATION_QUAL/quality_results_Z/sample_evaluation.csv",
         prediction_col="predicted",
         preferred_sep="\t",
     )
