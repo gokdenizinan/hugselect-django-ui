@@ -242,7 +242,7 @@ if __name__ == "__main__":
     output_json_path="10-EVALUATION/llm_ffs/input_A5.json",
 )
     # # Example usage
-    LLAMA_API_KEY = "tgp_v1_TWQVAGwnUy129r2YO4TDd7_8jjgoxmkfwjJza0bjH2c"
+    LLAMA_API_KEY = ""
     SAVE_LOC = "10-EVALUATION/llm_ffs/"
     VERSION = "A5"
 
