@@ -32,9 +32,9 @@ TOPICS = [
 # 400DEN ONCESI YOK
 #posts_10dan sonrakiler gercekten basliyor
 
-reddit = praw.Reddit(client_id='uV3CtS6JqcqFC8vNyJyfaQ',
-                     client_secret='iZ7H9lt_bbT7MrhonfslhOdV_l1BLA', password='arda1915',
-                     user_agent='PrawTut', username='StreetDonut6976')
+reddit = praw.Reddit(client_id='',
+                     client_secret='', password='',
+                     user_agent='', username='')
 
 url_topics = []
 

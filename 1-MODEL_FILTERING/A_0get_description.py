@@ -13,7 +13,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import os
 
-api = HfApi(token="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")  
+api = HfApi(token="")  
 
 ### HTLM EXTRACTION
 def clean_and_filter_chunks(md: str) -> str:

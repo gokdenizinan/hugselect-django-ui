@@ -6,9 +6,9 @@ from urllib.parse import quote_plus
 import time
 import os
 # 
-# API_KEY = "rl_n1a9FzA9kGditViNpgV9h8jYd" # A0DA
-# API_KEY = "rl_f1BgvxfEirh4SW4apVr3ZCTyz" #OPENFIBER
-API_KEY = "rl_oNSJpbrjQxw8ytHYBn3mhnxwC" #libcal
+# API_KEY = "" # A0DA
+# API_KEY = "" #OPENFIBER
+API_KEY = "" #libcal
 
 # EGER CONNECTION KAYBEDERSEN CHECKPOINTI DOSYASINDAN KENDIN DEGISTIR
 # with open("5-REVIEW_COLLECTION/N_model_dict_dedup_run.json", "r", encoding = "utf-8") as f:

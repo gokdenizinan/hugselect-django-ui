@@ -9,7 +9,7 @@ import requests
 with open("5-REVIEW_COLLECTION/hf_run_again.json", "r", encoding = "utf-8") as f:
     model_dict = json.load(f)
 
-api = HfApi(token="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")  
+api = HfApi(token="")  
 RRUN = 13
 reviews = []
 gone_models = []
