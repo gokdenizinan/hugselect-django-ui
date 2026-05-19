@@ -643,8 +643,8 @@ if __name__ == "__main__":
     results = collect_papers(
         queries=queries_domain_2,
         limit=100,
-        s2_api_key="PKmmBIFgDr6FkomlPibjQ862kKxfGHyk1CKpKRPs",
-        hf_token="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",
+        s2_api_key="",
+        hf_token="",
         exclude_no_repo=False,
         out_csv = "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/Candidates_SS_Batch_5.csv",
         out_json= "11-RECOMMENDATION_EVALUATION/MORE_PAPERS/Candidates_SS_Batch_5.json",

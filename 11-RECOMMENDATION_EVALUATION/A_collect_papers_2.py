@@ -412,7 +412,7 @@ def main():
 
 
 if __name__ == "__main__":
-    os.environ["HF_TOKEN"]= "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"
+    os.environ["HF_TOKEN"]= ""
     os.environ["OPENALEX_MAILTO"]="ardacanseradali@outlook.com"
     import sys
     sys.argv = [

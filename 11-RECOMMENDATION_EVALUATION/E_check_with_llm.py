@@ -353,7 +353,7 @@ if __name__ == "__main__":
     prompt_records = build_llm_prompt_records(results, max_hits_per_paper=400)
 
     # # # # Example usage
-    # LLAMA_API_KEY = "tgp_v1_QXCOAutwuv8IDjAgTXckUXDXC-bTtnOf_0ERXtNWoUQ"
+    # LLAMA_API_KEY = ""
     # SAVE_LOC = "10-EVALUATION/llm_nps/"
     # VERSION = "A7"
 

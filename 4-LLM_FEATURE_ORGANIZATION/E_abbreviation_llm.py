@@ -213,7 +213,7 @@ if __name__ == "__main__":
 )
     
     # # # Example usage
-    # LLAMA_API_KEY = "tgp_v1_QXCOAutwuv8IDjAgTXckUXDXC-bTtnOf_0ERXtNWoUQ"
+    # LLAMA_API_KEY = ""
     # SAVE_LOC = "4-LLM_FEATURE_ORGANIZATION/"
     # VERSION = "G0"
 

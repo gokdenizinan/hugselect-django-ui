@@ -200,7 +200,7 @@ if __name__ == "__main__":
     CHECK_LOC = f"checkpoints_{VERSION}{SAVE_NUM}"
 
     # ----- NEW: create LLMClient -----
-    GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+    GEMINI_API_KEY = ""
 
     # from your_module import LLMClient  # adjust import
     # from your_module import LLMResponse

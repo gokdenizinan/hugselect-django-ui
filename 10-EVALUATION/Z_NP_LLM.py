@@ -314,7 +314,7 @@ if __name__ == "__main__":
 #     token_limit = 500,
 # )
     # # # Example usage
-    LLAMA_API_KEY = "tgp_v1_QXCOAutwuv8IDjAgTXckUXDXC-bTtnOf_0ERXtNWoUQ"
+    LLAMA_API_KEY = ""
     SAVE_LOC = "10-EVALUATION/llm_nps/"
     VERSION = "G4"
 

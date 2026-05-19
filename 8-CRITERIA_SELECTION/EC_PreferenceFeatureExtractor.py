@@ -208,7 +208,7 @@ Example output format (structure only):
 
 if __name__ == "__main__":
 
-    GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+    GEMINI_API_KEY = ""
     llm_client = LLMClient(
         api_key=GEMINI_API_KEY,
         model_name="gemini-2.5-flash",

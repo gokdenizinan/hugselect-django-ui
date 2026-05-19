@@ -387,9 +387,9 @@ def main():
 
 if __name__ == "__main__":
     import os
-    S2_API_KEY="8UOI7VYemR3XcVoytIIE21CPV4bAKjid977MCxjT"
-    os.environ["S2_API_KEY"]= "8UOI7VYemR3XcVoytIIE21CPV4bAKjid977MCxjT"
-    os.environ["HF_TOKEN"]= "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"
-    HF_TOKEN= "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"
+    S2_API_KEY=""
+    os.environ["S2_API_KEY"]= ""
+    os.environ["HF_TOKEN"]= ""
+    HF_TOKEN= ""
 
     main()

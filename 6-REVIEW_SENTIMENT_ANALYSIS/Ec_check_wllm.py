@@ -332,8 +332,8 @@ if PHASE == 0:
     CHECK_LOC = f"checkpoints_V{SAVE_NUM}"
     # CHECKPOINT = 224
 
-    GEMINI_API_KEY = 'REMOVED_GEMINI_API_KEY'
-    LLAMA_API_KEY = '7074f62c180b45ef40e2308513e051d56e9933d647f4c83ab2a232267f1d75af'
+    GEMINI_API_KEY = ''
+    LLAMA_API_KEY = ''
 
     client = genai.Client(api_key=GEMINI_API_KEY)
 
