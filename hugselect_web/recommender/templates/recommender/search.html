@@ -1,61 +1,96 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>HugSelect Search</title>
+    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
 </head>
 <body>
-    <h1>HugSelect Model Search</h1>
-
-    <form method="post">
-        {% csrf_token %}
-        <label for="query">Describe the model you need:</label><br><br>
-
-        <textarea 
-            id="query"
-            name="query"
-            rows="5"
-            cols="80"
-            placeholder="Example: I need a popular text-generation model with Apache-2.0 license.">{{ query }}</textarea>
-
-        <br><br>
-        <button type="submit">Search</button>
-    </form>
-
-    {% if query %}
-        <hr>
-        <h2>You searched for:</h2>
-        {% if error %}
-    <hr>
-    <h2>Error</h2>
-    <p>{{ error }}</p>
-{% endif %}
-
-{% if results %}
-    <hr>
-    <h2>Results</h2>
-
-    {% for result in results %}
-        <div style="border: 1px solid #ccc; padding: 12px; margin-bottom: 12px;">
-            <h3>
-                {% if result.url %}
-                    <a href="{{ result.url }}" target="_blank">{{ result.model_id }}</a>
-                {% else %}
-                    {{ result.model_id }}
-                {% endif %}
-            </h3>
-
-            <p><strong>Author:</strong> {{ result.author }}</p>
-            <p><strong>Task:</strong> {{ result.pipeline_tag }}</p>
-            <p><strong>Downloads last 30 days:</strong> {{ result.downloads_last_30_days }}</p>
-            <p><strong>Likes:</strong> {{ result.likes }}</p>
-            <p><strong>Score:</strong> {{ result.score }}</p>
+    <header class="site-header">
+        <div class="nav">
+            <div class="logo">HugSelect</div>
+            <div class="nav-subtitle">AI4SE model recommendation interface</div>
         </div>
-    {% endfor %}
-{% elif query and not error %}
-    <hr>
-    <p>No results found.</p>
-{% endif %}
-        <p>{{ query }}</p>
-    {% endif %}
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="hero-badge">Research prototype</div>
+
+            <h1>Find Hugging Face models using natural language.</h1>
+
+            <p>
+                Describe your task, domain, preferences, and quality requirements.
+                HugSelect searches an indexed knowledge base of model metadata,
+                extracted features, and quality signals.
+            </p>
+        </section>
+
+        <section class="search-card">
+            <form method="post">
+                {% csrf_token %}
+
+                <label for="query">Describe the model you need</label>
+
+                <textarea
+                    id="query"
+                    name="query"
+                    placeholder="Example: I need a popular text-generation model with Apache-2.0 license, preferably recent and not gated."
+                >{{ query }}</textarea>
+
+                <button type="submit">Search models</button>
+            </form>
+        </section>
+
+        {% if query %}
+            <div class="query-box">
+                <strong>Your query:</strong> {{ query }}
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
+
+        {% if results %}
+            <h2 class="section-title">Recommended models</h2>
+
+            <section class="results-grid">
+                {% for result in results %}
+                    <article class="result-card">
+                        <h3>
+                            {% if result.url %}
+                                <a href="{{ result.url }}" target="_blank">
+                                    {{ result.model_id }}
+                                </a>
+                            {% else %}
+                                {{ result.model_id }}
+                            {% endif %}
+                        </h3>
+
+                        <div class="meta">
+                            <span class="pill">Author: {{ result.author|default:"Unknown" }}</span>
+                            <span class="pill">Task: {{ result.pipeline_tag|default:"Unknown" }}</span>
+                            <span class="pill">Downloads 30d: {{ result.downloads_last_30_days|default:"N/A" }}</span>
+                            <span class="pill">Likes: {{ result.likes|default:"N/A" }}</span>
+                            <span class="pill">Score: {{ result.score|floatformat:3 }}</span>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% elif query and not error %}
+            <div class="empty-state">
+                No matching models were found for this query.
+            </div>
+        {% endif %}
+
+        <p class="footer-note">
+            Current version uses a basic Elasticsearch search. The next step is connecting this interface
+            to the full HugSelect feature extraction and recommendation pipeline.
+        </p>
+    </main>
 </body>
 </html>
