@@ -62,3 +62,5 @@ logs/
 .idea/HF-Models-T7
 HF-Models-T7
 HF-Models-T7-U
+db.sqlite3
+hugselect_web/db.sqlite3

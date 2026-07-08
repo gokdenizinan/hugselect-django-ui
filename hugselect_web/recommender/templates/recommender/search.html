@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HugSelect Search</title>
+</head>
+<body>
+    <h1>HugSelect Model Search</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="query">Describe the model you need:</label><br><br>
+
+        <textarea 
+            id="query"
+            name="query"
+            rows="5"
+            cols="80"
+            placeholder="Example: I need a popular text-generation model with Apache-2.0 license.">{{ query }}</textarea>
+
+        <br><br>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if query %}
+        <hr>
+        <h2>You searched for:</h2>
+        {% if error %}
+    <hr>
+    <h2>Error</h2>
+    <p>{{ error }}</p>
+{% endif %}
+
+{% if results %}
+    <hr>
+    <h2>Results</h2>
+
+    {% for result in results %}
+        <div style="border: 1px solid #ccc; padding: 12px; margin-bottom: 12px;">
+            <h3>
+                {% if result.url %}
+                    <a href="{{ result.url }}" target="_blank">{{ result.model_id }}</a>
+                {% else %}
+                    {{ result.model_id }}
+                {% endif %}
+            </h3>
+
+            <p><strong>Author:</strong> {{ result.author }}</p>
+            <p><strong>Task:</strong> {{ result.pipeline_tag }}</p>
+            <p><strong>Downloads last 30 days:</strong> {{ result.downloads_last_30_days }}</p>
+            <p><strong>Likes:</strong> {{ result.likes }}</p>
+            <p><strong>Score:</strong> {{ result.score }}</p>
+        </div>
+    {% endfor %}
+{% elif query and not error %}
+    <hr>
+    <p>No results found.</p>
+{% endif %}
+        <p>{{ query }}</p>
+    {% endif %}
+</body>
+</html>
