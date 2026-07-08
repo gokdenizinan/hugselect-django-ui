@@ -98,7 +98,7 @@ ENABLE_QUALITY_DIMENSIONS = True
 ENABLE_FEATURE_LOCATIONS = True
 
 # Prefer environment variable over hard-coded secret.
-GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+GEMINI_API_KEY = ""
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY is not set. LLM extraction mode will fail unless cached feature files already exist.")
 

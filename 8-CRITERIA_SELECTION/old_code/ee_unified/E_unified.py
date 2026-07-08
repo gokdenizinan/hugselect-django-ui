@@ -101,7 +101,7 @@ for paper_key, paper in rationale_input.items():
     with open("8-CRITERIA_SELECTION/user_intent/ground_truth.json", "w") as f:
         json.dump(ground_truth, f, indent=2)
 
-    GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY" #"REMOVED_GEMINI_API_KEY" 
+    GEMINI_API_KEY = "" 
     llm_client = LLMClient(
         api_key=GEMINI_API_KEY,
         model_name="gemini-2.5-flash",

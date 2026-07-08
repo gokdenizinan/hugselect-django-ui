@@ -95,7 +95,7 @@ def load_single_feature_json(folder_path, eval_id):
 MAKE_RECOMMENDATION = True
 specific_deneme_count = True
 OUTPUT_LETTER = "M"
-GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+GEMINI_API_KEY = ""
 
 SPECIFIC_DENEME = {"19"} if specific_deneme_count else None
 

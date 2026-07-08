@@ -127,7 +127,7 @@ ENABLE_RANK_FUNCTIONS = True
 ENABLE_QUALITY_DIMENSIONS = True
 ENABLE_FEATURE_LOCATIONS = True
 # Rotate this key if it's real
-GEMINI_API_KEY = "REMOVED_GEMINI_API_KEY"
+GEMINI_API_KEY = ""
 
 SPECIFIC_DENEME = {"8"} if specific_deneme_count else None
 

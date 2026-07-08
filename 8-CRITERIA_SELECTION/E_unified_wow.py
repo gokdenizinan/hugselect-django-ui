@@ -144,10 +144,14 @@ ENABLE_FEATURE_LOCATIONS = False
 INCLUDE_SCORE_BREAKDOWN = False
 INCLUDE_EXPLAIN = False
 # Rotate this key if it's real
-# GEMINI_API_KEY = ""
-# GEMINI_API_KEY = ""
-GEMINI_API_KEY = ""
-# GEMINI_API_KEY = ""
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    raise RuntimeError(
+        "GEMINI_API_KEY environment variable is not set. "
+        "Set it with: export GEMINI_API_KEY='your-key-here'"
+    )
 
 # SPECIFIC_DENEME = {"9"} if specific_deneme_count else None
 # SPECIFIC_DENEME = {
