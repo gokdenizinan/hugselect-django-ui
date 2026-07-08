@@ -32,3 +32,33 @@ __pycache__/
 # VS / IDE files
 .vs/
 .vscode/
+
+# Python
+.venv/
+
+# Secrets
+.env
+*.key
+secrets.json
+
+# HugSelect local dataset
+HF-Models-T7/
+HF-Models-T7-U/
+*.zip
+__MACOSX/
+
+# Elasticsearch local/generated
+elasticsearch-*/
+data/
+logs/
+
+# Generated outputs
+8-CRITERIA_SELECTION/experiments/
+8-CRITERIA_SELECTION/user_intent/
+11-RECOMMENDATION_EVALUATION/OUTPUT_ZZZZ_VVVVV.json
+11-RECOMMENDATION_EVALUATION/OUTPUT_F.json
+
+# OS/editor
+.idea/HF-Models-T7
+HF-Models-T7
+HF-Models-T7-U

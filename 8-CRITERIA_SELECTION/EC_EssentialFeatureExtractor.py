@@ -71,7 +71,7 @@ class EssentialFeaturesExtractor:
     "model_name": {{
         "include" ["Llama-3.2-1B"],
         "exclude": [],
-        "priotity": "strong_prefer"
+        "priority": "strong_prefer"
     }}
     "author": null,
     "objective": {{
