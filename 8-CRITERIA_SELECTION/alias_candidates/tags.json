@@ -1,0 +1,11 @@
+[
+  "text-classification",
+  "sentiment-analysis",
+  "turkish",
+  "bert",
+  "commercial-use",
+  "pytorch",
+  "transformers",
+  "license:mit",
+  "license:apache-2.0"
+]

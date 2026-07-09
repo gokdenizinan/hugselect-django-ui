@@ -1,0 +1,11 @@
+[
+  "text-classification",
+  "token-classification",
+  "question-answering",
+  "translation",
+  "summarization",
+  "text-generation",
+  "image-classification",
+  "image-generation",
+  "automatic-speech-recognition"
+]
