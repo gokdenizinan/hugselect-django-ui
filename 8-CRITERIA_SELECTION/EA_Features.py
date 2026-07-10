@@ -207,16 +207,23 @@ def to_categorical_feat(obj):
     )
 
 
-def to_recency_feat(year, *, priority="must"):
-    if year is None:
+def to_recency_feat(value, *, priority="must"):
+    if value is None:
         return None
 
-    # normalize to string
-    year_str = str(year).strip()
+    # Live LLM extraction returns a RecencyFeature-shaped dictionary.
+    if isinstance(value, dict):
+        return RecencyFeature(
+            max_age_days=value.get("max_age_days"),
+            bucket=value.get("bucket") or value.get("value_direction"),
+            priority=value.get("priority") or priority,
+        )
 
-    # basic validation: must be 4-digit year
+    # Older experiment code may still provide a concrete four-digit year.
+    year_str = str(value).strip()
+
     if not year_str.isdigit() or len(year_str) != 4:
-        raise ValueError(f"Invalid year format: {year}")
+        raise ValueError(f"Invalid year format: {value}")
 
     return CategoricalFeature(
         include=[year_str],
