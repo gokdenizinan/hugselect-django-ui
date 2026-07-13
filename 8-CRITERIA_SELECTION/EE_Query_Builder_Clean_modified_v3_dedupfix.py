@@ -1300,7 +1300,19 @@ class ESQueryBuilderAdaptive:
 
 
     def _collect_needed_source_paths(self, groups: List[FeatureGroup]) -> List[str]:
-        paths: List[str] = []
+        # These fields are always needed by the Django result cards,
+        # even when they were not part of the user's search requirements.
+        paths: List[str] = [
+            "modelID",
+            "model_id",
+            "author",
+            "Metadata.pipeline_tag",
+            "Metadata.license",
+            "Metadata.library_name",
+            "Metadata.downloads_last_30_days",
+            "Metadata.likes",
+        ]
+
         for fg in groups:
             paths.extend(fg.fields)
 

@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render
 
 from .services import (
@@ -6,9 +8,13 @@ from .services import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 def search_view(request):
     query = ""
     results = []
+    warning = None
     error = None
     search_mode = None
 
@@ -20,21 +26,29 @@ def search_view(request):
                 results = search_models_feature_based(query, limit=10)
                 search_mode = "feature-based"
 
-            except Exception as feature_error:
+            except Exception:
+                logger.exception(
+                    "Feature-based search failed; trying basic fallback."
+                )
+
                 try:
                     results = search_models_basic(query, limit=10)
                     search_mode = "basic-fallback"
-                    error = (
-                        "Feature-based search was unavailable, so basic search "
-                        f"was used instead. Reason: {feature_error}"
+                    warning = (
+                        "Advanced recommendation is temporarily unavailable. "
+                        "Showing basic search results instead."
                     )
 
-                except Exception as basic_error:
-                    error = (
-                        "Both feature-based and basic search failed. "
-                        f"Feature error: {feature_error}. "
-                        f"Basic error: {basic_error}"
+                except Exception:
+                    logger.exception(
+                        "Basic fallback search also failed."
                     )
+                    error = (
+                        "Model search is temporarily unavailable. "
+                        "Please check that Elasticsearch is running and try again."
+                    )
+        else:
+            error = "Please describe the model you need."
 
     return render(
         request,
@@ -42,6 +56,7 @@ def search_view(request):
         {
             "query": query,
             "results": results,
+            "warning": warning,
             "error": error,
             "search_mode": search_mode,
         },

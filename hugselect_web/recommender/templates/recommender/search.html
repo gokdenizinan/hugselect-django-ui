@@ -28,7 +28,7 @@
         </section>
 
         <section class="search-card">
-            <form method="post">
+            <form method="post" id="search-form">
                 {% csrf_token %}
 
                 <label for="query">Describe the model you need</label>
@@ -36,10 +36,11 @@
                 <textarea
                     id="query"
                     name="query"
+                    required
                     placeholder="Example: I need a popular text-generation model with Apache-2.0 license, preferably recent and not gated."
                 >{{ query }}</textarea>
 
-                <button type="submit">Search models</button>
+                <button type="submit" id="search-button">Search models</button>
             </form>
         </section>
 
@@ -49,14 +50,34 @@
             </div>
         {% endif %}
 
+        {% if warning %}
+            <div class="warning">
+                <strong>Notice:</strong> {{ warning }}
+            </div>
+        {% endif %}
+
         {% if error %}
             <div class="error">
                 <strong>Error:</strong> {{ error }}
             </div>
         {% endif %}
 
+        {% if search_mode %}
+            <div class="search-mode">
+                {% if search_mode == "feature-based" %}
+                    Feature-based recommendation
+                {% elif search_mode == "basic-fallback" %}
+                    Basic fallback search
+                {% endif %}
+            </div>
+        {% endif %}
+
         {% if results %}
             <h2 class="section-title">Recommended models</h2>
+
+            <p class="data-note">
+                Some indexed models may have been renamed, removed, or made private on Hugging Face.
+            </p>
 
             <section class="results-grid">
                 {% for result in results %}
@@ -74,10 +95,31 @@
                         <div class="meta">
                             <span class="pill">Author: {{ result.author|default:"Unknown" }}</span>
                             <span class="pill">Task: {{ result.pipeline_tag|default:"Unknown" }}</span>
+                            <span class="pill">License: {{ result.license|default:"Unknown" }}</span>
+                            <span class="pill">Library: {{ result.library_name|default:"Unknown" }}</span>
                             <span class="pill">Downloads 30d: {{ result.downloads_last_30_days|default:"N/A" }}</span>
                             <span class="pill">Likes: {{ result.likes|default:"N/A" }}</span>
-                            <span class="pill">Score: {{ result.score|floatformat:3 }}</span>
+                            {% if search_mode == "feature-based" %}
+                                <span class="pill">
+                                    Feature match: {{ result.score|floatformat:1 }}%
+                                </span>
+                            {% elif search_mode == "basic-fallback" %}
+                                <span class="pill">
+                                    Relevance score: {{ result.score|floatformat:3 }}
+                                </span>
+                            {% endif %}
                         </div>
+
+                        {% if result.url %}
+                            <a
+                                class="model-link"
+                                href="{{ result.url }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open on Hugging Face
+                            </a>
+                        {% endif %}
                     </article>
                 {% endfor %}
             </section>
@@ -87,10 +129,16 @@
             </div>
         {% endif %}
 
-        <p class="footer-note">
-            Current version uses a basic Elasticsearch search. The next step is connecting this interface
-            to the full HugSelect feature extraction and recommendation pipeline.
-        </p>
     </main>
+
+    <script>
+        const searchForm = document.getElementById("search-form");
+        const searchButton = document.getElementById("search-button");
+
+        searchForm.addEventListener("submit", () => {
+            searchButton.disabled = true;
+            searchButton.textContent = "Searching...";
+        });
+    </script>
 </body>
 </html>
