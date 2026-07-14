@@ -39,6 +39,7 @@ def clean_results(response, limit=10):
             "downloads_last_30_days": metadata.get("downloads_last_30_days"),
             "likes": metadata.get("likes"),
             "score": hit.get("display_score", hit.get("_score")),
+            "match_explanation": hit.get("match_explanation"),
             "url": f"https://huggingface.co/{model_id}" if model_id else None,
         })
 
@@ -80,6 +81,25 @@ def search_models_basic(user_text, limit=10):
     response = es.search(index=INDEX_NAME, body=query)
     return clean_results(response, limit=limit)
 
+def get_model_by_id(model_id):
+    if not model_id:
+        return None
+
+    es = Elasticsearch(ES_URL)
+
+    query = {
+        "size": 1,
+        "query": {
+            "term": {
+                "modelID": model_id,
+            }
+        },
+    }
+
+    response = es.search(index=INDEX_NAME, body=query)
+    results = clean_results(response, limit=1)
+
+    return results[0] if results else None
 
 def _extract_feature_bundle(user_text):
     from EA_Features import FeatureBundle, FunctionalFeatures, QualityFeatures
@@ -244,5 +264,12 @@ def search_models_feature_based(user_text, limit=10):
         prebuilt_groups=prebuilt_groups,
         include_explain=False,
     )
+    for hit in response.get("hits", {}).get("hits", []):
+        source = hit.get("_source", {}) or {}
 
+        hit["match_explanation"] = builder.compare_bundle_to_sample(
+            bundle,
+            source,
+            prebuilt_groups=final_feature_groups,
+        )
     return clean_results(response, limit=limit)

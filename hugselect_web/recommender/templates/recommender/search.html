@@ -110,6 +110,13 @@
                             {% endif %}
                         </div>
 
+                        <a
+                        class="model-link"
+                        href="{% url 'model_detail' result.model_id %}"
+                        >
+                        View details
+                    </a>
+
                         {% if result.url %}
                             <a
                                 class="model-link"

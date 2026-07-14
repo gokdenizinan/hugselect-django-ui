@@ -1,0 +1,142 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ model.model_id }} — HugSelect</title>
+    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <div class="logo">HugSelect</div>
+            <div class="nav-subtitle">Model details</div>
+        </div>
+    </header>
+
+    <main class="container">
+            <a
+            href="{% url 'search' %}"
+            onclick="
+                if (
+                    document.referrer &&
+                    new URL(document.referrer).origin === window.location.origin
+                ) {
+                    window.history.back();
+                    return false;
+                }
+            "
+>
+         ← Back to search results
+            </a>
+
+        <section class="search-card">
+            <h1>{{ model.model_id }}</h1>
+
+            <div class="meta">
+                <span class="pill">
+                    Author: {{ model.author|default:"Unknown" }}
+                </span>
+
+                <span class="pill">
+                    Task: {{ model.pipeline_tag|default:"Unknown" }}
+                </span>
+
+                <span class="pill">
+                    License: {{ model.license|default:"Unknown" }}
+                </span>
+
+                <span class="pill">
+                    Library: {{ model.library_name|default:"Unknown" }}
+                </span>
+
+                <span class="pill">
+                    Downloads 30d:
+                    {{ model.downloads_last_30_days|default:"N/A" }}
+                </span>
+
+                <span class="pill">
+                    Likes: {{ model.likes|default:"N/A" }}
+                </span>
+            </div>
+            {% if search_context.search_mode %}
+            <section class="search-card">
+                <h2>Recommendation summary</h2>
+
+                {% if search_context.query %}
+                    <p>
+                        <strong>Your query:</strong>
+                        {{ search_context.query }}
+                    </p>
+                {% endif %}
+
+                {% if search_context.search_mode == "feature-based" %}
+                    <p><strong>Mode:</strong> Feature-based recommendation</p>
+
+                    {% if search_context.score != None %}
+                        <p>
+                            <strong>Feature match:</strong>
+                            {{ search_context.score|floatformat:1 }}%
+                        </p>
+                    {% endif %}
+
+                {% elif search_context.search_mode == "basic-fallback" %}
+                    <p><strong>Mode:</strong> Basic fallback search</p>
+
+                    {% if search_context.score != None %}
+                        <p>
+                            <strong>Relevance score:</strong>
+                            {{ search_context.score|floatformat:3 }}
+                        </p>
+                    {% endif %}
+                {% endif %}
+
+            </section>
+        {% endif %}
+        {% if search_context.search_mode == "feature-based" %}
+        <section class="search-card">
+            <h2>Why recommended?</h2>
+
+            {% if search_context.explanation %}
+                {% for feature_group in search_context.explanation.per_feature %}
+                    {% for match in feature_group.matches %}
+                        <p>
+                            <strong>{{ match.feature_key }}:</strong>
+                            {{ match.user_value }}
+
+                            {% if match.matched %}
+                                — Matched
+                            {% else %}
+                                — Not matched
+                            {% endif %}
+                        </p>
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p>No structured explanation is available for this result.</p>
+            {% endif %}
+        </section>
+
+    {% elif search_context.search_mode == "basic-fallback" %}
+        <section class="search-card">
+            <h2>Why recommended?</h2>
+            <p>
+                Structured match explanations are unavailable in basic fallback mode.
+                This result was ranked using Elasticsearch text relevance.
+            </p>
+        </section>
+    {% endif %}
+            {% if model.url %}
+                <a
+                    class="model-link"
+                    href="{{ model.url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Open on Hugging Face
+                </a>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>
