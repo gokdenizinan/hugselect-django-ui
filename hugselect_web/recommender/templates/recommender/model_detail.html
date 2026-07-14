@@ -105,10 +105,14 @@
                             {{ match.user_value }}
 
                             {% if match.matched %}
-                                — Matched
-                            {% else %}
-                                — Not matched
-                            {% endif %}
+                            <span class="match-status match-status--matched">
+                                Matched
+                            </span>
+                        {% else %}
+                            <span class="match-status match-status--not-matched">
+                                Not matched
+                            </span>
+                        {% endif %}
                         </p>
                     {% endfor %}
                 {% endfor %}
