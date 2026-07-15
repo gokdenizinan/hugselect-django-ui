@@ -247,7 +247,25 @@ button:disabled {
     cursor: not-allowed;
     opacity: 0.7;
 }
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 24px;
+    padding: 9px 14px;
+    background: var(--soft-accent);
+    color: var(--accent-dark);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-weight: 650;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
 
+.back-link:hover {
+    background: #d8ebe4;
+    transform: translateX(-2px);
+}
 @media (max-width: 640px) {
     .nav {
         align-items: flex-start;
@@ -306,4 +324,7 @@ button:disabled {
     height: 500px;
     border: 1px solid #d9e0e7;
     border-radius: 12px;
+}
+.search-card > .meta {
+    margin-bottom: 28px;
 }
