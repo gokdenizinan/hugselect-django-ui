@@ -36,6 +36,13 @@ def clean_results(response, limit=10):
             "pipeline_tag": metadata.get("pipeline_tag"),
             "license": metadata.get("license"),
             "library_name": metadata.get("library_name"),
+            "language": metadata.get("language"),
+            "datasets": metadata.get("datasets"),
+            "basemodels": metadata.get("basemodels"),
+            "model_type": metadata.get("model_type"),
+            "metrics": metadata.get("metrics"),
+            "tags": metadata.get("tags"),
+            "quality": src.get("Quality") or {},
             "downloads_last_30_days": metadata.get("downloads_last_30_days"),
             "likes": metadata.get("likes"),
             "score": hit.get("display_score", hit.get("_score")),
@@ -100,6 +107,61 @@ def get_model_by_id(model_id):
     results = clean_results(response, limit=1)
 
     return results[0] if results else None
+
+def build_model_graph(model):
+    if not model:
+        return {"nodes": [], "edges": []}
+
+    nodes = [
+        {
+            "id": "model",
+            "label": model["model_id"],
+            "type": "model",
+        }
+    ]
+    edges = []
+
+    relationships = [
+        ("author", model.get("author"), "Created by"),
+        ("task", model.get("pipeline_tag"), "Performs"),
+        ("license", model.get("license"), "Licensed under"),
+        ("library", model.get("library_name"), "Uses"),
+        ("base_model", model.get("basemodels"), "Based on"),
+        ("model_type", model.get("model_type"), "Model type"),
+    ]
+
+    languages = model.get("language") or []
+    if isinstance(languages, str):
+        languages = [languages]
+
+    for index, language in enumerate(languages):
+        relationships.append(
+            (f"language_{index}", language, "Supports")
+        )
+
+    for node_id, value, relationship in relationships:
+        if not value:
+            continue
+
+        nodes.append({
+            "id": node_id,
+            "label": str(value),
+            "type": {
+            "base_model": "base_model",
+            "model_type": "model_type",
+        }.get(node_id, node_id.split("_")[0]),
+        })
+
+        edges.append({
+            "source": "model",
+            "target": node_id,
+            "label": relationship,
+        })
+
+    return {
+        "nodes": nodes,
+        "edges": edges,
+    }
 
 def _extract_feature_bundle(user_text):
     from EA_Features import FeatureBundle, FunctionalFeatures, QualityFeatures

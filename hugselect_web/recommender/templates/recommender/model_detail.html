@@ -4,8 +4,12 @@
 <html>
 <head>
     <title>{{ model.model_id }} — HugSelect</title>
-    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
+    <link
+        rel="stylesheet"
+        href="{% static 'recommender/styles.css' %}"
+    >
 </head>
+
 <body>
     <header class="site-header">
         <div class="nav">
@@ -15,7 +19,7 @@
     </header>
 
     <main class="container">
-            <a
+        <a
             href="{% url 'search' %}"
             onclick="
                 if (
@@ -26,9 +30,9 @@
                     return false;
                 }
             "
->
-         ← Back to search results
-            </a>
+        >
+            ← Back to search results
+        </a>
 
         <section class="search-card">
             <h1>{{ model.model_id }}</h1>
@@ -59,77 +63,94 @@
                     Likes: {{ model.likes|default:"N/A" }}
                 </span>
             </div>
+
             {% if search_context.search_mode %}
-            <section class="search-card">
-                <h2>Recommendation summary</h2>
+                <section class="search-card">
+                    <h2>Recommendation summary</h2>
 
-                {% if search_context.query %}
-                    <p>
-                        <strong>Your query:</strong>
-                        {{ search_context.query }}
-                    </p>
-                {% endif %}
-
-                {% if search_context.search_mode == "feature-based" %}
-                    <p><strong>Mode:</strong> Feature-based recommendation</p>
-
-                    {% if search_context.score != None %}
+                    {% if search_context.query %}
                         <p>
-                            <strong>Feature match:</strong>
-                            {{ search_context.score|floatformat:1 }}%
+                            <strong>Your query:</strong>
+                            {{ search_context.query }}
                         </p>
                     {% endif %}
 
-                {% elif search_context.search_mode == "basic-fallback" %}
-                    <p><strong>Mode:</strong> Basic fallback search</p>
-
-                    {% if search_context.score != None %}
+                    {% if search_context.search_mode == "feature-based" %}
                         <p>
-                            <strong>Relevance score:</strong>
-                            {{ search_context.score|floatformat:3 }}
+                            <strong>Mode:</strong>
+                            Feature-based recommendation
                         </p>
-                    {% endif %}
-                {% endif %}
 
-            </section>
-        {% endif %}
-        {% if search_context.search_mode == "feature-based" %}
-        <section class="search-card">
-            <h2>Why recommended?</h2>
-
-            {% if search_context.explanation %}
-                {% for feature_group in search_context.explanation.per_feature %}
-                    {% for match in feature_group.matches %}
-                        <p>
-                            <strong>{{ match.feature_key }}:</strong>
-                            {{ match.user_value }}
-
-                            {% if match.matched %}
-                            <span class="match-status match-status--matched">
-                                Matched
-                            </span>
-                        {% else %}
-                            <span class="match-status match-status--not-matched">
-                                Not matched
-                            </span>
+                        {% if search_context.score != None %}
+                            <p>
+                                <strong>Feature match:</strong>
+                                {{ search_context.score|floatformat:1 }}%
+                            </p>
                         {% endif %}
-                        </p>
-                    {% endfor %}
-                {% endfor %}
-            {% else %}
-                <p>No structured explanation is available for this result.</p>
-            {% endif %}
-        </section>
 
-    {% elif search_context.search_mode == "basic-fallback" %}
-        <section class="search-card">
-            <h2>Why recommended?</h2>
-            <p>
-                Structured match explanations are unavailable in basic fallback mode.
-                This result was ranked using Elasticsearch text relevance.
-            </p>
-        </section>
-    {% endif %}
+                    {% elif search_context.search_mode == "basic-fallback" %}
+                        <p>
+                            <strong>Mode:</strong>
+                            Basic fallback search
+                        </p>
+
+                        {% if search_context.score != None %}
+                            <p>
+                                <strong>Relevance score:</strong>
+                                {{ search_context.score|floatformat:3 }}
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                </section>
+            {% endif %}
+
+            {% if search_context.search_mode == "feature-based" %}
+                <section class="search-card">
+                    <h2>Why recommended?</h2>
+
+                    {% if search_context.explanation %}
+                        {% for feature_group in search_context.explanation.per_feature %}
+                            {% for match in feature_group.matches %}
+                                <p>
+                                    <strong>{{ match.feature_key }}:</strong>
+                                    {{ match.user_value }}
+
+                                    {% if match.matched %}
+                                        <span class="match-status match-status--matched">
+                                            Matched
+                                        </span>
+                                    {% else %}
+                                        <span class="match-status match-status--not-matched">
+                                            Not matched
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <p>
+                            No structured explanation is available for this result.
+                        </p>
+                    {% endif %}
+                </section>
+
+            {% elif search_context.search_mode == "basic-fallback" %}
+                <section class="search-card">
+                    <h2>Why recommended?</h2>
+
+                    <p>
+                        Structured match explanations are unavailable in
+                        basic fallback mode. This result was ranked using
+                        Elasticsearch text relevance.
+                    </p>
+                </section>
+            {% endif %}
+
+            <section class="search-card">
+                <h2>Knowledge Graph</h2>
+                <div id="model-graph"></div>
+            </section>
+
             {% if model.url %}
                 <a
                     class="model-link"
@@ -142,5 +163,40 @@
             {% endif %}
         </section>
     </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/vis-network@10.1.0/standalone/umd/vis-network.min.js"></script>
+
+    {{ graph|json_script:"model-graph-data" }}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const graphElement =
+                document.getElementById("model-graph-data");
+
+            const container =
+                document.getElementById("model-graph");
+
+            if (!graphElement || !container) {
+                console.error("Knowledge graph elements were not found.");
+                return;
+            }
+
+            const graph = JSON.parse(graphElement.textContent);
+
+            const data = {
+                nodes: new vis.DataSet(graph.nodes),
+                edges: new vis.DataSet(
+                    graph.edges.map(edge => ({
+                        id: `${edge.source}-${edge.target}`,
+                        from: edge.source,
+                        to: edge.target,
+                        label: edge.label,
+                    }))
+                ),
+            };
+
+            new vis.Network(container, data, {});
+        });
+    </script>
 </body>
 </html>

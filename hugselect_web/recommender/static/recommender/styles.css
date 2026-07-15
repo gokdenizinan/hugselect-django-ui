@@ -301,3 +301,9 @@ button:disabled {
     background: #fee2e2;
     color: #991b1b;
 }
+#model-graph {
+    width: 100%;
+    height: 500px;
+    border: 1px solid #d9e0e7;
+    border-radius: 12px;
+}

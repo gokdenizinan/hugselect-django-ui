@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import  Http404
 
 from .services import (
+    build_model_graph,
     get_model_by_id,
     search_models_basic,
     search_models_feature_based,
@@ -83,7 +84,7 @@ def model_detail_view(request, model_id):
     model = get_model_by_id(model_id)
     if model is None:
         raise Http404("Model not found.")
-
+    graph = build_model_graph(model)
     last_search = request.session.get("hugselect_last_search", {})
     explanations = last_search.get("explanations", {})
     scores = last_search.get("scores", {})
@@ -101,5 +102,6 @@ def model_detail_view(request, model_id):
         {
             "model": model,
             "search_context": search_context,
+            "graph": graph,
         },
     )
