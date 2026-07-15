@@ -139,6 +139,14 @@ def build_model_graph(model):
             (f"language_{index}", language, "Supports")
         )
 
+    relationships = [
+        (
+            node_id,
+            ", ".join(map(str, value)) if isinstance(value, list) else value,
+            relationship,
+        )
+        for node_id, value, relationship in relationships
+    ]
     for node_id, value, relationship in relationships:
         if not value:
             continue

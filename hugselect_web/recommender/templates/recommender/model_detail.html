@@ -195,7 +195,48 @@
                 ),
             };
 
-            new vis.Network(container, data, {});
+            const network = new vis.Network(container, data, {
+    nodes: {
+        shape: "box",
+        margin: 12,
+    },
+    edges: {
+        arrows: "to",
+        smooth: true,
+    },
+    physics: {
+            barnesHut: {
+        gravitationalConstant: -700,
+        centralGravity: 0.15,
+        springLength: 170,
+        springConstant: 0.015,
+        damping: 0.4,
+        avoidOverlap: 0.8,
+    },
+    maxVelocity: 20,
+    },
+});
+
+network.once("stabilizationIterationsDone", function () {
+    network.stopSimulation();
+    network.on("dragEnd", function (params) {
+    if (params.nodes.length === 0) {
+        return;
+    }
+
+    const nodeId = params.nodes[0];
+    const position = network.getPosition(nodeId);
+
+    data.nodes.update({
+        id: nodeId,
+        x: position.x,
+        y: position.y,
+        physics: false,
+    });
+
+    network.stopSimulation();
+});
+});
         });
     </script>
 </body>
