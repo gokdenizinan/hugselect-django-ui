@@ -389,3 +389,40 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) {
     * { scroll-behavior: auto !important; transition: none !important; }
 }
+.project-note {
+    margin-top: 70px;
+    border-top: 1px solid var(--line-strong);
+    background: rgba(17, 19, 15, .035);
+}
+
+.project-note__inner {
+    width: min(1160px, calc(100% - 64px));
+    margin: 0 auto;
+    padding: 28px 0 36px;
+}
+
+.project-note__label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--blue);
+    font-family: var(--mono);
+    font-size: .64rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.project-note p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: .72rem;
+    line-height: 1.65;
+}
+
+@media (max-width: 760px) {
+    .project-note__inner {
+        width: min(100% - 32px, 1160px);
+    }
+}
