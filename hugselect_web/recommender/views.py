@@ -328,3 +328,32 @@ def compare_models_view(request):
             },
         },
     )
+def decision_stress_view(request):
+    model_ids = list(
+        dict.fromkeys(request.GET.getlist("model_ids"))
+    )
+
+    if len(model_ids) < 2 or len(model_ids) > 3:
+        return render(
+            request,
+            "recommender/decision_stress.html",
+            {
+                "error": (
+                    "Please select two or three models "
+                    "to run a decision stress test."
+                ),
+                "models": [],
+            },
+        )
+
+    return render(
+        request,
+        "recommender/decision_stress.html",
+        {
+            "model_ids": model_ids,
+            "search_context": request.session.get(
+                "hugselect_last_search",
+                {},
+            ),
+        },
+    )

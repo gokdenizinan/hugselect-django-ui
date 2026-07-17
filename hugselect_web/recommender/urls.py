@@ -9,4 +9,9 @@ urlpatterns = [
         name="model_detail",
     ),
     path("compare/", views.compare_models_view, name="compare_models"),
+    path(
+    "compare/stress-test/",
+    views.decision_stress_view,
+    name="decision_stress",
+),
     ]

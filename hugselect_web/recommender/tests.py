@@ -149,3 +149,44 @@ class CompareModelsViewTests(TestCase):
                 },
             ],
         )
+class DecisionStressViewTests(TestCase):
+    def test_requires_two_or_three_models(self):
+        response = self.client.get(
+            reverse("decision_stress"),
+            {"model_ids": ["author/model-a"]},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            (
+                "Please select two or three models "
+                "to run a decision stress test."
+            ),
+        )
+
+    def test_displays_selected_models_and_search_query(self):
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "English text-generation model",
+            "search_mode": "feature-based",
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("decision_stress"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "author/model-a")
+        self.assertContains(response, "author/model-b")
+        self.assertContains(
+            response,
+            "English text-generation model",
+        )

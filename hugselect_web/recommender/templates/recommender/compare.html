@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Compare Models — HugSelect</title>
+
     <link
         rel="stylesheet"
         href="{% static 'recommender/styles.css' %}"
@@ -15,8 +16,14 @@
 <body>
     <header class="site-header">
         <div class="nav">
-            <a class="logo" href="{% url 'search' %}"><span class="logo-mark">HS</span><span>HugSelect</span></a>
-            <div class="nav-subtitle"><span class="status-dot"></span> Comparative analysis</div>
+            <a class="logo" href="{% url 'search' %}">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+
+            <div class="nav-subtitle">
+                Comparative analysis
+            </div>
         </div>
     </header>
 
@@ -31,20 +38,23 @@
             </div>
         {% else %}
             <section class="search-card">
-                <span class="specimen-label">Analysis / Comparative study</span>
+                <span class="specimen-label">
+                    Analysis / Comparative study
+                </span>
+
                 <h1>Explainable model comparison</h1>
 
                 {% if search_context.query %}
-                <div class="comparison-query">
-                    <span class="comparison-query__label">
-                        Your query
-                    </span>
+                    <div class="comparison-query">
+                        <span class="comparison-query__label">
+                            Your query
+                        </span>
 
-                    <span class="comparison-query__text">
-                        {{ search_context.query }}
-                    </span>
-                </div>
-            {% endif %}
+                        <span class="comparison-query__text">
+                            {{ search_context.query }}
+                        </span>
+                    </div>
+                {% endif %}
 
                 <div class="comparison-grid">
                     {% for model in models %}
@@ -114,6 +124,7 @@
                                             N/A
                                         {% endif %}
                                     </dd>
+
                                 {% elif search_context.search_mode == "basic-fallback" %}
                                     <dt>Relevance score</dt>
                                     <dd>
@@ -138,74 +149,116 @@
 
                 {% if search_context.search_mode == "feature-based" %}
                     {% if decision_summary %}
-                    <section class="decision-summary">
-                        <div class="decision-summary__top">
-                            <div>
-                                <span class="decision-summary__eyebrow">
-                                    Decision summary
-                                </span>
-
-                                {% if decision_summary.is_tie %}
-                                    <span class="decision-summary__status">
-                                        Feature-match tie
+                        <section class="decision-summary">
+                            <div class="decision-summary__top">
+                                <div>
+                                    <span class="decision-summary__eyebrow">
+                                        Decision summary
                                     </span>
-                                {% else %}
-                                    <span class="decision-summary__status">
-                                        Clear leader
-                                    </span>
-                                {% endif %}
-                            </div>
 
-                            <div class="decision-summary__score">
-                                {{ decision_summary.best_score|floatformat:1 }}%
-                                <small>Feature match</small>
-                            </div>
-                        </div>
+                                    {% if decision_summary.is_tie %}
+                                        <span class="decision-summary__status">
+                                            Feature-match tie
+                                        </span>
+                                    {% else %}
+                                        <span class="decision-summary__status">
+                                            Clear leader
+                                        </span>
+                                    {% endif %}
+                                </div>
 
-                        {% if decision_summary.tie_breaker_model %}
-                            <div class="decision-summary__winner">
-                                <span>Recommended model</span>
-                                <strong>
-                                    {{ decision_summary.tie_breaker_model }}
-                                </strong>
-                            </div>
+                                <div class="decision-summary__score">
+                                    {{ decision_summary.best_score|floatformat:1 }}%
 
-                            <div class="decision-summary__tie-breakers">
-                                <div class="decision-summary__tie-breaker-heading">
-                                    <strong>Tie-breaker priority</strong>
                                     <small>
-                                        Used only when feature-match scores are equal
+                                        Feature match
                                     </small>
                                 </div>
+                            </div>
 
-                                <div
-                                    class="decision-summary__chips"
-                                    aria-label="Tie-breaker priority"
-                                >
+                            {% if decision_summary.tie_breaker_model %}
+                                <div class="decision-summary__winner">
                                     <span>
-                                        <strong>1st</strong>
-                                        Downloads
+                                        Recommended model
                                     </span>
 
-                                    <span>
-                                        <strong>2nd</strong>
-                                        Likes
-                                    </span>
+                                    <strong>
+                                        {{ decision_summary.tie_breaker_model }}
+                                    </strong>
                                 </div>
+
+                                <div class="decision-summary__tie-breakers">
+                                    <div class="decision-summary__tie-breaker-heading">
+                                        <strong>
+                                            Tie-breaker priority
+                                        </strong>
+
+                                        <small>
+                                            Used only when feature-match
+                                            scores are equal
+                                        </small>
+                                    </div>
+
+                                    <div
+                                        class="decision-summary__chips"
+                                        aria-label="Tie-breaker priority"
+                                    >
+                                        <span>
+                                            <strong>1st</strong>
+                                            Downloads
+                                        </span>
+
+                                        <span>
+                                            <strong>2nd</strong>
+                                            Likes
+                                        </span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="decision-summary__winner">
+                                    <span>
+                                        Recommended model
+                                    </span>
+
+                                    <strong>
+                                        {% for model_id in decision_summary.leaders %}
+                                            {{ model_id }}
+                                        {% endfor %}
+                                    </strong>
+                                </div>
+                            {% endif %}
+                        </section>
+
+                        <form
+                            class="stress-test-action"
+                            method="get"
+                            action="{% url 'decision_stress' %}"
+                        >
+                            {% for model in models %}
+                                <input
+                                    type="hidden"
+                                    name="model_ids"
+                                    value="{{ model.model_id }}"
+                                >
+                            {% endfor %}
+
+                            <div>
+                                <span class="specimen-label">
+                                    Analysis / Robustness
+                                </span>
+
+                                <p>
+                                    Test whether the recommended model
+                                    remains strongest when requirement
+                                    priorities change.
+                                </p>
                             </div>
 
-                        {% else %}
-                            <div class="decision-summary__winner">
-                                <span>Recommended model</span>
-
-                                <strong>
-                                    {% for model_id in decision_summary.leaders %}
-                                        {{ model_id }}
-                                    {% endfor %}
-                                </strong>
-                            </div>
-                        {% endif %}
-                    </section>
+                            <button type="submit">
+                                Run decision stress test
+                                <span>→</span>
+                            </button>
+                        </form>
                     {% endif %}
 
                     <section class="requirement-comparison">

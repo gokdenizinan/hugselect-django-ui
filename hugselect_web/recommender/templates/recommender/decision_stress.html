@@ -1,0 +1,183 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Decision Stress Test — HugSelect</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'recommender/styles.css' %}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+
+            <div class="nav-subtitle">
+                Decision robustness analysis
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <a
+            class="back-link"
+            href="javascript:history.back()"
+        >
+            ← Back to comparison
+        </a>
+
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong>
+                {{ error }}
+            </div>
+        {% else %}
+            <section class="search-card">
+                <span class="specimen-label">
+                    Analysis / Decision stress test
+                </span>
+
+                <h1>
+                    Test the stability<br>
+                    of your decision.
+                </h1>
+
+                {% if search_context.query %}
+                    <div class="comparison-query">
+                        <span class="comparison-query__label">
+                            Your query
+                        </span>
+
+                        <span class="comparison-query__text">
+                            {{ search_context.query }}
+                        </span>
+                    </div>
+                {% endif %}
+
+                <section class="requirement-comparison">
+                    <span class="specimen-label">
+                        Input / Selected candidates
+                    </span>
+
+                    <h2>Selected models</h2>
+
+                    <div class="comparison-grid">
+                        {% for model_id in model_ids %}
+                            <article class="comparison-column">
+                                <div class="stress-model-heading">
+                                    <span
+                                        class="model-symbol"
+                                        aria-hidden="true"
+                                    >
+                                        AI
+                                    </span>
+
+                                    <h3 class="comparison-model-name">
+                                        {{ model_id }}
+                                    </h3>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="decision-summary">
+                    <div class="decision-summary__top">
+                        <div>
+                            <span class="decision-summary__eyebrow">
+                                Analysis status
+                            </span>
+
+                            <span class="decision-summary__status">
+                                Stress-test engine not run yet
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="decision-summary__winner">
+                        <span>
+                            Next analysis stage
+                        </span>
+
+                        <strong>
+                            These models will be tested under several
+                            transparent requirement-priority scenarios.
+                        </strong>
+                    </div>
+                </section>
+
+                <section class="requirement-comparison">
+                    <span class="specimen-label">
+                        Planned scenarios
+                    </span>
+
+                    <h2>What will be tested</h2>
+
+                    <div class="comparison-table-wrapper">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Scenario</th>
+                                    <th>Purpose</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td>Current weights</td>
+                                    <td>
+                                        Preserves the normal HugSelect ranking.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Essential first</td>
+                                    <td>
+                                        Gives essential requirements more influence.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Functional first</td>
+                                    <td>
+                                        Prioritizes functional suitability.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Quality first</td>
+                                    <td>
+                                        Gives quality requirements more influence.
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Strict essentials</td>
+                                    <td>
+                                        Penalizes missed essential requirements more strongly.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="warning">
+                    <strong>Current limitation:</strong>
+                    This page does not calculate scenario scores yet.
+                    No decision-stability result is being claimed.
+                </div>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>
