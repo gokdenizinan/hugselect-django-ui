@@ -328,8 +328,15 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .comparison-metadata dd { margin: 4px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: .86rem; overflow-wrap: anywhere; }
 .comparison-column .model-link { align-self: flex-start; margin-top: auto; }
 
-.comparison-query { display: flex; align-items: flex-start; gap: 15px; margin: 18px 0; padding: 13px; border: 1px solid var(--line); background: var(--blue-pale); }
-.comparison-query__label { flex: 0 0 auto; color: var(--blue); font: 700 .62rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.comparison-query {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 18px 0;
+    padding: 13px;
+    border: 1px solid var(--line);
+    background: var(--blue-pale);
+}.comparison-query__label { flex: 0 0 auto; color: var(--blue); font: 700 .62rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .comparison-query__text { font-size: .85rem; line-height: 1.55; }
 
 .decision-summary { margin-top: 28px; padding: 24px; border: 1px solid var(--blue); background: var(--blue-pale); }
