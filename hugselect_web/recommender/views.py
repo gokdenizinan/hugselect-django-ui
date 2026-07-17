@@ -249,19 +249,15 @@ def compare_models_view(request):
 
             coverage_rows.append(row)
 
+    def numeric_value(value):
+        try:
+            return float(value or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
     decision_summary = None
 
     if search_mode == "feature-based" and coverage_rows:
-        match_counts = {
-            model["model_id"]: 0
-            for model in models
-        }
-
-        for row in coverage_rows:
-            for status in row["model_statuses"]:
-                if status["matched"] is True:
-                    match_counts[status["model_id"]] += 1
-
         scored_models = [
             model
             for model in models
@@ -277,21 +273,47 @@ def compare_models_view(request):
                 for model in scored_models
             )
 
-            leaders = [
+            score_leaders = [
                 model
                 for model in scored_models
                 if model["comparison_score"] == best_score
             ]
 
+            tie_breaker_model = None
+
+            if len(score_leaders) > 1:
+                best_popularity = max(
+                    (
+                        numeric_value(
+                            model.get("downloads_last_30_days")
+                        ),
+                        numeric_value(model.get("likes")),
+                    )
+                    for model in score_leaders
+                )
+
+                popularity_leaders = [
+                    model
+                    for model in score_leaders
+                    if (
+                        numeric_value(
+                            model.get("downloads_last_30_days")
+                        ),
+                        numeric_value(model.get("likes")),
+                    ) == best_popularity
+                ]
+
+                if len(popularity_leaders) == 1:
+                    tie_breaker_model = popularity_leaders[0]["model_id"]
+
             decision_summary = {
                 "leaders": [
                     model["model_id"]
-                    for model in leaders
+                    for model in score_leaders
                 ],
                 "best_score": best_score,
-                "match_counts": match_counts,
-                "total_requirements": len(coverage_rows),
-                "is_tie": len(leaders) > 1,
+                "is_tie": len(score_leaders) > 1,
+                "tie_breaker_model": tie_breaker_model,
             }
     return render(
         request,
