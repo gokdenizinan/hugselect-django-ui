@@ -3,44 +3,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HugSelect Search</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Evidence-led Hugging Face model discovery.">
+    <title>HugSelect — Model Discovery Laboratory</title>
     <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
 </head>
 <body>
     <header class="site-header">
         <div class="nav">
-            <div class="logo">HugSelect</div>
-            <div class="nav-subtitle">AI4SE model recommendation interface</div>
+            <a class="logo" href="{% url 'search' %}" aria-label="HugSelect home">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+            <div class="nav-subtitle"><span class="status-dot"></span> AI model discovery laboratory</div>
         </div>
     </header>
 
     <main class="container">
         <section class="hero">
-            <div class="hero-badge">Research prototype</div>
+            <div class="hero-badge">System / Research prototype 01</div>
 
-            <h1>Find Hugging Face models using natural language.</h1>
+            <h1>Observe the field.<br><em>Select with evidence.</em></h1>
 
             <p>
-                Describe your task, domain, preferences, and quality requirements.
-                HugSelect searches an indexed knowledge base of model metadata,
-                extracted features, and quality signals.
+                A research interface for finding Hugging Face models from natural-language
+                requirements, structured metadata, extracted features, and measurable quality signals.
             </p>
+
+            <div class="hero-method" aria-label="Recommendation pipeline">
+                <span><b>01</b> Specify</span><i></i>
+                <span><b>02</b> Extract</span><i></i>
+                <span><b>03</b> Rank</span><i></i>
+                <span><b>04</b> Compare</span>
+            </div>
         </section>
 
         <section class="search-card">
             <form method="post" id="search-form">
                 {% csrf_token %}
 
-                <label for="query">Describe the model you need</label>
+                <div class="form-heading">
+                    <div>
+                        <span class="specimen-label">Input / Observation</span>
+                        <label for="query">Define your model requirements</label>
+                    </div>
+                    <span class="field-code">QUERY.001</span>
+                </div>
 
                 <textarea
                     id="query"
                     name="query"
                     required
-                    placeholder="Example: I need a popular text-generation model with Apache-2.0 license, preferably recent and not gated."
+                    placeholder="e.g. A recent, non-gated text-generation model with Apache-2.0 licensing and strong community adoption…"
                 >{{ query }}</textarea>
 
-                <button type="submit" id="search-button">Search models</button>
+                <div class="form-actions">
+                    <p>Describe task, domain, language, license, library, and quality preferences.</p>
+                    <button type="submit" id="search-button">Run analysis <span>→</span></button>
+                </div>
             </form>
         </section>
 
@@ -73,7 +94,13 @@
         {% endif %}
 
         {% if results %}
-            <h2 class="section-title">Recommended models</h2>
+            <div class="section-heading">
+                <div>
+                    <span class="specimen-label">Output / Ranked observations</span>
+                    <h2 class="section-title">Recommended models</h2>
+                </div>
+                <span class="result-count">{{ results|length|stringformat:"02d" }} candidates</span>
+            </div>
 
             <p class="data-note">
                 Some indexed models may have been renamed, removed, or made private on Hugging Face.
@@ -85,7 +112,7 @@
     id="compare-form"
 >
     <div class="compare-toolbar">
-        <p>Select two or three models to compare.</p>
+        <p><span class="toolbar-index">COMPARE</span> Select two or three specimens for side-by-side analysis.</p>
 
         <button
             type="submit"
@@ -106,7 +133,7 @@
                         value="{{ result.model_id }}"
                         class="compare-checkbox"
                     >
-                    Compare
+                    Add to comparison
                 </label>
 
                 <h3>
@@ -179,9 +206,7 @@
         {% endfor %}
     </section>
 </form>
-
-</form>
-</form>        {% elif query and not error %}
+        {% elif query and not error %}
             <div class="empty-state">
                 No matching models were found for this query.
             </div>
