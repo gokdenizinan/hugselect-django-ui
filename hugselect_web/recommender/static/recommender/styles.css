@@ -666,3 +666,17 @@ button:disabled {
         flex-direction: column;
     }
 }
+.comparison-model-name {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 1.25rem 0;
+    padding: 0.65rem 0.85rem;
+    color: #1e293b;
+    background: #f8fafc;
+    border: 1px solid #dbe3ee;
+    border-radius: 10px;
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
