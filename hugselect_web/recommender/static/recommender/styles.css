@@ -432,3 +432,12 @@ button:disabled {
         flex-direction: column;
     }
 }
+.comparison-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.comparison-column .model-link {
+    margin-top: auto;
+    align-self: flex-start;
+}
