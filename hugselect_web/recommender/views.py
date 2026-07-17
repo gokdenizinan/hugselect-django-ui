@@ -10,9 +10,7 @@ from .services import (
     search_models_feature_based,
 )
 
-
 logger = logging.getLogger(__name__)
-
 
 def search_view(request):
     query = ""
@@ -251,13 +249,57 @@ def compare_models_view(request):
 
             coverage_rows.append(row)
 
+    decision_summary = None
 
+    if search_mode == "feature-based" and coverage_rows:
+        match_counts = {
+            model["model_id"]: 0
+            for model in models
+        }
+
+        for row in coverage_rows:
+            for status in row["model_statuses"]:
+                if status["matched"] is True:
+                    match_counts[status["model_id"]] += 1
+
+        scored_models = [
+            model
+            for model in models
+            if isinstance(
+                model.get("comparison_score"),
+                (int, float),
+            )
+        ]
+
+        if scored_models:
+            best_score = max(
+                model["comparison_score"]
+                for model in scored_models
+            )
+
+            leaders = [
+                model
+                for model in scored_models
+                if model["comparison_score"] == best_score
+            ]
+
+            decision_summary = {
+                "leaders": [
+                    model["model_id"]
+                    for model in leaders
+                ],
+                "best_score": best_score,
+                "match_counts": match_counts,
+                "total_requirements": len(coverage_rows),
+                "is_tie": len(leaders) > 1,
+            }
     return render(
         request,
         "recommender/compare.html",
         {
             "models": models,
             "coverage_rows": coverage_rows,
+            "decision_summary": decision_summary,
             "search_context": {
                 "query": last_search.get("query"),
                 "search_mode": search_mode,

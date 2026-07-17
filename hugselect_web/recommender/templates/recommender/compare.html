@@ -14,7 +14,9 @@
     <header class="site-header">
         <div class="nav">
             <div class="logo">HugSelect</div>
-            <div class="nav-subtitle">Explainable Model Showdown</div>
+            <div class="nav-subtitle">
+                Explainable Model Showdown
+            </div>
         </div>
     </header>
 
@@ -24,153 +26,201 @@
         </a>
 
         {% if error %}
-        <div class="error">
-            <strong>Error:</strong> {{ error }}
-        </div>
-    {% else %}
-        <section class="search-card">
-            <h1>Explainable Model Showdown</h1>
-    
-            {% if search_context.query %}
-                <p>
-                    <strong>Your query:</strong>
-                    {{ search_context.query }}
-                </p>
-            {% endif %}
-    
-            <div class="comparison-grid">
-                {% for model in models %}
-                    <article class="comparison-column">
-                        {% if model.is_strongest_match %}
-                            <div class="hero-badge">
-                                {{ model.strongest_label }}
-                            </div>
-                        {% endif %}
-    
-                        <h2>{{ model.model_id }}</h2>
-    
-                        <dl class="comparison-metadata">
-                            <dt>Author</dt>
-                            <dd>{{ model.author|default:"Unknown" }}</dd>
-    
-                            <dt>Task</dt>
-                            <dd>{{ model.pipeline_tag|default:"Unknown" }}</dd>
-    
-                            <dt>License</dt>
-                            <dd>{{ model.license|default:"Unknown" }}</dd>
-    
-                            <dt>Library</dt>
-                            <dd>{{ model.library_name|default:"Unknown" }}</dd>
-    
-                            <dt>Language</dt>
-                            <dd>{{ model.language|default:"Unknown" }}</dd>
-    
-                            <dt>Base model</dt>
-                            <dd>{{ model.basemodels|default:"Unknown" }}</dd>
-    
-                            <dt>Model type</dt>
-                            <dd>{{ model.model_type|default:"Unknown" }}</dd>
-    
-                            <dt>Downloads 30d</dt>
-                            <dd>
-                                {{ model.downloads_last_30_days|default:"N/A" }}
-                            </dd>
-    
-                            <dt>Likes</dt>
-                            <dd>{{ model.likes|default:"N/A" }}</dd>
-    
-                            {% if search_context.search_mode == "feature-based" %}
-                                <dt>Feature match</dt>
-                                <dd>
-                                    {% if model.comparison_score != None %}
-                                        {{ model.comparison_score|floatformat:1 }}%
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </dd>
-                            {% elif search_context.search_mode == "basic-fallback" %}
-                                <dt>Relevance score</dt>
-                                <dd>
-                                    {% if model.comparison_score != None %}
-                                        {{ model.comparison_score|floatformat:3 }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </dd>
-                            {% endif %}
-                        </dl>
-    
-                        <a
-                            class="model-link"
-                            href="{% url 'model_detail' model.model_id %}"
-                        >
-                            View model details
-                        </a>
-                    </article>
-                {% endfor %}
-            </div>
-            {% if search_context.search_mode == "feature-based" %}
-    <section class="requirement-comparison">
-        <h2>Requirement coverage</h2>
-
-        {% if coverage_rows %}
-            <div class="comparison-table-wrapper">
-                <table class="comparison-table">
-                    <thead>
-                        <tr>
-                            <th>Requirement</th>
-                            <th>Requested value</th>
-
-                            {% for model in models %}
-                                <th>{{ model.model_id }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for row in coverage_rows %}
-                            <tr>
-                                <td>{{ row.feature_key }}</td>
-                                <td>{{ row.user_value }}</td>
-
-                                {% for status in row.model_statuses %}
-                                    <td>
-                                        {% if status.matched %}
-                                            <span class="match-status match-status--matched">
-                                                Matched
-                                            </span>
-                                        {% else %}
-                                            <span class="match-status match-status--not-matched">
-                                                Not matched
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="error">
+                <strong>Error:</strong> {{ error }}
             </div>
         {% else %}
-            <p>
-                No structured requirement comparison is available.
-            </p>
+            <section class="search-card">
+                <h1>Explainable Model Showdown</h1>
+
+                {% if search_context.query %}
+                    <p>
+                        <strong>Your query:</strong>
+                        {{ search_context.query }}
+                    </p>
+                {% endif %}
+
+                <div class="comparison-grid">
+                    {% for model in models %}
+                        <article class="comparison-column">
+                            {% if model.is_strongest_match %}
+                                <div class="hero-badge">
+                                    {{ model.strongest_label }}
+                                </div>
+                            {% endif %}
+
+                            <h2>{{ model.model_id }}</h2>
+
+                            <dl class="comparison-metadata">
+                                <dt>Author</dt>
+                                <dd>
+                                    {{ model.author|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Task</dt>
+                                <dd>
+                                    {{ model.pipeline_tag|default:"Unknown" }}
+                                </dd>
+
+                                <dt>License</dt>
+                                <dd>
+                                    {{ model.license|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Library</dt>
+                                <dd>
+                                    {{ model.library_name|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Language</dt>
+                                <dd>
+                                    {{ model.language|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Base model</dt>
+                                <dd>
+                                    {{ model.basemodels|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Model type</dt>
+                                <dd>
+                                    {{ model.model_type|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Downloads 30d</dt>
+                                <dd>
+                                    {{ model.downloads_last_30_days|default:"N/A" }}
+                                </dd>
+
+                                <dt>Likes</dt>
+                                <dd>
+                                    {{ model.likes|default:"N/A" }}
+                                </dd>
+
+                                {% if search_context.search_mode == "feature-based" %}
+                                    <dt>Feature match</dt>
+                                    <dd>
+                                        {% if model.comparison_score != None %}
+                                            {{ model.comparison_score|floatformat:1 }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </dd>
+                                {% elif search_context.search_mode == "basic-fallback" %}
+                                    <dt>Relevance score</dt>
+                                    <dd>
+                                        {% if model.comparison_score != None %}
+                                            {{ model.comparison_score|floatformat:3 }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </dd>
+                                {% endif %}
+                            </dl>
+
+                            <a
+                                class="model-link"
+                                href="{% url 'model_detail' model.model_id %}"
+                            >
+                                View model details
+                            </a>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                {% if search_context.search_mode == "feature-based" %}
+                    {% if decision_summary %}
+                        <section class="decision-summary">
+                            <h2>Decision summary</h2>
+
+                            <p>
+                                {% if decision_summary.is_tie %}
+                                    <strong>Weighted score is tied.</strong>
+                                    Joint leaders:
+                                {% else %}
+                                    <strong>Recommended leader:</strong>
+                                {% endif %}
+                            
+                                {% for model_id in decision_summary.leaders %}
+                                    {{ model_id }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            
+                                — highest feature match:
+                                {{ decision_summary.best_score|floatformat:1 }}%.
+                            </p>
+                        </section>
+                    {% endif %}
+
+                    <section class="requirement-comparison">
+                        <h2>Requirement coverage</h2>
+
+                        {% if coverage_rows %}
+                            <div class="comparison-table-wrapper">
+                                <table class="comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Requirement</th>
+                                            <th>Requested value</th>
+
+                                            {% for model in models %}
+                                                <th>
+                                                    {{ model.model_id }}
+                                                </th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for row in coverage_rows %}
+                                            <tr>
+                                                <td>
+                                                    {{ row.feature_key }}
+                                                </td>
+
+                                                <td>
+                                                    {{ row.user_value }}
+                                                </td>
+
+                                                {% for status in row.model_statuses %}
+                                                    <td>
+                                                        {% if status.matched %}
+                                                            <span class="match-status match-status--matched">
+                                                                Matched
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="match-status match-status--not-matched">
+                                                                Not matched
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>
+                                No structured requirement comparison
+                                is available.
+                            </p>
+                        {% endif %}
+                    </section>
+
+                {% elif search_context.search_mode == "basic-fallback" %}
+                    <section class="requirement-comparison">
+                        <h2>Requirement coverage</h2>
+
+                        <p>
+                            Structured feature comparisons are unavailable
+                            in basic fallback mode. These models were ranked
+                            using Elasticsearch text relevance, and the
+                            relevance score is not a percentage.
+                        </p>
+                    </section>
+                {% endif %}
+            </section>
         {% endif %}
-    </section>
-
-{% elif search_context.search_mode == "basic-fallback" %}
-    <section class="requirement-comparison">
-        <h2>Requirement coverage</h2>
-
-        <p>
-            Structured feature comparisons are unavailable in basic
-            fallback mode. These models were ranked using Elasticsearch
-            text relevance, and the relevance score is not a percentage.
-        </p>
-    </section>
-{% endif %}
-        </section>
-    {% endif %}
     </main>
 </body>
 </html>
