@@ -8,4 +8,5 @@ urlpatterns = [
         views.model_detail_view,
         name="model_detail",
     ),
+    path("compare/", views.compare_models_view, name="compare_models"),
     ]

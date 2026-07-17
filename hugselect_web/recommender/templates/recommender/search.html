@@ -79,58 +79,109 @@
                 Some indexed models may have been renamed, removed, or made private on Hugging Face.
             </p>
 
-            <section class="results-grid">
-                {% for result in results %}
-                    <article class="result-card">
-                        <h3>
-                            {% if result.url %}
-                                <a href="{{ result.url }}" target="_blank">
-                                    {{ result.model_id }}
-                                </a>
-                            {% else %}
-                                {{ result.model_id }}
-                            {% endif %}
-                        </h3>
+    <form
+    method="get"
+    action="{% url 'compare_models' %}"
+    id="compare-form"
+>
+    <div class="compare-toolbar">
+        <p>Select two or three models to compare.</p>
 
-                        <div class="meta">
-                            <span class="pill">Author: {{ result.author|default:"Unknown" }}</span>
-                            <span class="pill">Task: {{ result.pipeline_tag|default:"Unknown" }}</span>
-                            <span class="pill">License: {{ result.license|default:"Unknown" }}</span>
-                            <span class="pill">Library: {{ result.library_name|default:"Unknown" }}</span>
-                            <span class="pill">Downloads 30d: {{ result.downloads_last_30_days|default:"N/A" }}</span>
-                            <span class="pill">Likes: {{ result.likes|default:"N/A" }}</span>
-                            {% if search_mode == "feature-based" %}
-                                <span class="pill">
-                                    Feature match: {{ result.score|floatformat:1 }}%
-                                </span>
-                            {% elif search_mode == "basic-fallback" %}
-                                <span class="pill">
-                                    Relevance score: {{ result.score|floatformat:3 }}
-                                </span>
-                            {% endif %}
-                        </div>
+        <button
+            type="submit"
+            id="compare-button"
+            disabled
+        >
+            Compare selected
+        </button>
+    </div>
 
-                        <a
+    <section class="results-grid">
+        {% for result in results %}
+            <article class="result-card">
+                <label class="compare-control">
+                    <input
+                        type="checkbox"
+                        name="model_ids"
+                        value="{{ result.model_id }}"
+                        class="compare-checkbox"
+                    >
+                    Compare
+                </label>
+
+                <h3>
+                    {% if result.url %}
+                        <a href="{{ result.url }}" target="_blank">
+                            {{ result.model_id }}
+                        </a>
+                    {% else %}
+                        {{ result.model_id }}
+                    {% endif %}
+                </h3>
+
+                <div class="meta">
+                    <span class="pill">
+                        Author: {{ result.author|default:"Unknown" }}
+                    </span>
+
+                    <span class="pill">
+                        Task: {{ result.pipeline_tag|default:"Unknown" }}
+                    </span>
+
+                    <span class="pill">
+                        License: {{ result.license|default:"Unknown" }}
+                    </span>
+
+                    <span class="pill">
+                        Library: {{ result.library_name|default:"Unknown" }}
+                    </span>
+
+                    <span class="pill">
+                        Downloads 30d:
+                        {{ result.downloads_last_30_days|default:"N/A" }}
+                    </span>
+
+                    <span class="pill">
+                        Likes: {{ result.likes|default:"N/A" }}
+                    </span>
+
+                    {% if search_mode == "feature-based" %}
+                        <span class="pill">
+                            Feature match:
+                            {{ result.score|floatformat:1 }}%
+                        </span>
+                    {% elif search_mode == "basic-fallback" %}
+                        <span class="pill">
+                            Relevance score:
+                            {{ result.score|floatformat:3 }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <a
+                    class="model-link"
+                    href="{% url 'model_detail' result.model_id %}"
+                >
+                    View details
+                </a>
+
+                {% if result.url %}
+                    <a
                         class="model-link"
-                        href="{% url 'model_detail' result.model_id %}"
-                        >
-                        View details
+                        href="{{ result.url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open on Hugging Face
                     </a>
+                {% endif %}
+            </article>
+        {% endfor %}
+    </section>
+</form>
 
-                        {% if result.url %}
-                            <a
-                                class="model-link"
-                                href="{{ result.url }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Open on Hugging Face
-                            </a>
-                        {% endif %}
-                    </article>
-                {% endfor %}
-            </section>
-        {% elif query and not error %}
+</form>
+</form>        {% elif query and not error %}
             <div class="empty-state">
                 No matching models were found for this query.
             </div>
@@ -142,10 +193,53 @@
         const searchForm = document.getElementById("search-form");
         const searchButton = document.getElementById("search-button");
 
-        searchForm.addEventListener("submit", () => {
-            searchButton.disabled = true;
-            searchButton.textContent = "Searching...";
-        });
+        if (searchForm && searchButton) {
+            searchForm.addEventListener("submit", () => {
+                searchButton.disabled = true;
+                searchButton.textContent = "Searching...";
+            });
+        }
+
+        const compareForm = document.getElementById("compare-form");
+        const compareButton = document.getElementById("compare-button");
+        const compareCheckboxes = document.querySelectorAll(
+            ".compare-checkbox"
+        );
+
+        if (compareForm && compareButton) {
+            function updateComparisonSelection() {
+                const selectedCheckboxes = document.querySelectorAll(
+                    ".compare-checkbox:checked"
+                );
+
+                compareButton.disabled = selectedCheckboxes.length < 2;
+
+                compareCheckboxes.forEach((checkbox) => {
+                    checkbox.disabled =
+                        selectedCheckboxes.length >= 3 &&
+                        !checkbox.checked;
+                });
+            }
+
+            compareCheckboxes.forEach((checkbox) => {
+                checkbox.addEventListener(
+                    "change",
+                    updateComparisonSelection
+                );
+            });
+
+            compareForm.addEventListener("submit", (event) => {
+                const selectedCount = document.querySelectorAll(
+                    ".compare-checkbox:checked"
+                ).length;
+
+                if (selectedCount < 2 || selectedCount > 3) {
+                    event.preventDefault();
+                }
+            });
+
+            updateComparisonSelection();
+        }
     </script>
 </body>
 </html>

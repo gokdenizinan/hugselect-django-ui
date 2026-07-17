@@ -105,3 +105,162 @@ def model_detail_view(request, model_id):
             "graph": graph,
         },
     )
+
+def compare_models_view(request):
+    model_ids = list(
+        dict.fromkeys(request.GET.getlist("model_ids"))
+    )
+
+    if len(model_ids) < 2 or len(model_ids) > 3:
+        return render(
+            request,
+            "recommender/compare.html",
+            {
+                "error": "Please select two or three models to compare.",
+                "models": [],
+            },
+        )
+
+    models = []
+
+    for model_id in model_ids:
+        model = get_model_by_id(model_id)
+
+        if model is not None:
+            models.append(model)
+
+    if len(models) < 2:
+        return render(
+            request,
+            "recommender/compare.html",
+            {
+                "error": (
+                    "At least two of the selected models "
+                    "could not be found."
+                ),
+                "models": models,
+            },
+        )
+
+    last_search = request.session.get(
+        "hugselect_last_search",
+        {},
+    )
+
+    search_mode = last_search.get("search_mode")
+    scores = last_search.get("scores", {})
+    explanations = last_search.get("explanations", {})
+
+    for model in models:
+        model_id = model["model_id"]
+
+        for field_name in ("language", "basemodels"):
+                value = model.get(field_name)
+
+                if isinstance(value, list):
+                    model[field_name] = ", ".join(
+                        str(item) for item in value
+                    )
+
+        model["comparison_score"] = scores.get(model_id)
+        model["comparison_explanation"] = explanations.get(model_id)
+        model["is_strongest_match"] = False
+
+    if search_mode == "feature-based":
+        scored_models = [
+            model
+            for model in models
+
+            if isinstance(
+                model.get("comparison_score"),
+                (int, float),
+            )
+        ]
+
+        if scored_models:
+            strongest_score = max(
+                model["comparison_score"]
+                for model in scored_models
+            )
+
+            strongest_models = [
+                model
+                for model in scored_models
+                if model["comparison_score"] == strongest_score
+            ]
+
+            strongest_label = (
+                "Joint strongest match"
+                if len(strongest_models) > 1
+                else "Strongest overall match"
+            )
+
+            for model in strongest_models:
+                model["is_strongest_match"] = True
+                model["strongest_label"] = strongest_label
+    coverage_rows = []
+
+    if search_mode == "feature-based":
+        rows_by_requirement = {}
+
+        for model in models:
+            explanation = (
+                model.get("comparison_explanation") or {}
+            )
+
+            for feature_group in explanation.get(
+                "per_feature",
+                [],
+            ):
+                for match in feature_group.get("matches", []):
+                    feature_key = match.get("feature_key")
+                    user_value = match.get("user_value")
+
+                    if not feature_key:
+                        continue
+
+                    requirement_key = (
+                        feature_key,
+                        str(user_value),
+                    )
+
+                    if requirement_key not in rows_by_requirement:
+                        rows_by_requirement[requirement_key] = {
+                            "feature_key": feature_key,
+                            "user_value": user_value,
+                            "statuses": {},
+                        }
+
+                    rows_by_requirement[
+                        requirement_key
+                    ]["statuses"][model["model_id"]] = match.get(
+                        "matched",
+                        False,
+                    )
+
+        for row in rows_by_requirement.values():
+            row["model_statuses"] = [
+                {
+                    "model_id": model["model_id"],
+                    "matched": row["statuses"].get(
+                        model["model_id"]
+                    ),
+                }
+                for model in models
+            ]
+
+            coverage_rows.append(row)
+
+
+    return render(
+        request,
+        "recommender/compare.html",
+        {
+            "models": models,
+            "coverage_rows": coverage_rows,
+            "search_context": {
+                "query": last_search.get("query"),
+                "search_mode": search_mode,
+            },
+        },
+    )
