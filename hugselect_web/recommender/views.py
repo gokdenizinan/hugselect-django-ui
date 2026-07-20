@@ -2,12 +2,15 @@ import logging
 
 from django.shortcuts import render
 from django.http import  Http404
-
 from .services import (
     build_model_graph,
     get_model_by_id,
     search_models_basic,
     search_models_feature_based,
+)
+from .decision_stress import (
+    run_decision_stress_test,
+    summarize_decision_stress_test,
 )
 
 logger = logging.getLogger(__name__)
@@ -346,14 +349,69 @@ def decision_stress_view(request):
             },
         )
 
+    last_search = request.session.get(
+        "hugselect_last_search",
+        {},
+    )
+
+    search_mode = last_search.get("search_mode")
+    explanations = last_search.get("explanations", {})
+
+    if search_mode != "feature-based":
+        return render(
+            request,
+            "recommender/decision_stress.html",
+            {
+                "error": (
+                    "Decision stress testing is available only "
+                    "for feature-based recommendations."
+                ),
+                "models": [],
+            },
+        )
+
+    model_explanations = {
+        model_id: explanations[model_id]
+        for model_id in model_ids
+        if explanations.get(model_id)
+    }
+
+
+    missing_explanation_ids = [
+        model_id
+        for model_id in model_ids
+        if model_id not in model_explanations
+    ]
+
+    if len(model_explanations) < 2:
+        return render(
+            request,
+            "recommender/decision_stress.html",
+            {
+                "error": (
+                    "Structured explanations are unavailable for "
+                    "at least two selected models."
+                ),
+                "models": [],
+            },
+        )
+
+    stress_result = run_decision_stress_test(
+        model_explanations
+    )
+
+    stress_summary = summarize_decision_stress_test(
+        stress_result
+    )
+
     return render(
         request,
         "recommender/decision_stress.html",
         {
             "model_ids": model_ids,
-            "search_context": request.session.get(
-                "hugselect_last_search",
-                {},
-            ),
+            "search_context": last_search,
+            "stress_result": stress_result,
+            "stress_summary": stress_summary,
+            "missing_explanation_ids": missing_explanation_ids,
         },
     )

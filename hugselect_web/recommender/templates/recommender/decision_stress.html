@@ -94,88 +94,147 @@
                     <div class="decision-summary__top">
                         <div>
                             <span class="decision-summary__eyebrow">
-                                Analysis status
+                                Decision stability
                             </span>
 
                             <span class="decision-summary__status">
-                                Stress-test engine not run yet
+                                {{ stress_summary.stability_label }}
                             </span>
+                        </div>
+
+                        <div class="decision-summary__score">
+                            {{ stress_summary.stability_percentage|floatformat:1 }}%
+
+                            <small>
+                                Scenario consistency
+                            </small>
                         </div>
                     </div>
 
                     <div class="decision-summary__winner">
-                        <span>
-                            Next analysis stage
-                        </span>
+                        {% if stress_summary.is_tied %}
+                            <span>Most frequent joint winners</span>
+                        {% else %}
+                            <span>Most consistent winner</span>
+                        {% endif %}
 
                         <strong>
-                            These models will be tested under several
-                            transparent requirement-priority scenarios.
+                            {% for model_id in stress_summary.leaders %}
+                                {{ model_id }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
                         </strong>
+                    </div>
+
+                    <div class="decision-summary__tie-breakers">
+                        <div class="decision-summary__tie-breaker-heading">
+                            <strong>
+                                Scenario performance
+                            </strong>
+
+                            <small>
+                                Wins across {{ stress_summary.scenario_count }}
+                                tested priority configurations
+                            </small>
+                        </div>
+
+                        <div class="decision-summary__chips">
+                            {% for model_id, wins in stress_summary.win_counts.items %}
+                                <span>
+                                    <strong>{{ wins }}</strong>
+                                    {{ model_id }}
+                                </span>
+                            {% endfor %}
+                        </div>
                     </div>
                 </section>
 
                 <section class="requirement-comparison">
                     <span class="specimen-label">
-                        Planned scenarios
+                        Output / Scenario observations
                     </span>
 
-                    <h2>What will be tested</h2>
+                    <h2>Scenario results</h2>
 
-                    <div class="comparison-table-wrapper">
-                        <table class="comparison-table">
-                            <thead>
-                                <tr>
-                                    <th>Scenario</th>
-                                    <th>Purpose</th>
-                                </tr>
-                            </thead>
+                    <div class="stress-scenario-list">
+                        {% for scenario in stress_result.scenarios %}
+                            <article class="stress-scenario">
+                                <div class="stress-scenario__header">
+                                    <div>
+                                        <span class="field-code">
+                                            Scenario {{ forloop.counter|stringformat:"02d" }}
+                                        </span>
 
-                            <tbody>
-                                <tr>
-                                    <td>Current weights</td>
-                                    <td>
-                                        Preserves the normal HugSelect ranking.
-                                    </td>
-                                </tr>
+                                        <h3>{{ scenario.label }}</h3>
 
-                                <tr>
-                                    <td>Essential first</td>
-                                    <td>
-                                        Gives essential requirements more influence.
-                                    </td>
-                                </tr>
+                                        <p>{{ scenario.description }}</p>
+                                    </div>
 
-                                <tr>
-                                    <td>Functional first</td>
-                                    <td>
-                                        Prioritizes functional suitability.
-                                    </td>
-                                </tr>
+                                    <div class="stress-scenario__winner">
+                                        <span>Winner</span>
 
-                                <tr>
-                                    <td>Quality first</td>
-                                    <td>
-                                        Gives quality requirements more influence.
-                                    </td>
-                                </tr>
+                                        <strong>
+                                            {% for model_id in scenario.winners %}
+                                                {{ model_id }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </strong>
+                                    </div>
+                                </div>
 
-                                <tr>
-                                    <td>Strict essentials</td>
-                                    <td>
-                                        Penalizes missed essential requirements more strongly.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                <div class="comparison-table-wrapper">
+                                    <table class="comparison-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Rank</th>
+                                                <th>Model</th>
+                                                <th>Scenario score</th>
+                                                <th>Essential status</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {% for result in scenario.model_results %}
+                                                <tr>
+                                                    <td>{{ result.rank }}</td>
+
+                                                    <td>
+                                                        <div class="stress-model-heading">
+                                                            <span
+                                                                class="model-symbol"
+                                                                aria-hidden="true"
+                                                            >
+                                                                AI
+                                                            </span>
+
+                                                            <strong>
+                                                                {{ result.model_id }}
+                                                            </strong>
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        {{ result.score|floatformat:1 }}%
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.strict_exclusion %}
+                                                            <span class="match-status match-status--not-matched">
+                                                                Essential missed
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="match-status match-status--matched">
+                                                                Eligible
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </article>
+                        {% endfor %}
                     </div>
                 </section>
-
-                <div class="warning">
-                    <strong>Current limitation:</strong>
-                    This page does not calculate scenario scores yet.
-                    No decision-stability result is being claimed.
-                </div>
             </section>
         {% endif %}
     </main>
