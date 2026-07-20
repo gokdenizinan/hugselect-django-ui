@@ -9,6 +9,7 @@ from .services import (
     search_models_feature_based,
 )
 from .decision_stress import (
+    collect_essential_requirements,
     run_decision_stress_test,
     summarize_decision_stress_test,
 )
@@ -375,7 +376,9 @@ def decision_stress_view(request):
         for model_id in model_ids
         if explanations.get(model_id)
     }
-
+    essential_requirements = collect_essential_requirements(
+    model_explanations
+)
 
     missing_explanation_ids = [
         model_id
@@ -412,6 +415,7 @@ def decision_stress_view(request):
             "search_context": last_search,
             "stress_result": stress_result,
             "stress_summary": stress_summary,
+            "essential_requirements": essential_requirements,
             "missing_explanation_ids": missing_explanation_ids,
         },
     )

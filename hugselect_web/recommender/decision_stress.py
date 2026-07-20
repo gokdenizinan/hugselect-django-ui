@@ -451,3 +451,49 @@ def summarize_decision_stress_test(
         "is_tied": len(leaders) > 1,
         "all_scenarios_tied": False,
     }
+def collect_essential_requirements(
+    model_explanations: dict[str, dict],
+) -> list[dict]:
+    """
+    Collect the unique requirements classified as essential
+    in the stored match explanations.
+    """
+
+    requirements_by_key = {}
+
+    for explanation in model_explanations.values():
+        for feature_group in explanation.get(
+            "per_feature",
+            [],
+        ):
+            for match in feature_group.get("matches", []):
+                feature_key = str(
+                    match.get("feature_key") or ""
+                )
+
+                if category_for_feature(feature_key) != "essential":
+                    continue
+
+                user_value = match.get("user_value")
+
+                requirement_key = _requirement_key(
+                    feature_key,
+                    user_value,
+                )
+
+                requirements_by_key.setdefault(
+                    requirement_key,
+                    {
+                        "key": requirement_key,
+                        "feature_key": feature_key,
+                        "user_value": user_value,
+                    },
+                )
+
+    return sorted(
+        requirements_by_key.values(),
+        key=lambda requirement: (
+            requirement["feature_key"].casefold(),
+            str(requirement["user_value"]).casefold(),
+        ),
+    )

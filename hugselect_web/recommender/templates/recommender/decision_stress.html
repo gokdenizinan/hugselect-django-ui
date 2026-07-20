@@ -62,6 +62,39 @@
                         </span>
                     </div>
                 {% endif %}
+                <section class="stress-essentials">
+                    <span class="specimen-label">
+                        Input / Enforced essentials
+                    </span>
+
+                    <h2>Core requirements</h2>
+
+                    <p class="stress-essentials__intro">
+                        These requirements were classified as essential from your query.
+                        Missing one only causes exclusion in the Strict Essentials scenario.
+                    </p>
+
+                    {% if essential_requirements %}
+                        <div class="stress-essentials__list">
+                            {% for requirement in essential_requirements %}
+                                <div class="stress-essential">
+                                    <span class="stress-essential__type">
+                                        {{ requirement.feature_key }}
+                                    </span>
+
+                                    <strong>
+                                        {{ requirement.user_value }}
+                                    </strong>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="warning">
+                            No essential requirements were identified in the stored
+                            explanation data.
+                        </div>
+                    {% endif %}
+                </section>
 
                 <section class="requirement-comparison">
                     <span class="specimen-label">
@@ -187,7 +220,7 @@
                                                 <th>Rank</th>
                                                 <th>Model</th>
                                                 <th>Scenario score</th>
-                                                <th>Essential status</th>
+                                                <th>Essential rule</th>
                                             </tr>
                                         </thead>
 
@@ -216,13 +249,19 @@
                                                     </td>
 
                                                     <td>
-                                                        {% if result.strict_exclusion %}
-                                                            <span class="match-status match-status--not-matched">
-                                                                Essential missed
-                                                            </span>
+                                                        {% if scenario.key == "strict_essentials" %}
+                                                            {% if result.strict_exclusion %}
+                                                                <span class="match-status match-status--not-matched">
+                                                                    Missed — excluded
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="match-status match-status--matched">
+                                                                    All essentials matched
+                                                                </span>
+                                                            {% endif %}
                                                         {% else %}
-                                                            <span class="match-status match-status--matched">
-                                                                Eligible
+                                                            <span class="match-status">
+                                                                Affects score only
                                                             </span>
                                                         {% endif %}
                                                     </td>
