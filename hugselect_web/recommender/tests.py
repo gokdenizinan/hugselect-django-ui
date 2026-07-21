@@ -246,8 +246,84 @@ class DecisionStressViewTests(TestCase):
         )
         self.assertContains(
             response,
-            "Task: text generation",
-)
+            "Task: text generation",)
+        self.assertNotContains(
+            response,
+            "Why these models remain tied",
+        )
+    def test_explains_evidence_equivalent_models(self):
+        identical_explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text generation",
+                            "effective_weight": 10.0,
+                            "matched": True,
+                            "score": 10.0,
+                        }
+                    ],
+                }
+            ]
+        }
+
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "English text-generation model",
+            "search_mode": "feature-based",
+            "explanations": {
+                "author/model-a": identical_explanation,
+                "author/model-b": identical_explanation,
+            },
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("decision_stress"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            response.context[
+                "stress_summary"
+            ]["all_scenarios_tied"]
+        )
+        self.assertContains(
+            response,
+            "5 / 5",
+        )
+        self.assertContains(
+            response,
+            "Tied scenarios",
+        )
+        self.assertNotContains(
+            response,
+            "Scenario consistency",
+        )
+        self.assertContains(
+            response,
+            "Why these models remain tied",
+        )
+        self.assertContains(
+            response,
+            (
+                "The indexed requirement evidence "
+                "cannot distinguish these models."
+            ),
+        )
+        self.assertContains(
+            response,
+            "benchmark performance",
+        )
+
 class DecisionStressPolicyTests(SimpleTestCase):
     def test_defines_five_unique_scenarios(self):
         scenario_keys = [

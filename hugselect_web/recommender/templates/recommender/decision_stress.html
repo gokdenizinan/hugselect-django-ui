@@ -136,13 +136,21 @@
                         </div>
 
                         <div class="decision-summary__score">
-                            {{ stress_summary.stability_percentage|floatformat:1 }}%
+                            {% if stress_summary.all_scenarios_tied %}
+                                {{ stress_summary.tied_scenario_count }} / {{ stress_summary.scenario_count }}
 
-                            <small>
-                                Scenario consistency
-                            </small>
+                                <small>
+                                    Tied scenarios
+                                </small>
+                            {% else %}
+                                {{ stress_summary.stability_percentage|floatformat:1 }}%
+
+                                <small>
+                                    Outright-win consistency
+                                </small>
+                            {% endif %}
+                            </div>
                         </div>
-                    </div>
 
                     <div class="decision-summary__winner">
                         {% if stress_summary.is_tied %}
@@ -180,6 +188,23 @@
                         </div>
                     </div>
                 </section>
+                {% if stress_summary.all_scenarios_tied %}
+                    <section class="evidence-equivalent-panel">
+                        <span class="specimen-label">
+                            Interpretation / Evidence limit
+                        </span>
+
+                        <h2>Why these models remain tied</h2>
+
+                        <p>The indexed requirement evidence cannot distinguish these models.</p>
+
+                        <p>
+                            Compare additional evidence such as benchmark performance,
+                            deployment compatibility, latency, memory use, or a separately
+                            labelled adoption signal.
+                        </p>
+                    </section>
+                {% endif %}
 
                 <section class="requirement-comparison">
                     <span class="specimen-label">

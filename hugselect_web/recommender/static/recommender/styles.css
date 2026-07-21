@@ -354,7 +354,46 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .decision-summary__tie-breaker-heading { display: grid; gap: 5px; }
 .decision-summary__chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .decision-summary__chips span { padding: 5px 7px; border: 1px solid #bac7ef; background: white; font: .64rem var(--mono); }
+.evidence-equivalent-panel {
+    position: relative;
+    margin-top: 18px;
+    padding: 22px;
+    border: 1px solid var(--blue);
+    background: rgba(232, 237, 255, .58);
+    box-shadow: 5px 5px 0 rgba(23, 71, 209, .08);
+}
 
+.evidence-equivalent-panel::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 72px;
+    height: 3px;
+    background: var(--blue);
+}
+
+.evidence-equivalent-panel h2 {
+    margin: 9px 0 10px;
+    font-family: var(--serif);
+    font-size: 1.55rem;
+    letter-spacing: -.025em;
+}
+
+.evidence-equivalent-panel p {
+    max-width: 820px;
+    margin: 0;
+    color: var(--muted);
+    font-size: .84rem;
+    line-height: 1.65;
+}
+
+.evidence-equivalent-panel p + p {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #bac7ef;
+    color: var(--ink);
+}
 .requirement-comparison { margin-top: 36px; }
 .comparison-table-wrapper { overflow-x: auto; }
 .comparison-table { width: 100%; margin-top: 14px; border-collapse: collapse; background: var(--surface); font-size: .8rem; }
