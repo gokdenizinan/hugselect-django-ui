@@ -219,15 +219,21 @@ def score_explanation_for_scenario(
                 ] = candidate
 
             if category == "essential":
-                already_matched = essential_statuses.get(
-                    requirement_key,
-                    False,
+                existing_status = essential_statuses.get(
+                    requirement_key
                 )
 
-                essential_statuses[requirement_key] = (
-                    already_matched
-                    or bool(match.get("matched"))
-                )
+                if existing_status is None:
+                    essential_statuses[requirement_key] = {
+                        "feature_key": feature_key,
+                        "user_value": match.get("user_value"),
+                        "matched": bool(match.get("matched")),
+                    }
+                else:
+                    existing_status["matched"] = (
+                        existing_status["matched"]
+                        or bool(match.get("matched"))
+                    )
 
     total_actual = sum(
         item["actual"]
@@ -246,10 +252,12 @@ def score_explanation_for_scenario(
     )
 
     missed_essentials = [
-        requirement_key
-        for requirement_key, matched
-        in essential_statuses.items()
-        if not matched
+        {
+            "feature_key": status["feature_key"],
+            "user_value": status["user_value"],
+        }
+        for status in essential_statuses.values()
+        if not status["matched"]
     ]
 
     strict_exclusion = (

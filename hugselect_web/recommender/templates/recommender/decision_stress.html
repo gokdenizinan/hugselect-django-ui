@@ -251,9 +251,21 @@
                                                     <td>
                                                         {% if scenario.key == "strict_essentials" %}
                                                             {% if result.strict_exclusion %}
-                                                                <span class="match-status match-status--not-matched">
-                                                                    Missed — excluded
-                                                                </span>
+                                                                <div class="stress-exclusion">
+                                                                    <span class="match-status match-status--not-matched">
+                                                                        Missed — excluded
+                                                                    </span>
+
+                                                                    <div class="stress-exclusion__reason">
+                                                                        <strong>Why excluded</strong>
+
+                                                                        <ul>
+                                                                            {% for requirement in result.missed_essentials %}
+                                                                                <li>{{ requirement.feature_key|title }}: {{ requirement.user_value }}</li>
+                                                                            {% endfor %}
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
                                                             {% else %}
                                                                 <span class="match-status match-status--matched">
                                                                     All essentials matched

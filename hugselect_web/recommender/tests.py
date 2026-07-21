@@ -240,6 +240,14 @@ class DecisionStressViewTests(TestCase):
             response.context["stress_summary"]["leaders"],
             ["author/model-a"],
         )
+        self.assertContains(
+            response,
+            "Why excluded",
+        )
+        self.assertContains(
+            response,
+            "Task: text generation",
+)
 class DecisionStressPolicyTests(SimpleTestCase):
     def test_defines_five_unique_scenarios(self):
         scenario_keys = [
@@ -367,7 +375,12 @@ class DecisionStressScoringTests(SimpleTestCase):
         self.assertEqual(result["score"], 0.0)
         self.assertEqual(
             result["missed_essentials"],
-            ["text generation"],
+            [
+                {
+                    "feature_key": "task",
+                    "user_value": "text generation",
+                }
+            ],
         )
 
 class DecisionStressRankingTests(SimpleTestCase):
