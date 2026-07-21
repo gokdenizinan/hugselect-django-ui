@@ -365,7 +365,43 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .match-status { display: inline-block; margin: 3px 0 3px 6px; padding: 4px 7px; border: 1px solid currentColor; font: 700 .6rem var(--mono); text-transform: uppercase; }
 .match-status--matched { color: var(--success); background: #eaf6e9; }
 .match-status--not-matched { color: var(--danger); background: #fff0ed; }
+.stress-scenario .comparison-table th:last-child,
+.stress-scenario .comparison-table td:last-child {
+    min-width: 250px;
+}
 
+.stress-exclusion {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.stress-exclusion .match-status {
+    margin: 0;
+}
+
+.stress-exclusion__reason {
+    width: 100%;
+}
+
+.stress-exclusion__reason > strong {
+    display: block;
+    margin-bottom: 8px;
+    font-family: var(--mono);
+    font-size: .7rem;
+}
+
+.stress-exclusion__reason ul {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 20px;
+}
+
+.stress-exclusion__reason li {
+    line-height: 1.4;
+}
 @media (max-width: 760px) {
     .nav, .container { width: min(100% - 32px, 1160px); }
     .nav { min-height: 65px; }
