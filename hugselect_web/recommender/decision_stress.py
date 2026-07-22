@@ -38,12 +38,20 @@ QUALITY_FEATURE_KEYS = {
     "Flexibility",
 }
 
+FEATURE_KEY_ALIASES = {
+    "task_alias": "task",
+    "domain_alias": "domain",
+    "functional_item": "functional",
+}
 
 SCENARIOS = (
     {
         "key": "current",
-        "label": "Current weights",
-        "description": "Uses the normal HugSelect requirement weights.",
+        "label": "Starting priorities",
+        "description": (
+            "Uses the requirements from your search with "
+            "the importance HugSelect originally assigned to them."
+        ),
         "multipliers": {
             "essential": 1.0,
             "preference": 1.0,
@@ -138,17 +146,88 @@ def _safe_float(value) -> float:
 
 
 def _requirement_key(feature_key: str, user_value) -> str:
+    canonical_feature_key = FEATURE_KEY_ALIASES.get(
+        feature_key,
+        feature_key,
+    )
+
     value_text = str(user_value).strip().casefold()
 
     if value_text:
-        return value_text
+        return f"{canonical_feature_key}:{value_text}"
 
-    return f"feature:{feature_key}"
+    return f"feature:{canonical_feature_key}"
+def _collect_requirement_catalogue(
+    model_explanations: dict[str, dict],
+) -> dict[str, dict]:
+    """
+    Build one shared requirement catalogue for all selected models.
+    """
 
+    requirements_by_key = {}
+
+    for explanation in model_explanations.values():
+        for feature_group in explanation.get(
+            "per_feature",
+            [],
+        ):
+            group_weight = feature_group.get(
+                "effective_weight",
+                0.0,
+            )
+
+            for match in feature_group.get("matches", []):
+                feature_key = str(
+                    match.get("feature_key") or ""
+                )
+
+                category = category_for_feature(feature_key)
+
+                if category == "unknown":
+                    continue
+
+                requirement_key = _requirement_key(
+                    feature_key,
+                    match.get("user_value"),
+                )
+
+                effective_weight = _safe_float(
+                    match.get(
+                        "effective_weight",
+                        group_weight,
+                    )
+                )
+
+                candidate = {
+                    "key": requirement_key,
+                    "feature_key": FEATURE_KEY_ALIASES.get(
+                        feature_key,
+                        feature_key,
+                    ),
+                    "category": category,
+                    "user_value": match.get("user_value"),
+                    "effective_weight": effective_weight,
+                }
+
+                current = requirements_by_key.get(
+                    requirement_key
+                )
+
+                if (
+                    current is None
+                    or effective_weight
+                    > current["effective_weight"]
+                ):
+                    requirements_by_key[
+                        requirement_key
+                    ] = candidate
+
+    return requirements_by_key
 
 def score_explanation_for_scenario(
     explanation: dict,
     scenario: dict,
+    requirement_catalogue: dict[str, dict] | None = None,
 ) -> dict:
     """
     Rescore one model's existing match explanation under one scenario.
@@ -157,10 +236,39 @@ def score_explanation_for_scenario(
     """
 
     multipliers = scenario.get("multipliers", {})
+    requirement_catalogue = requirement_catalogue or {}
 
     best_by_requirement = {}
     essential_statuses = {}
     unknown_features = set()
+
+    for requirement_key, requirement in (
+        requirement_catalogue.items()
+    ):
+        category = requirement["category"]
+
+        multiplier = _safe_float(
+            multipliers.get(category, 1.0)
+        )
+
+        best_by_requirement[requirement_key] = {
+            "feature_key": requirement["feature_key"],
+            "category": category,
+            "user_value": requirement["user_value"],
+            "matched": False,
+            "actual": 0.0,
+            "possible": (
+                requirement["effective_weight"]
+                * multiplier
+            ),
+        }
+
+        if category == "essential":
+            essential_statuses[requirement_key] = {
+                "feature_key": requirement["feature_key"],
+                "user_value": requirement["user_value"],
+                "matched": False,
+            }
 
     for feature_group in explanation.get("per_feature", []):
         group_weight = feature_group.get(
@@ -283,6 +391,7 @@ def score_explanation_for_scenario(
     return {
         "scenario_key": scenario.get("key"),
         "score": round(normalized_score, 2),
+        "ranking_score": normalized_score,
         "raw_score": round(total_actual, 4),
         "maximum_score": round(total_possible, 4),
         "strict_exclusion": strict_exclusion,
@@ -299,6 +408,10 @@ def run_decision_stress_test(
 
     scenario_results = []
 
+    requirement_catalogue = _collect_requirement_catalogue(
+        model_explanations
+    )
+
     for scenario in SCENARIOS:
         model_results = []
 
@@ -306,6 +419,7 @@ def run_decision_stress_test(
             result = score_explanation_for_scenario(
                 explanation,
                 scenario,
+                requirement_catalogue,
             )
 
             model_results.append({
@@ -315,22 +429,33 @@ def run_decision_stress_test(
 
         model_results.sort(
             key=lambda item: (
-                -item["score"],
+                -item["ranking_score"],
                 item["model_id"].casefold(),
             )
         )
 
+        eligible_results = [
+            result
+            for result in model_results
+            if not result["strict_exclusion"]
+        ]
+
         best_score = (
-            model_results[0]["score"]
-            if model_results
-            else 0.0
+            eligible_results[0]["ranking_score"]
+            if eligible_results
+            else None
         )
 
         winners = [
             result["model_id"]
-            for result in model_results
-            if result["score"] == best_score
+            for result in eligible_results
+            if result["ranking_score"] == best_score
         ]
+
+        all_models_excluded = (
+            bool(model_results)
+            and not eligible_results
+        )
 
         current_rank = 0
         previous_score = None
@@ -339,9 +464,9 @@ def run_decision_stress_test(
             model_results,
             start=1,
         ):
-            if result["score"] != previous_score:
+            if result["ranking_score"] != previous_score:
                 current_rank = position
-                previous_score = result["score"]
+                previous_score = result["ranking_score"]
 
             result["rank"] = current_rank
 
@@ -351,6 +476,7 @@ def run_decision_stress_test(
             "description": scenario["description"],
             "winners": winners,
             "is_tie": len(winners) > 1,
+            "all_models_excluded": all_models_excluded,
             "model_results": model_results,
         })
 
@@ -371,11 +497,16 @@ def summarize_decision_stress_test(
 
     outright_win_counts = {}
     tied_scenario_count = 0
+    no_winner_scenario_count = 0
 
     for scenario in scenarios:
         winners = scenario.get("winners", [])
 
-        if len(winners) != 1:
+        if not winners:
+            no_winner_scenario_count += 1
+            continue
+
+        if len(winners) > 1:
             tied_scenario_count += 1
             continue
 
@@ -395,6 +526,7 @@ def summarize_decision_stress_test(
             "tied_scenario_count": 0,
             "is_tied": False,
             "all_scenarios_tied": False,
+            "no_winner_scenario_count": no_winner_scenario_count,
         }
 
     all_scenarios_tied = (
@@ -421,6 +553,7 @@ def summarize_decision_stress_test(
             "tied_scenario_count": tied_scenario_count,
             "is_tied": True,
             "all_scenarios_tied": True,
+            "no_winner_scenario_count": no_winner_scenario_count,
         }
 
     highest_win_count = max(
@@ -458,6 +591,7 @@ def summarize_decision_stress_test(
         "tied_scenario_count": tied_scenario_count,
         "is_tied": len(leaders) > 1,
         "all_scenarios_tied": False,
+        "no_winner_scenario_count": no_winner_scenario_count,
     }
 def collect_essential_requirements(
     model_explanations: dict[str, dict],

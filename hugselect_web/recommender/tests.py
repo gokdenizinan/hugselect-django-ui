@@ -251,6 +251,14 @@ class DecisionStressViewTests(TestCase):
             response,
             "Why these models remain tied",
         )
+        self.assertContains(
+            response,
+            "Weighted requirement match",
+        )
+        self.assertNotContains(
+            response,
+            "Scenario score",
+        )
     def test_explains_evidence_equivalent_models(self):
         identical_explanation = {
             "per_feature": [
@@ -323,6 +331,64 @@ class DecisionStressViewTests(TestCase):
             response,
             "benchmark performance",
         )
+    def test_displays_no_eligible_model_when_all_are_excluded(self):
+        missing_essential_explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text generation",
+                            "effective_weight": 10.0,
+                            "matched": False,
+                            "score": 0.0,
+                        }
+                    ],
+                }
+            ]
+        }
+
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "I need a text-generation model",
+            "search_mode": "feature-based",
+            "explanations": {
+                "author/model-a": missing_essential_explanation,
+                "author/model-b": missing_essential_explanation,
+            },
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("decision_stress"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        strict_essentials = next(
+            scenario
+            for scenario in response.context[
+                "stress_result"
+            ]["scenarios"]
+            if scenario["key"] == "strict_essentials"
+        )
+
+        self.assertTrue(
+            strict_essentials["all_models_excluded"]
+        )
+        self.assertEqual(
+            strict_essentials["winners"],
+            [],
+        )
+        self.assertContains(
+            response,
+            "No eligible model",
+        )
 
 class DecisionStressPolicyTests(SimpleTestCase):
     def test_defines_five_unique_scenarios(self):
@@ -357,6 +423,24 @@ class DecisionStressPolicyTests(SimpleTestCase):
         self.assertEqual(
             category_for_feature("unrecognized_feature"),
             "unknown",
+        )
+    def test_names_current_scenario_as_evidence_baseline(self):
+        current_scenario = next(
+            scenario
+            for scenario in SCENARIOS
+            if scenario["key"] == "current"
+        )
+
+        self.assertEqual(
+            current_scenario["label"],
+            "Starting priorities",
+        )
+        self.assertEqual(
+            current_scenario["description"],
+            (
+                "Uses the requirements from your search with "
+                "the importance HugSelect originally assigned to them."
+            ),
         )
 
 class DecisionStressScoringTests(SimpleTestCase):
@@ -459,6 +543,85 @@ class DecisionStressScoringTests(SimpleTestCase):
             ],
         )
 
+    def test_keeps_same_text_in_different_feature_types_separate(
+        self,
+    ):
+        explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "objective",
+                            "user_value": "apache-2.0",
+                            "effective_weight": 10.0,
+                            "matched": False,
+                            "score": 0.0,
+                        }
+                    ],
+                },
+                {
+                    "effective_weight": 8.0,
+                    "matches": [
+                        {
+                            "feature_key": "license_name",
+                            "user_value": "apache-2.0",
+                            "effective_weight": 8.0,
+                            "matched": True,
+                            "score": 8.0,
+                        }
+                    ],
+                },
+            ]
+        }
+
+        starting_scenario = next(
+            scenario
+            for scenario in SCENARIOS
+            if scenario["key"] == "current"
+        )
+
+        result = score_explanation_for_scenario(
+            explanation,
+            starting_scenario,
+        )
+
+        self.assertEqual(result["raw_score"], 8.0)
+        self.assertEqual(result["maximum_score"], 18.0)
+        self.assertEqual(result["score"], 44.44)
+    def test_deduplicates_true_feature_aliases(self):
+        explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text-generation",
+                            "matched": True,
+                            "score": 10,
+                            "effective_weight": 10,
+                        },
+                        {
+                            "feature_key": "task_alias",
+                            "user_value": "text-generation",
+                            "matched": True,
+                            "score": 10,
+                            "effective_weight": 10,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        result = score_explanation_for_scenario(
+            explanation,
+            SCENARIOS[0],
+        )
+
+        self.assertEqual(result["raw_score"], 10)
+        self.assertEqual(result["maximum_score"], 10)
+        self.assertEqual(result["score"], 100)
 class DecisionStressRankingTests(SimpleTestCase):
     def test_ranks_models_across_all_scenarios(self):
         model_explanations = {
@@ -552,7 +715,104 @@ class DecisionStressRankingTests(SimpleTestCase):
             preference_first["winners"],
             ["author/model-b"],
         )
+    def test_missing_shared_requirement_counts_against_model(
+    self,
+        ):
+        model_explanations = {
+            "author/model-a": {
+                "per_feature": [
+                    {
+                        "effective_weight": 10.0,
+                        "matches": [
+                            {
+                                "feature_key": "task",
+                                "user_value": "text generation",
+                                "effective_weight": 10.0,
+                                "matched": True,
+                                "score": 10.0,
+                            }
+                        ],
+                    },
+                    {
+                        "effective_weight": 8.0,
+                        "matches": [
+                            {
+                                "feature_key": "license_name",
+                                "user_value": "apache-2.0",
+                                "effective_weight": 8.0,
+                                "matched": True,
+                                "score": 8.0,
+                            }
+                        ],
+                    },
+                ]
+            },
+            "author/model-b": {
+                "per_feature": [
+                    {
+                        "effective_weight": 8.0,
+                        "matches": [
+                            {
+                                "feature_key": "license_name",
+                                "user_value": "apache-2.0",
+                                "effective_weight": 8.0,
+                                "matched": True,
+                                "score": 8.0,
+                            }
+                        ],
+                    },
+                ]
+            },
+        }
 
+        result = run_decision_stress_test(
+            model_explanations
+        )
+
+        starting_priorities = next(
+            scenario
+            for scenario in result["scenarios"]
+            if scenario["key"] == "current"
+        )
+
+        starting_results_by_model = {
+            model_result["model_id"]: model_result
+            for model_result in starting_priorities[
+                "model_results"
+            ]
+        }
+
+        model_b_starting_result = (
+            starting_results_by_model["author/model-b"]
+        )
+
+        self.assertEqual(
+            model_b_starting_result["maximum_score"],
+            18.0,
+        )
+        self.assertEqual(
+            model_b_starting_result["score"],
+            44.44,
+        )
+
+        strict_essentials = next(
+            scenario
+            for scenario in result["scenarios"]
+            if scenario["key"] == "strict_essentials"
+        )
+
+        strict_results_by_model = {
+            model_result["model_id"]: model_result
+            for model_result in strict_essentials[
+                "model_results"
+            ]
+        }
+
+        self.assertTrue(
+            strict_results_by_model[
+                "author/model-b"
+            ]["strict_exclusion"]
+        )
     def test_preserves_joint_winners(self):
         identical_explanation = {
             "per_feature": [
@@ -592,6 +852,92 @@ class DecisionStressRankingTests(SimpleTestCase):
                 for model in current["model_results"]
             ],
             [1, 1],
+        )
+    def test_strict_essentials_has_no_winner_when_all_models_are_excluded(
+        self,
+    ):
+        missing_essential_explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text generation",
+                            "effective_weight": 10.0,
+                            "matched": False,
+                            "score": 0.0,
+                        }
+                    ],
+                }
+            ]
+        }
+
+        result = run_decision_stress_test({
+            "author/model-a": missing_essential_explanation,
+            "author/model-b": missing_essential_explanation,
+        })
+
+        strict_essentials = next(
+            scenario
+            for scenario in result["scenarios"]
+            if scenario["key"] == "strict_essentials"
+        )
+
+        self.assertEqual(
+            strict_essentials["winners"],
+            [],
+        )
+        self.assertTrue(
+            strict_essentials["all_models_excluded"]
+        )
+    def test_uses_unrounded_scores_to_avoid_false_ties(self):
+        def explanation_with_score(score):
+            return {
+                "per_feature": [
+                    {
+                        "effective_weight": 100.0,
+                        "matches": [
+                            {
+                                "feature_key": "task",
+                                "user_value": "text generation",
+                                "effective_weight": 100.0,
+                                "matched": True,
+                                "score": score,
+                            }
+                        ],
+                    }
+                ]
+            }
+
+        result = run_decision_stress_test({
+            "author/model-a": explanation_with_score(
+                73.334
+            ),
+            "author/model-b": explanation_with_score(
+                73.326
+            ),
+        })
+
+        starting_priorities = next(
+            scenario
+            for scenario in result["scenarios"]
+            if scenario["key"] == "current"
+        )
+
+        self.assertEqual(
+            [
+                model["score"]
+                for model in starting_priorities["model_results"]
+            ],
+            [73.33, 73.33],
+        )
+        self.assertEqual(
+            starting_priorities["winners"],
+            ["author/model-a"],
+        )
+        self.assertFalse(
+            starting_priorities["is_tie"]
         )
 
 class DecisionStressSummaryTests(SimpleTestCase):
@@ -687,5 +1033,41 @@ class DecisionStressSummaryTests(SimpleTestCase):
             5,
         )
         self.assertTrue(
+            summary["all_scenarios_tied"]
+        )
+
+    def test_does_not_count_no_eligible_winner_as_a_tie(self):
+        stress_result = {
+            "scenarios": [
+                {
+                    "winners": [
+                        "author/model-a",
+                        "author/model-b",
+                    ],
+                    "all_models_excluded": False,
+                }
+                for _ in range(4)
+            ]
+            + [
+                {
+                    "winners": [],
+                    "all_models_excluded": True,
+                }
+            ]
+        }
+
+        summary = summarize_decision_stress_test(
+            stress_result
+        )
+
+        self.assertEqual(
+            summary["tied_scenario_count"],
+            4,
+        )
+        self.assertEqual(
+            summary["no_winner_scenario_count"],
+            1,
+        )
+        self.assertFalse(
             summary["all_scenarios_tied"]
         )

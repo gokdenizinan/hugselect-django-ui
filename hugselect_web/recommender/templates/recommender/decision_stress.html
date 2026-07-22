@@ -228,12 +228,22 @@
                                     </div>
 
                                     <div class="stress-scenario__winner">
-                                        <span>Winner</span>
+                                        <span>
+                                            {% if scenario.all_models_excluded %}
+                                                Outcome
+                                            {% else %}
+                                                Winner
+                                            {% endif %}
+                                        </span>
 
                                         <strong>
-                                            {% for model_id in scenario.winners %}
-                                                {{ model_id }}{% if not forloop.last %}, {% endif %}
-                                            {% endfor %}
+                                            {% if scenario.all_models_excluded %}
+                                                No eligible model
+                                            {% else %}
+                                                {% for model_id in scenario.winners %}
+                                                    {{ model_id }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
                                         </strong>
                                     </div>
                                 </div>
@@ -244,7 +254,7 @@
                                             <tr>
                                                 <th>Rank</th>
                                                 <th>Model</th>
-                                                <th>Scenario score</th>
+                                                <th>Weighted requirement match</th>
                                                 <th>Essential rule</th>
                                             </tr>
                                         </thead>
