@@ -278,9 +278,27 @@
                                                             </strong>
                                                         </div>
                                                     </td>
-
                                                     <td>
                                                         {{ result.score|floatformat:1 }}%
+
+                                                        {% if scenario.key != "strict_essentials" %}
+                                                            {% if result.missing_requirements %}
+                                                                <div class="stress-exclusion__reason">
+                                                                    <strong>
+                                                                        Missing stored evidence
+                                                                    </strong>
+
+                                                                    <ul>
+                                                                        {% for requirement in result.missing_requirements %}
+                                                                            <li>
+                                                                                {{ requirement.feature_key|title }}:
+                                                                                {{ requirement.user_value }}
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endif %}
                                                     </td>
 
                                                     <td>

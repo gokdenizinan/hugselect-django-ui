@@ -241,6 +241,7 @@ def score_explanation_for_scenario(
     best_by_requirement = {}
     essential_statuses = {}
     unknown_features = set()
+    seen_requirement_keys = set()
 
     for requirement_key, requirement in (
         requirement_catalogue.items()
@@ -304,6 +305,9 @@ def score_explanation_for_scenario(
                 feature_key,
                 match.get("user_value"),
             )
+            seen_requirement_keys.add(
+                requirement_key
+            )
 
             candidate = {
                 "feature_key": feature_key,
@@ -358,6 +362,15 @@ def score_explanation_for_scenario(
         if total_possible > 0
         else 0.0
     )
+    missing_requirements = [
+        {
+            "feature_key": requirement["feature_key"],
+            "user_value": requirement["user_value"],
+        }
+        for requirement_key, requirement
+        in requirement_catalogue.items()
+        if requirement_key not in seen_requirement_keys
+    ]
 
     missed_essentials = [
         {
@@ -396,6 +409,7 @@ def score_explanation_for_scenario(
         "maximum_score": round(total_possible, 4),
         "strict_exclusion": strict_exclusion,
         "missed_essentials": missed_essentials,
+        "missing_requirements": missing_requirements,
         "category_contributions": category_contributions,
         "unknown_features": sorted(unknown_features),
     }

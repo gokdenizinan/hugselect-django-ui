@@ -259,6 +259,79 @@ class DecisionStressViewTests(TestCase):
             response,
             "Scenario score",
         )
+    def test_displays_missing_stored_evidence(self):
+        model_a_explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text generation",
+                            "effective_weight": 10.0,
+                            "matched": True,
+                            "score": 10.0,
+                        }
+                    ],
+                },
+                {
+                    "effective_weight": 8.0,
+                    "matches": [
+                        {
+                            "feature_key": "license_name",
+                            "user_value": "apache-2.0",
+                            "effective_weight": 8.0,
+                            "matched": True,
+                            "score": 8.0,
+                        }
+                    ],
+                },
+            ]
+        }
+
+        model_b_explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 8.0,
+                    "matches": [
+                        {
+                            "feature_key": "license_name",
+                            "user_value": "apache-2.0",
+                            "effective_weight": 8.0,
+                            "matched": True,
+                            "score": 8.0,
+                        }
+                    ],
+                }
+            ]
+        }
+
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "Text generation with Apache license",
+            "search_mode": "feature-based",
+            "explanations": {
+                "author/model-a": model_a_explanation,
+                "author/model-b": model_b_explanation,
+            },
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("decision_stress"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "Missing stored evidence",
+        )
     def test_explains_evidence_equivalent_models(self):
         identical_explanation = {
             "per_feature": [
@@ -793,6 +866,15 @@ class DecisionStressRankingTests(SimpleTestCase):
         self.assertEqual(
             model_b_starting_result["score"],
             44.44,
+        )
+        self.assertEqual(
+            model_b_starting_result["missing_requirements"],
+            [
+                {
+                    "feature_key": "task",
+                    "user_value": "text generation",
+                }
+            ],
         )
 
         strict_essentials = next(
