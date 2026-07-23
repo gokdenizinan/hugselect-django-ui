@@ -390,10 +390,42 @@ def score_explanation_for_scenario(
         normalized_score = 0.0
 
     category_contributions = {
+    "essential": 0.0,
+    "preference": 0.0,
+    "functional": 0.0,
+    "quality": 0.0,
+    }
+
+    category_maximums = {
         "essential": 0.0,
         "preference": 0.0,
         "functional": 0.0,
         "quality": 0.0,
+    }
+
+    for item in best_by_requirement.values():
+        category = item["category"]
+
+        if category not in category_contributions:
+            continue
+
+        category_contributions[category] += item["actual"]
+        category_maximums[category] += item["possible"]
+
+    category_scores = {
+        category: (
+            min(
+                100.0,
+                (
+                    category_contributions[category]
+                    / category_maximums[category]
+                )
+                * 100.0,
+            )
+            if category_maximums[category] > 0
+            else 0.0
+        )
+        for category in category_contributions
     }
 
     for item in best_by_requirement.values():
@@ -411,6 +443,14 @@ def score_explanation_for_scenario(
         "missed_essentials": missed_essentials,
         "missing_requirements": missing_requirements,
         "category_contributions": category_contributions,
+        "category_maximums": {
+        category: round(value, 4)
+        for category, value in category_maximums.items()
+    },
+    "category_scores": {
+        category: round(value, 2)
+        for category, value in category_scores.items()
+    },
         "unknown_features": sorted(unknown_features),
     }
 def run_decision_stress_test(

@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pathlib import Path
 
 from elasticsearch import Elasticsearch
@@ -231,7 +232,6 @@ def _extract_feature_bundle(user_text):
         functional=Ffeatures,
     )
 
-
 def _make_feature_search_builder(limit=10):
     from EE_Query_Builder_Clean_modified_v3_dedupfix import (
         ESQueryBuilderAdaptive,
@@ -296,7 +296,6 @@ def _make_feature_search_builder(limit=10):
         "prefer": 1.0,
         "avoid": 0.0,
     }
-
     return ESQueryBuilderAdaptive(
         mapping=query_mapping,
         target_hits=50,
@@ -317,16 +316,32 @@ def search_models_feature_based(user_text, limit=10):
     if not user_text:
         return []
 
+    total_start = time.perf_counter()
+
     es = Elasticsearch(ES_URL)
 
+    index_check_start = time.perf_counter()
     if not es.indices.exists(index=INDEX_NAME):
         raise RuntimeError(f"Elasticsearch index does not exist: {INDEX_NAME}")
+    index_check_seconds = time.perf_counter() - index_check_start
 
+    feature_extraction_start = time.perf_counter()
     bundle = _extract_feature_bundle(user_text)
+    feature_extraction_seconds = (
+        time.perf_counter() - feature_extraction_start
+    )
 
+    builder_creation_start = time.perf_counter()
     builder = _make_feature_search_builder(limit=limit)
-    prebuilt_groups = builder.precompute_feature_group_cache(bundle)
+    builder_creation_seconds = (
+        time.perf_counter() - builder_creation_start
+    )
 
+    precompute_start = time.perf_counter()
+    prebuilt_groups = builder.precompute_feature_group_cache(bundle)
+    precompute_seconds = time.perf_counter() - precompute_start
+
+    search_start = time.perf_counter()
     response, final_query, final_feature_groups = builder.search(
         es_client=es,
         index=INDEX_NAME,
@@ -334,6 +349,9 @@ def search_models_feature_based(user_text, limit=10):
         prebuilt_groups=prebuilt_groups,
         include_explain=False,
     )
+    search_seconds = time.perf_counter() - search_start
+
+    explanations_start = time.perf_counter()
     for hit in response.get("hits", {}).get("hits", []):
         source = hit.get("_source", {}) or {}
 
@@ -342,4 +360,19 @@ def search_models_feature_based(user_text, limit=10):
             source,
             prebuilt_groups=final_feature_groups,
         )
+    explanations_seconds = time.perf_counter() - explanations_start
+
+    total_seconds = time.perf_counter() - total_start
+
+    print(
+        "Feature search timings | "
+        f"index_check={index_check_seconds:.3f}s | "
+        f"feature_extraction={feature_extraction_seconds:.3f}s | "
+        f"builder_creation={builder_creation_seconds:.3f}s | "
+        f"precompute={precompute_seconds:.3f}s | "
+        f"search={search_seconds:.3f}s | "
+        f"explanations={explanations_seconds:.3f}s | "
+        f"total={total_seconds:.3f}s"
+    )
+
     return clean_results(response, limit=limit)

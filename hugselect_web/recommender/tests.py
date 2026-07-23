@@ -574,7 +574,78 @@ class DecisionStressScoringTests(SimpleTestCase):
         self.assertEqual(result["maximum_score"], 30.0)
         self.assertEqual(result["score"], 73.33)
         self.assertFalse(result["strict_exclusion"])
+    def test_calculates_percentage_score_for_each_category(self):
+        explanation = {
+            "per_feature": [
+                {
+                    "effective_weight": 10.0,
+                    "matches": [
+                        {
+                            "feature_key": "task",
+                            "user_value": "text generation",
+                            "effective_weight": 10.0,
+                            "matched": True,
+                            "score": 10.0,
+                        }
+                    ],
+                },
+                {
+                    "effective_weight": 8.0,
+                    "matches": [
+                        {
+                            "feature_key": "license_name",
+                            "user_value": "apache-2.0",
+                            "effective_weight": 8.0,
+                            "matched": False,
+                            "score": 0.0,
+                        }
+                    ],
+                },
+                {
+                    "effective_weight": 12.0,
+                    "matches": [
+                        {
+                            "feature_key": "functional",
+                            "user_value": "answer questions",
+                            "effective_weight": 12.0,
+                            "matched": True,
+                            "score": 12.0,
+                        }
+                    ],
+                },
+            ]
+        }
 
+        current_scenario = next(
+            scenario
+            for scenario in SCENARIOS
+            if scenario["key"] == "current"
+        )
+
+        result = score_explanation_for_scenario(
+            explanation,
+            current_scenario,
+        )
+
+        self.assertEqual(
+            result["category_scores"],
+            {
+                "essential": 100.0,
+                "preference": 0.0,
+                "functional": 100.0,
+                "quality": 0.0,
+            },
+        )
+
+        self.assertEqual(
+            result["category_maximums"],
+            {
+                "essential": 10.0,
+                "preference": 8.0,
+                "functional": 12.0,
+                "quality": 0.0,
+            },
+        )
     def test_strict_essentials_excludes_missing_essential(self):
         explanation = {
             "per_feature": [

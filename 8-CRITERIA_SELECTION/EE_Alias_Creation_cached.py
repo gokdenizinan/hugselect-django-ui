@@ -15,7 +15,6 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-
 @dataclass(frozen=True)
 class SynonymAlias:
     value: str

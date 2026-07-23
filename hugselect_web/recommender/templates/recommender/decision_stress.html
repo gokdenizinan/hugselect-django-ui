@@ -254,7 +254,11 @@
                                             <tr>
                                                 <th>Rank</th>
                                                 <th>Model</th>
-                                                <th>Weighted requirement match</th>
+                                                <th>Overall</th>
+                                                <th>Essential</th>
+                                                <th>Preference</th>
+                                                <th>Functional</th>
+                                                <th>Quality</th>
                                                 <th>Essential rule</th>
                                             </tr>
                                         </thead>
@@ -300,7 +304,37 @@
                                                             {% endif %}
                                                         {% endif %}
                                                     </td>
+                                                    <td>
+                                                        {% if result.category_maximums.essential > 0 %}
+                                                            {{ result.category_scores.essential|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
 
+                                                    <td>
+                                                        {% if result.category_maximums.preference > 0 %}
+                                                            {{ result.category_scores.preference|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.category_maximums.functional > 0 %}
+                                                            {{ result.category_scores.functional|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.category_maximums.quality > 0 %}
+                                                            {{ result.category_scores.quality|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
                                                     <td>
                                                         {% if scenario.key == "strict_essentials" %}
                                                             {% if result.strict_exclusion %}
