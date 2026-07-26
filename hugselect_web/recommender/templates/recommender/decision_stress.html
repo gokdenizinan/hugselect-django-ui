@@ -248,6 +248,20 @@
                                     </div>
                                 </div>
 
+                                {% if scenario.outcome_explanation %}
+                                <div class="stress-outcome-explanation">
+                                    <strong>
+                                        {{ scenario.outcome_explanation.title }}
+                                    </strong>
+
+                                    <p>
+                                        {{ scenario.outcome_explanation.summary }}
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                            <div class="comparison-table-wrapper">
+
                                 <div class="comparison-table-wrapper">
                                     <table class="comparison-table">
                                         <thead>

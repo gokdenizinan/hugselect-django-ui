@@ -428,10 +428,6 @@ def score_explanation_for_scenario(
         for category in category_contributions
     }
 
-    for item in best_by_requirement.values():
-        category_contributions[item["category"]] += item[
-            "actual"
-        ]
 
     return {
         "scenario_key": scenario.get("key"),
@@ -451,8 +447,128 @@ def score_explanation_for_scenario(
         category: round(value, 2)
         for category, value in category_scores.items()
     },
-        "unknown_features": sorted(unknown_features),
+    "unknown_features": sorted(unknown_features),
     }
+
+
+def explain_scenario_outcome(
+    model_results: list[dict],
+    winners: list[str],
+    all_models_excluded: bool,
+) -> dict:
+    """
+    Build a short explanation for one scenario outcome.
+    """
+
+    if all_models_excluded:
+        return {
+            "kind": "no_eligible_model",
+            "title": "No eligible model",
+            "summary": (
+                "Every model missed at least one essential requirement."
+            ),
+        }
+
+    if len(winners) > 1:
+        return {
+            "kind": "tie",
+            "title": "Tied result",
+            "summary": (
+                "The leading models have the same scenario score."
+            ),
+        }
+
+    if len(winners) == 1:
+        winner_id = winners[0]
+
+        winner_result = next(
+            (
+                result
+                for result in model_results
+                if result.get("model_id") == winner_id
+            ),
+            None,
+        )
+
+        runner_up = next(
+            (
+                result
+                for result in model_results
+                if (
+                    result.get("model_id") != winner_id
+                    and not result.get("strict_exclusion", False)
+                )
+            ),
+            None,
+        )
+
+        summary = (
+            "This model has the highest score under this scenario."
+        )
+
+        if winner_result and runner_up:
+            category_labels = {
+                "essential": "Essential",
+                "preference": "Preference",
+                "functional": "Functional",
+                "quality": "Quality",
+            }
+
+            advantages = []
+
+            for category, label in category_labels.items():
+                maximum = winner_result.get(
+                    "category_maximums",
+                    {},
+                ).get(category, 0.0)
+
+                if maximum <= 0:
+                    continue
+
+                winner_score = winner_result.get(
+                    "category_scores",
+                    {},
+                ).get(category, 0.0)
+
+                runner_up_score = runner_up.get(
+                    "category_scores",
+                    {},
+                ).get(category, 0.0)
+
+                difference = winner_score - runner_up_score
+
+                if difference > 0:
+                    advantages.append(
+                        (difference, label)
+                    )
+
+            if advantages:
+                strongest_difference, strongest_label = max(
+                    advantages,
+                    key=lambda item: item[0],
+                )
+
+                summary = (
+                    f"Its clearest advantage over "
+                    f"{runner_up['model_id']} is {strongest_label} "
+                    f"({strongest_difference:.1f} percentage points)."
+                )
+
+        return {
+            "kind": "winner",
+            "title": f"Why {winner_id} wins",
+            "summary": summary,
+        }
+
+    return {
+        "kind": "no_result",
+        "title": "No result",
+        "summary": (
+            "No result"
+        ),
+    }
+
+
 def run_decision_stress_test(
     model_explanations: dict[str, dict],
 ) -> dict:
@@ -524,6 +640,12 @@ def run_decision_stress_test(
 
             result["rank"] = current_rank
 
+        outcome_explanation = explain_scenario_outcome(
+            model_results=model_results,
+            winners=winners,
+            all_models_excluded=all_models_excluded,
+        )
+
         scenario_results.append({
             "key": scenario["key"],
             "label": scenario["label"],
@@ -532,6 +654,7 @@ def run_decision_stress_test(
             "is_tie": len(winners) > 1,
             "all_models_excluded": all_models_excluded,
             "model_results": model_results,
+            "outcome_explanation": outcome_explanation,
         })
 
     return {

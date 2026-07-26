@@ -6,6 +6,7 @@ from .services import build_model_graph
 from .decision_stress import (
     SCENARIOS,
     category_for_feature,
+    explain_scenario_outcome,
     run_decision_stress_test,
     score_explanation_for_scenario,
     summarize_decision_stress_test,
@@ -1223,4 +1224,99 @@ class DecisionStressSummaryTests(SimpleTestCase):
         )
         self.assertFalse(
             summary["all_scenarios_tied"]
+        )
+
+class DecisionStressOutcomeExplanationTests(SimpleTestCase):
+    def test_explains_single_winner(self):
+        result = explain_scenario_outcome(
+            model_results=[],
+            winners=["model-a"],
+            all_models_excluded=False,
+        )
+
+        self.assertEqual(result["kind"], "winner")
+        self.assertEqual(result["title"], "Why model-a wins")
+        self.assertEqual(result["summary"], "This model has the highest score under this scenario.")
+
+    def test_explains_tied_winners(self):
+        result = explain_scenario_outcome(
+            model_results=[],
+            winners=["model-a", "model-b"],
+            all_models_excluded=False,
+        )
+
+        self.assertEqual(result["kind"], "tie")
+        self.assertEqual(result["title"], "Tied result")
+        self.assertEqual(result["summary"], "The leading models have the same scenario score.")
+
+    def test_explains_when_all_models_are_excluded(self):
+        result = explain_scenario_outcome(
+            model_results=[],
+            winners=[],
+            all_models_excluded=True,
+        )
+
+        self.assertEqual(result["kind"], "no_eligible_model")
+        self.assertEqual(result["title"], "No eligible model")
+        self.assertEqual(result["summary"], "Every model missed at least one essential requirement.")
+
+    def test_explains_when_no_result_is_available(self):
+        result = explain_scenario_outcome(
+            model_results=[],
+            winners=[],
+            all_models_excluded=False,
+        )
+
+        self.assertEqual(result["kind"], "no_result")
+        self.assertEqual(result["title"], "No result")
+        self.assertEqual(result["summary"], "No result")
+
+    def test_explains_winners_strongest_category_advantage(self):
+        model_results = [
+            {
+                "model_id": "model-a",
+                "strict_exclusion": False,
+                "category_scores": {
+                    "essential": 100.0,
+                    "preference": 50.0,
+                    "functional": 80.0,
+                    "quality": 0.0,
+                },
+                "category_maximums": {
+                    "essential": 10.0,
+                    "preference": 8.0,
+                    "functional": 12.0,
+                    "quality": 0.0,
+                },
+            },
+            {
+                "model_id": "model-b",
+                "strict_exclusion": False,
+                "category_scores": {
+                    "essential": 80.0,
+                    "preference": 60.0,
+                    "functional": 70.0,
+                    "quality": 0.0,
+                },
+                "category_maximums": {
+                    "essential": 10.0,
+                    "preference": 8.0,
+                    "functional": 12.0,
+                    "quality": 0.0,
+                },
+            },
+        ]
+
+        result = explain_scenario_outcome(
+            model_results=model_results,
+            winners=["model-a"],
+            all_models_excluded=False,
+        )
+
+        self.assertEqual(
+            result["summary"],
+            (
+                "Its clearest advantage over model-b is Essential "
+                "(20.0 percentage points)."
+            ),
         )

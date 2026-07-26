@@ -667,3 +667,18 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     line-height: 1.35;
     overflow-wrap: anywhere;
 }
+
+.stress-outcome-explanation {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid #d9dee7;
+}
+
+.stress-outcome-explanation strong {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.stress-outcome-explanation p {
+    margin: 0;
+}
