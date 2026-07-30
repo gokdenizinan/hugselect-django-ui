@@ -54,8 +54,34 @@
                     License: {{ model.license|default:"Unknown" }}
                 </span>
 
-                <span class="pill">
-                    Library: {{ model.library_name|default:"Unknown" }}
+                <span class="pill metadata-tooltip">
+                    <span>
+                        Library:
+                        {{ model.library_name|default:"Unknown" }}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="metadata-tooltip__trigger"
+                        aria-label="Explain library metadata"
+                        aria-describedby="library-tooltip"
+                    >
+                        i
+                    </button>
+
+                    <span
+                        id="library-tooltip"
+                        class="metadata-tooltip__content"
+                        role="tooltip"
+                    >
+                    The software library used to load, run,
+                    or fine-tune the model.
+
+                    {% if model.library_name == "transformers" %}
+                        “transformers” refers to Hugging Face’s
+                        library for working with pretrained models.
+                    {% endif %}
+                    </span>
                 </span>
 
                 <span class="pill">

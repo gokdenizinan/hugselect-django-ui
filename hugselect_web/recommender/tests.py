@@ -52,6 +52,86 @@ class BuildModelGraphTests(SimpleTestCase):
             },
             graph["edges"],
         )
+class ModelDetailViewTests(TestCase):
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_library_metadata(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-a",
+            "library_name": "transformers",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-a"],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"The software library used to load, run,\s+"
+                r"or fine-tune the model\."
+            ),
+        )
+
+        self.assertRegex(
+            response_html,
+        (
+            r"“transformers” refers to\s+"
+            r"Hugging Face’s\s+"
+            r"library for working with pretrained models\."
+        ),
+    )
+
+        self.assertContains(
+            response,
+            'aria-describedby="library-tooltip"',
+        )
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_does_not_describe_other_libraries_as_transformers(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-b",
+            "library_name": "diffusers",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-b"],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "diffusers",
+        )
+        self.assertNotContains(
+            response,
+            "“transformers” refers to",
+        )
 class CompareModelsViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(
