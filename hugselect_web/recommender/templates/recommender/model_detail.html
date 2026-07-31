@@ -72,8 +72,31 @@
                     </span>
                 </span>
 
-                <span class="pill">
-                    License: {{ model.license|default:"Unknown" }}
+                <span class="pill metadata-tooltip">
+                    <span>
+                        License:
+                        {{ model.license|default:"Unknown" }}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="metadata-tooltip__trigger"
+                        aria-label="Explain license metadata"
+                        aria-describedby="license-tooltip"
+                    >
+                        i
+                    </button>
+
+                    <span
+                        id="license-tooltip"
+                        class="metadata-tooltip__content"
+                        role="tooltip"
+                    >
+                        The license describes the rules for using,
+                        modifying, and redistributing the model.
+                        Exact permissions and obligations depend on
+                        the specific license shown.
+                    </span>
                 </span>
 
                 <span class="pill metadata-tooltip">

@@ -179,6 +179,51 @@ class ModelDetailViewTests(TestCase):
             response,
             'aria-describedby="task-tooltip"',
         )
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_license_metadata(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-d",
+            "license": "apache-2.0",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-d"],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "apache-2.0",
+        )
+
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"The license describes the rules for using,\s+"
+                r"modifying, and redistributing the model\.\s+"
+                r"Exact permissions and obligations depend on\s+"
+                r"the specific license shown\."
+            ),
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="license-tooltip"',
+        )
 class CompareModelsViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(
