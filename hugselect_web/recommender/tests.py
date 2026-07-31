@@ -542,6 +542,66 @@ class CompareModelsViewTests(TestCase):
             response,
             'aria-describedby="comparison-model-type-tooltip-2"',
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_feature_match_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+            },
+            {
+                "model_id": "author/model-b",
+            },
+        ]
+
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "English text-generation model",
+            "search_mode": "feature-based",
+            "scores": {
+                "author/model-a": 90.0,
+                "author/model-b": 80.0,
+            },
+            "explanations": {},
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "90.0%")
+        self.assertContains(response, "80.0%")
+
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"Feature match shows how much of your weighted\s+"
+                r"requirements this model satisfies\.\s+"
+                r"It does not measure general model quality\s+"
+                r"or benchmark performance\."
+            ),
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-feature-match-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-feature-match-tooltip-2"',
+        )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(
