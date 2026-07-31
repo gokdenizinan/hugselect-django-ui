@@ -364,6 +364,50 @@ class CompareModelsViewTests(TestCase):
                 },
             ],
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_task_metadata_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+                "pipeline_tag": "text-generation",
+            },
+            {
+                "model_id": "author/model-b",
+                "pipeline_tag": "summarization",
+            },
+        ]
+
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "text-generation",
+        )
+        self.assertContains(
+            response,
+            "summarization",
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-task-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-task-tooltip-2"',
+        )
+
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(

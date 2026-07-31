@@ -75,7 +75,29 @@
                                     {{ model.author|default:"Unknown" }}
                                 </dd>
 
-                                <dt>Task</dt>
+                                <dt class="metadata-tooltip">
+                                    <span>Task</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain task metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-task-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-task-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The task describes the model's primary capability
+                                        on Hugging Face, such as text generation,
+                                        summarization, translation, or question answering.
+                                    </span>
+                                </dt>
+
                                 <dd>
                                     {{ model.pipeline_tag|default:"Unknown" }}
                                 </dd>
