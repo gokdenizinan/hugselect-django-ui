@@ -236,6 +236,41 @@ class CompareModelsViewTests(TestCase):
             response,
             "Please select two or three models to compare.",
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_library_metadata_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+                "library_name": "transformers",
+            },
+            {
+                "model_id": "author/model-b",
+                "library_name": "diffusers",
+            },
+        ]
+
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-library-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-library-tooltip-2"',
+        )
 
     @patch("recommender.views.get_model_by_id")
     def test_builds_feature_comparison_context(
