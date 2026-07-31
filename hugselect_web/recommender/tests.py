@@ -91,6 +91,179 @@ class SearchViewTooltipTests(TestCase):
             response,
             'aria-describedby="search-task-tooltip-2"',
         )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_explains_library_metadata_for_each_search_result(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "library_name": "transformers",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "library_name": "diffusers",
+                "score": 80.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {"query": "English text-generation model"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "transformers")
+        self.assertContains(response, "diffusers")
+
+        response_html = response.content.decode()
+        result_cards = response_html.split(
+            '<article class="result-card">'
+        )[1:]
+
+        self.assertEqual(len(result_cards), 2)
+        self.assertIn(
+            'aria-describedby="search-library-tooltip-1"',
+            result_cards[0],
+        )
+        self.assertIn(
+            'id="search-library-tooltip-1"',
+            result_cards[0],
+        )
+        self.assertRegex(
+            result_cards[0],
+            (
+                r"Library:\s+transformers[\s\S]*"
+                r"“transformers” refers to Hugging Face’s\s+"
+                r"library for working with pretrained models\."
+            ),
+        )
+        self.assertIn(
+            'aria-describedby="search-library-tooltip-2"',
+            result_cards[1],
+        )
+        self.assertIn(
+            'id="search-library-tooltip-2"',
+            result_cards[1],
+        )
+        self.assertRegex(result_cards[1], r"Library:\s+diffusers")
+        self.assertNotIn("“transformers” refers to", result_cards[1])
+        self.assertRegex(
+            response_html,
+            (
+                r"The software library used to load, run,\s+"
+                r"or fine-tune the model\."
+            ),
+        )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_explains_license_metadata_for_each_search_result(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "license": "apache-2.0",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "license": "bsd-3-clause",
+                "score": 80.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {"query": "English text-generation model"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "apache-2.0")
+        self.assertContains(response, "bsd-3-clause")
+        self.assertContains(
+            response,
+            'aria-describedby="search-license-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="search-license-tooltip-2"',
+        )
+        self.assertContains(response, 'id="search-license-tooltip-1"')
+        self.assertContains(response, 'id="search-license-tooltip-2"')
+
+        response_html = response.content.decode()
+        result_cards = response_html.split(
+            '<article class="result-card">'
+        )[1:]
+
+        self.assertRegex(result_cards[0], r"License:\s+apache-2\.0")
+        self.assertRegex(result_cards[1], r"License:\s+bsd-3-clause")
+        self.assertRegex(
+            response_html,
+            (
+                r"The license describes the rules for using,\s+"
+                r"modifying, and redistributing the model\.\s+"
+                r"Exact permissions and obligations depend on\s+"
+                r"the specific license shown\."
+            ),
+        )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_explains_feature_match_for_each_search_result(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "score": 80.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {"query": "English text-generation model"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "90.0%")
+        self.assertContains(response, "80.0%")
+        self.assertContains(
+            response,
+            'aria-describedby="search-feature-match-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="search-feature-match-tooltip-2"',
+        )
+        self.assertContains(
+            response,
+            'id="search-feature-match-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'id="search-feature-match-tooltip-2"',
+        )
+
+        response_html = response.content.decode()
+        self.assertRegex(
+            response_html,
+            (
+                r"Feature match shows how much of your weighted\s+"
+                r"requirements this model satisfies\. It does not\s+"
+                r"measure general model quality or benchmark performance\."
+            ),
+        )
+
 class ModelDetailViewTests(TestCase):
     @patch("recommender.views.build_model_graph")
     @patch("recommender.views.get_model_by_id")

@@ -177,12 +177,58 @@
                         Task: {{ result.pipeline_tag|default:"Unknown" }}
                     </span>
 
-                    <span class="pill">
-                        License: {{ result.license|default:"Unknown" }}
+                    <span class="pill metadata-tooltip">
+                        <span>
+                            License: {{ result.license|default:"Unknown" }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain license metadata for {{ result.model_id }}"
+                            aria-describedby="search-license-tooltip-{{ forloop.counter }}"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="search-license-tooltip-{{ forloop.counter }}"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            The license describes the rules for using,
+                            modifying, and redistributing the model.
+                            Exact permissions and obligations depend on
+                            the specific license shown.
+                        </span>
                     </span>
 
-                    <span class="pill">
-                        Library: {{ result.library_name|default:"Unknown" }}
+                    <span class="pill metadata-tooltip">
+                        <span>
+                            Library: {{ result.library_name|default:"Unknown" }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain library metadata for {{ result.model_id }}"
+                            aria-describedby="search-library-tooltip-{{ forloop.counter }}"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="search-library-tooltip-{{ forloop.counter }}"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            The software library used to load, run,
+                            or fine-tune the model.
+                            {% if result.library_name == "transformers" %}
+                                “transformers” refers to Hugging Face’s
+                                library for working with pretrained models.
+                            {% endif %}
+                        </span>
                     </span>
 
                     <span class="pill">
@@ -195,9 +241,30 @@
                     </span>
 
                     {% if search_mode == "feature-based" %}
-                        <span class="pill">
-                            Feature match:
-                            {{ result.score|floatformat:1 }}%
+                        <span class="pill metadata-tooltip">
+                            <span>
+                                Feature match:
+                                {{ result.score|floatformat:1 }}%
+                            </span>
+
+                            <button
+                                type="button"
+                                class="metadata-tooltip__trigger"
+                                aria-label="Explain feature match for {{ result.model_id }}"
+                                aria-describedby="search-feature-match-tooltip-{{ forloop.counter }}"
+                            >
+                                i
+                            </button>
+
+                            <span
+                                id="search-feature-match-tooltip-{{ forloop.counter }}"
+                                class="metadata-tooltip__content"
+                                role="tooltip"
+                            >
+                                Feature match shows how much of your weighted
+                                requirements this model satisfies. It does not
+                                measure general model quality or benchmark performance.
+                            </span>
                         </span>
                     {% elif search_mode == "basic-fallback" %}
                         <span class="pill">
