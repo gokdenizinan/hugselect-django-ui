@@ -192,7 +192,28 @@
                                     {{ model.basemodels|default:"Unknown" }}
                                 </dd>
 
-                                <dt>Model type</dt>
+                                <dt class="metadata-tooltip">
+                                    <span>Model type</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain model type for {{ model.model_id }}"
+                                        aria-describedby="comparison-model-type-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-model-type-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The model type identifies the model's architecture
+                                        or configuration family, such as BERT, Llama, or Qwen.
+                                    </span>
+                                </dt>
+
                                 <dd>
                                     {{ model.model_type|default:"Unknown" }}
                                 </dd>

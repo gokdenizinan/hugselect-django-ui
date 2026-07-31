@@ -493,6 +493,55 @@ class CompareModelsViewTests(TestCase):
             response,
             'aria-describedby="comparison-base-model-tooltip-2"',
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_model_type_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+                "model_type": "qwen2",
+            },
+            {
+                "model_id": "author/model-b",
+                "model_type": "bert",
+            },
+        ]
+
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "qwen2")
+        self.assertContains(response, "bert")
+
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"The model type identifies the model's\s+"
+                r"architecture\s+or configuration family,\s+"
+                r"such as BERT, Llama, or Qwen\."
+            ),
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-model-type-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-model-type-tooltip-2"',
+        )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(
