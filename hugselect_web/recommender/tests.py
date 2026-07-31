@@ -52,6 +52,45 @@ class BuildModelGraphTests(SimpleTestCase):
             },
             graph["edges"],
         )
+class SearchViewTooltipTests(TestCase):
+    @patch("recommender.views.search_models_feature_based")
+    def test_explains_task_metadata_for_each_search_result(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "pipeline_tag": "text-generation",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "pipeline_tag": "summarization",
+                "score": 80.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English text-generation model",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "text-generation")
+        self.assertContains(response, "summarization")
+
+        self.assertContains(
+            response,
+            'aria-describedby="search-task-tooltip-1"',
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="search-task-tooltip-2"',
+        )
 class ModelDetailViewTests(TestCase):
     @patch("recommender.views.build_model_graph")
     @patch("recommender.views.get_model_by_id")

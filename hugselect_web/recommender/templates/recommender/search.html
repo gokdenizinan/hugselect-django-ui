@@ -147,8 +147,30 @@
                 </h3>
 
                 <div class="meta">
-                    <span class="pill">
-                        Author: {{ result.author|default:"Unknown" }}
+                    <span class="pill metadata-tooltip">
+                        <span>
+                            Task:
+                            {{ result.pipeline_tag|default:"Unknown" }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain task metadata for {{ result.model_id }}"
+                            aria-describedby="search-task-tooltip-{{ forloop.counter }}"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="search-task-tooltip-{{ forloop.counter }}"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            The task describes the model's primary capability
+                            on Hugging Face, such as text generation,
+                            summarization, translation, or question answering.
+                        </span>
                     </span>
 
                     <span class="pill">
@@ -216,7 +238,7 @@
                 <span class="project-note__label">
                     Future interface layer
                 </span>
-        
+
                 <p>
                     Add a transition animation so that entering HugSelect from
                     AI4SE.nl feels like naturally moving into an AI model laboratory.
