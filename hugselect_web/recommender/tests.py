@@ -444,6 +444,55 @@ class CompareModelsViewTests(TestCase):
             response,
             'aria-describedby="comparison-license-tooltip-2"',
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_base_model_metadata_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+                "basemodels": ["base/model-a"],
+            },
+            {
+                "model_id": "author/model-b",
+                "basemodels": ["base/model-b"],
+            },
+        ]
+
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "base/model-a")
+        self.assertContains(response, "base/model-b")
+
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"The base model is the model used as the "
+                r"starting point\s+"
+                r"before additional training or fine-tuning\."
+            ),
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-base-model-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-base-model-tooltip-2"',
+        )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(

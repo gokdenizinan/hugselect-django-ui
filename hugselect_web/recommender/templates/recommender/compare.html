@@ -166,7 +166,28 @@
                                     {{ model.language|default:"Unknown" }}
                                 </dd>
 
-                                <dt>Base model</dt>
+                                <dt class="metadata-tooltip">
+                                    <span>Base model</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain base model metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-base-model-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-base-model-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The base model is the model used as the starting point
+                                        before additional training or fine-tuning.
+                                    </span>
+                                </dt>
+
                                 <dd>
                                     {{ model.basemodels|default:"Unknown" }}
                                 </dd>
