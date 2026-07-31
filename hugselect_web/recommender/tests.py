@@ -407,7 +407,43 @@ class CompareModelsViewTests(TestCase):
             response,
             'aria-describedby="comparison-task-tooltip-2"',
         )
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_license_metadata_for_each_compared_model(
+        self,
+        mock_get_model_by_id,
+    ):
+        mock_get_model_by_id.side_effect = [
+            {
+                "model_id": "author/model-a",
+                "license": "apache-2.0",
+            },
+            {
+                "model_id": "author/model-b",
+                "license": "mit",
+            },
+        ]
 
+        response = self.client.get(
+            reverse("compare_models"),
+            {
+                "model_ids": [
+                    "author/model-a",
+                    "author/model-b",
+                ]
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "apache-2.0")
+        self.assertContains(response, "mit")
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-license-tooltip-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="comparison-license-tooltip-2"',
+        )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(

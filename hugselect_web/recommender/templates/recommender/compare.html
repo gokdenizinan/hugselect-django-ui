@@ -102,7 +102,30 @@
                                     {{ model.pipeline_tag|default:"Unknown" }}
                                 </dd>
 
-                                <dt>License</dt>
+                                <dt class="metadata-tooltip">
+                                    <span>License</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain license metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-license-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-license-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The license describes the rules for using,
+                                        modifying, and redistributing the model.
+                                        Exact permissions and obligations depend on
+                                        the specific license shown.
+                                    </span>
+                                </dt>
+
                                 <dd>
                                     {{ model.license|default:"Unknown" }}
                                 </dd>
