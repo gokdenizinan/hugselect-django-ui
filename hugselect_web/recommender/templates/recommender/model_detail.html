@@ -46,8 +46,30 @@
                     Author: {{ model.author|default:"Unknown" }}
                 </span>
 
-                <span class="pill">
-                    Task: {{ model.pipeline_tag|default:"Unknown" }}
+                <span class="pill metadata-tooltip">
+                    <span>
+                        Task:
+                        {{ model.pipeline_tag|default:"Unknown" }}
+                    </span>
+
+                    <button
+                        type="button"
+                        class="metadata-tooltip__trigger"
+                        aria-label="Explain task metadata"
+                        aria-describedby="task-tooltip"
+                    >
+                        i
+                    </button>
+
+                    <span
+                        id="task-tooltip"
+                        class="metadata-tooltip__content"
+                        role="tooltip"
+                    >
+                        The task describes the model's primary capability
+                        on Hugging Face, such as text generation,
+                        summarization, translation, or question answering.
+                    </span>
                 </span>
 
                 <span class="pill">

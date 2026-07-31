@@ -102,6 +102,7 @@ class ModelDetailViewTests(TestCase):
         )
     @patch("recommender.views.build_model_graph")
     @patch("recommender.views.get_model_by_id")
+
     def test_does_not_describe_other_libraries_as_transformers(
         self,
         mock_get_model_by_id,
@@ -131,6 +132,52 @@ class ModelDetailViewTests(TestCase):
         self.assertNotContains(
             response,
             "“transformers” refers to",
+        )
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_explains_task_metadata(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-c",
+            "pipeline_tag": "text-generation",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-c"],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "text-generation",
+        )
+
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r"The task describes the model's primary capability\s+"
+                r"on Hugging Face,\s+"
+                r"such as text generation,\s+"
+                r"summarization, translation,\s+"
+                r"or question answering\."
+            ),
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="task-tooltip"',
         )
 class CompareModelsViewTests(TestCase):
     def test_requires_two_or_three_models(self):
