@@ -61,11 +61,13 @@ class SearchViewTooltipTests(TestCase):
         mock_search_models_feature_based.return_value = [
             {
                 "model_id": "author/model-a",
+                "author": "Author A",
                 "pipeline_tag": "text-generation",
                 "score": 90.0,
             },
             {
                 "model_id": "author/model-b",
+                "author": "Author B",
                 "pipeline_tag": "summarization",
                 "score": 80.0,
             },
@@ -79,17 +81,33 @@ class SearchViewTooltipTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "text-generation")
-        self.assertContains(response, "summarization")
+        response_html = response.content.decode()
+        result_cards = response_html.split(
+            '<article class="result-card">'
+        )[1:]
 
-        self.assertContains(
-            response,
+        self.assertEqual(len(result_cards), 2)
+        self.assertRegex(result_cards[0], r"Author:\s+Author A")
+        self.assertRegex(result_cards[1], r"Author:\s+Author B")
+        self.assertRegex(result_cards[0], r"Task:\s+text-generation")
+        self.assertRegex(result_cards[1], r"Task:\s+summarization")
+        self.assertEqual(result_cards[0].count("Task:"), 1)
+        self.assertEqual(result_cards[1].count("Task:"), 1)
+        self.assertIn(
             'aria-describedby="search-task-tooltip-1"',
+            result_cards[0],
         )
-
-        self.assertContains(
-            response,
+        self.assertIn(
+            'id="search-task-tooltip-1"',
+            result_cards[0],
+        )
+        self.assertIn(
             'aria-describedby="search-task-tooltip-2"',
+            result_cards[1],
+        )
+        self.assertIn(
+            'id="search-task-tooltip-2"',
+            result_cards[1],
         )
 
     @patch("recommender.views.search_models_feature_based")

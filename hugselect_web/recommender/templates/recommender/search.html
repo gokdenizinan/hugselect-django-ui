@@ -147,6 +147,10 @@
                 </h3>
 
                 <div class="meta">
+                    <span class="pill">
+                        Author: {{ result.author|default:"Unknown" }}
+                    </span>
+
                     <span class="pill metadata-tooltip">
                         <span>
                             Task:
@@ -171,10 +175,6 @@
                             on Hugging Face, such as text generation,
                             summarization, translation, or question answering.
                         </span>
-                    </span>
-
-                    <span class="pill">
-                        Task: {{ result.pipeline_tag|default:"Unknown" }}
                     </span>
 
                     <span class="pill metadata-tooltip">
