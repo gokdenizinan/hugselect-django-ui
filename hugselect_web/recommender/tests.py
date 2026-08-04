@@ -929,12 +929,66 @@ class DecisionStressViewTests(TestCase):
         )
         self.assertContains(
             response,
-            "Weighted requirement match",
+            "Overall",
         )
         self.assertNotContains(
             response,
             "Scenario score",
         )
+
+        response_html = response.content.decode()
+        tooltip_types = (
+            "overall",
+            "essential",
+            "preference",
+            "functional",
+            "quality",
+        )
+
+        for scenario_number in range(1, len(SCENARIOS) + 1):
+            for tooltip_type in tooltip_types:
+                tooltip_id = (
+                    f"stress-{tooltip_type}-tooltip-"
+                    f"{scenario_number}"
+                )
+                self.assertContains(
+                    response,
+                    f'aria-describedby="{tooltip_id}"',
+                    count=1,
+                )
+                self.assertContains(
+                    response,
+                    f'id="{tooltip_id}"',
+                    count=1,
+                )
+
+        self.assertRegex(
+            response_html,
+            (
+                r"Overall is the model's normalized weighted "
+                r"requirement-match\s+"
+                r"score under this priority scenario, calculated from stored\s+"
+                r"match evidence\. It is not a benchmark or general "
+                r"model-quality score\."
+            ),
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="outright-win-consistency-tooltip"',
+        )
+        self.assertContains(
+            response,
+            'id="outright-win-consistency-tooltip"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="strict-essentials-tooltip"',
+        )
+        self.assertContains(
+            response,
+            'id="strict-essentials-tooltip"',
+        )
+
     def test_displays_missing_stored_evidence(self):
         model_a_explanation = {
             "per_feature": [
@@ -1008,6 +1062,25 @@ class DecisionStressViewTests(TestCase):
             response,
             "Missing stored evidence",
         )
+        response_html = response.content.decode()
+
+        normalized_html = " ".join(response_html.split())
+
+        self.assertIn(
+            (
+                "No stored match record was found for one or more listed "
+                "requirements. This does not confirm that the model lacks "
+                "them, but HugSelect cannot count them as satisfied in "
+                "this analysis."
+            ),
+            normalized_html,
+        )
+
+        self.assertNotContains(
+            response,
+            "missing-stored-evidence-tooltip",
+        )
+
     def test_explains_evidence_equivalent_models(self):
         identical_explanation = {
             "per_feature": [

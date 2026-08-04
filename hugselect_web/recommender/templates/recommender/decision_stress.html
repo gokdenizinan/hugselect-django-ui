@@ -146,7 +146,30 @@
                                 {{ stress_summary.stability_percentage|floatformat:1 }}%
 
                                 <small>
-                                    Outright-win consistency
+                                    <span class="metadata-tooltip">
+                                        <span>
+                                            Outright-win consistency
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            class="metadata-tooltip__trigger"
+                                            aria-label="Explain outright-win consistency"
+                                            aria-describedby="outright-win-consistency-tooltip"
+                                        >
+                                            i
+                                        </button>
+
+                                        <span
+                                            id="outright-win-consistency-tooltip"
+                                            class="metadata-tooltip__content"
+                                            role="tooltip"
+                                        >
+                                        This metric shows how often the leading model wins alone across all tested
+                                        priority scenarios. Ties and scenarios with no eligible model do not count
+                                        as outright wins.
+                                        </span>
+                                    </span>
                                 </small>
                             {% endif %}
                             </div>
@@ -222,7 +245,33 @@
                                             Scenario {{ forloop.counter|stringformat:"02d" }}
                                         </span>
 
-                                        <h3>{{ scenario.label }}</h3>
+                                        <h3>
+                                            {% if scenario.key == "strict_essentials" %}
+                                                <span class="metadata-tooltip">
+                                                    <span>{{ scenario.label }}</span>
+
+                                                    <button
+                                                        type="button"
+                                                        class="metadata-tooltip__trigger"
+                                                        aria-label="Explain strict essentials"
+                                                        aria-describedby="strict-essentials-tooltip"
+                                                    >
+                                                        i
+                                                    </button>
+
+                                                    <span
+                                                        id="strict-essentials-tooltip"
+                                                        class="metadata-tooltip__content"
+                                                        role="tooltip"
+                                                    >
+                                                    This rule applies only in the Strict essentials scenario.
+                                                    A model becomes ineligible if it misses even one essential requirement.
+                                                    </span>
+                                                </span>
+                                            {% else %}
+                                                {{ scenario.label }}
+                                            {% endif %}
+                                        </h3>
 
                                         <p>{{ scenario.description }}</p>
                                     </div>
@@ -268,11 +317,125 @@
                                             <tr>
                                                 <th>Rank</th>
                                                 <th>Model</th>
-                                                <th>Overall</th>
-                                                <th>Essential</th>
-                                                <th>Preference</th>
-                                                <th>Functional</th>
-                                                <th>Quality</th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Overall</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain overall score"
+                                                            aria-describedby="stress-overall-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-overall-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Overall is the model's normalized weighted requirement-match
+                                                            score under this priority scenario, calculated from stored
+                                                            match evidence. It is not a benchmark or general model-quality score.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Essential</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain essential requirement score"
+                                                            aria-describedby="stress-essential-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-essential-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Essential covers core identifying requirements such as task,
+                                                            domain, author, objective, or model name. The percentage shows how much of the essential requirements
+                                                            included in this comparison the model satisfies, based on stored match evidence.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Preference</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain preference requirement score"
+                                                            aria-describedby="stress-preference-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-preference-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Preference covers requested metadata such as license, language,
+                                                            library, datasets, gating, base models, metrics, or recency.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Functional</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain functional requirement score"
+                                                            aria-describedby="stress-functional-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-functional-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Functional covers capabilities or behavior the user requested
+                                                            the model to provide.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Quality</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain quality requirement score"
+                                                            aria-describedby="stress-quality-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-quality-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Quality covers requested software-quality characteristics such as
+                                                            reliability, security, compatibility, maintainability, flexibility,
+                                                            or performance efficiency. A dash in any category means no stored
+                                                            requirement from that category was available for scoring.
+                                                        </span>
+                                                    </span>
+                                                </th>
                                                 <th>Essential rule</th>
                                             </tr>
                                         </thead>
@@ -305,6 +468,11 @@
                                                                     <strong>
                                                                         Missing stored evidence
                                                                     </strong>
+                                                                    <p class="stress-exclusion__note">
+                                                                        No stored match record was found for one or more listed requirements.
+                                                                        This does not confirm that the model lacks them, but HugSelect cannot
+                                                                        count them as satisfied in this analysis.
+                                                                    </p>
 
                                                                     <ul>
                                                                         {% for requirement in result.missing_requirements %}

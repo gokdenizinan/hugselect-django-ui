@@ -107,8 +107,8 @@ SCENARIOS = (
         "key": "strict_essentials",
         "label": "Strict essentials",
         "description": (
-            "Prioritizes essentials and penalizes models "
-            "that miss essential requirements."
+            "Prioritizes essentials and makes models ineligible "
+            "when essential requirements are missed."
         ),
         "multipliers": {
             "essential": 2.0,
