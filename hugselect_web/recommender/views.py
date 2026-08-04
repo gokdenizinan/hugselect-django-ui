@@ -16,6 +16,77 @@ from .decision_stress import (
 
 logger = logging.getLogger(__name__)
 
+def _normalize_base_models(value):
+    """
+    Return a clean, unique list of base-model names.
+    """
+
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, (list, tuple, set)):
+        candidates = value
+    else:
+        candidates = [value]
+
+    normalized = []
+
+    for candidate in candidates:
+        base_model = str(candidate).strip()
+
+        if base_model and base_model not in normalized:
+            normalized.append(base_model)
+
+    return normalized
+
+
+def group_search_results_by_base_model(results):
+    """
+    Group ranked search results without changing their order.
+    """
+
+    single_groups_by_name = {}
+    single_base_model_groups = []
+    multiple_base_model_results = []
+    no_base_model_results = []
+
+    for result in results:
+        base_models = _normalize_base_models(
+            result.get("basemodels")
+        )
+
+        if not base_models:
+            no_base_model_results.append(result)
+            continue
+
+        if len(base_models) > 1:
+            multiple_base_model_results.append(result)
+            continue
+
+        base_model = base_models[0]
+
+        if base_model not in single_groups_by_name:
+            group = {
+                "base_model": base_model,
+                "results": [],
+            }
+
+            single_groups_by_name[base_model] = group
+            single_base_model_groups.append(group)
+
+        single_groups_by_name[
+            base_model
+        ]["results"].append(result)
+
+    return {
+        "single_base_model_groups": single_base_model_groups,
+        "multiple_base_model_results": (
+            multiple_base_model_results
+        ),
+        "no_base_model_results": no_base_model_results,
+    }
 def search_view(request):
     query = ""
     results = []
@@ -70,12 +141,16 @@ def search_view(request):
                 if result.get("model_id") and result.get("match_explanation")
             },
         }
+    grouped_results = group_search_results_by_base_model(
+        results
+    )
     return render(
         request,
         "recommender/search.html",
         {
             "query": query,
             "results": results,
+            "grouped_results": grouped_results,
             "warning": warning,
             "error": error,
             "search_mode": search_mode,

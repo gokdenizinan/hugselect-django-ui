@@ -52,6 +52,174 @@ class BuildModelGraphTests(SimpleTestCase):
             },
             graph["edges"],
         )
+class SearchResultGroupingTests(SimpleTestCase):
+    def test_groups_results_by_base_model_count(self):
+        from .views import group_search_results_by_base_model
+
+        results = [
+            {
+                "model_id": "author/model-a",
+                "basemodels": "base/shared",
+            },
+            {
+                "model_id": "author/model-b",
+                "basemodels": ["base/shared"],
+            },
+            {
+                "model_id": "author/model-c",
+                "basemodels": [
+                    "base/first",
+                    "base/second",
+                ],
+            },
+            {
+                "model_id": "author/model-d",
+                "basemodels": None,
+            },
+        ]
+
+        grouped_results = group_search_results_by_base_model(
+            results
+        )
+        self.assertEqual(
+            [
+                result["tooltip_key"]
+                for result in results
+            ],
+            [
+                "result-1",
+                "result-2",
+                "result-3",
+                "result-4",
+            ],
+        )
+
+        self.assertEqual(
+            grouped_results["single_base_model_groups"],
+            [
+                {
+                    "base_model": "base/shared",
+                    "results": [
+                        results[0],
+                        results[1],
+                    ],
+                }
+            ],
+        )
+
+        self.assertEqual(
+            grouped_results["multiple_base_model_results"],
+            [results[2]],
+        )
+
+        self.assertEqual(
+            grouped_results["no_base_model_results"],
+            [results[3]],
+        )
+class SearchViewGroupingTests(TestCase):
+    @patch("recommender.views.search_models_feature_based")
+    def test_adds_grouped_results_to_search_context(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "basemodels": "base/shared",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "basemodels": ["base/shared"],
+                "score": 80.0,
+            },
+            {
+                "model_id": "author/model-c",
+                "basemodels": [
+                    "base/first",
+                    "base/second",
+                ],
+                "score": 70.0,
+            },
+            {
+                "model_id": "author/model-d",
+                "basemodels": None,
+                "score": 60.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {"query": "English text-generation model"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        grouped_results = response.context["grouped_results"]
+
+        self.assertEqual(
+            grouped_results["single_base_model_groups"][0][
+                "base_model"
+            ],
+            "base/shared",
+        )
+        self.assertEqual(
+            len(
+                grouped_results[
+                    "single_base_model_groups"
+                ][0]["results"]
+            ),
+            2,
+        )
+        self.assertEqual(
+            grouped_results[
+                "multiple_base_model_results"
+            ][0]["model_id"],
+            "author/model-c",
+        )
+        self.assertEqual(
+            grouped_results[
+                "no_base_model_results"
+            ][0]["model_id"],
+            "author/model-d",
+        )
+class SearchTemplateGroupingTests(TestCase):
+    @patch("recommender.views.search_models_feature_based")
+    def test_hides_empty_base_model_categories(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "author/model-a",
+                "basemodels": "base/shared",
+                "score": 90.0,
+            },
+            {
+                "model_id": "author/model-b",
+                "basemodels": ["base/shared"],
+                "score": 80.0,
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {"query": "English text-generation model"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "Single base model",
+        )
+        self.assertNotContains(
+            response,
+            "Multiple base models",
+        )
+        self.assertNotContains(
+            response,
+            "No base model",
+        )
 class SearchViewTooltipTests(TestCase):
     @patch("recommender.views.search_models_feature_based")
     def test_explains_task_metadata_for_each_search_result(
