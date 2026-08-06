@@ -4,6 +4,11 @@ from . import views
 urlpatterns = [
     path("search/", views.search_view, name="search"),
     path(
+        "results/",
+        views.search_results_view,
+        name="search_results",
+    ),
+    path(
         "models/<path:model_id>/",
         views.model_detail_view,
         name="model_detail",
@@ -13,5 +18,5 @@ urlpatterns = [
     "compare/stress-test/",
     views.decision_stress_view,
     name="decision_stress",
-),
+    ),
     ]

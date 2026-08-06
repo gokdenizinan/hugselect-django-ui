@@ -22,17 +22,8 @@
 
     <main class="container">
         <a
-        class="back-link"
-        href="{% url 'search' %}"
-            onclick="
-                if (
-                    document.referrer &&
-                    new URL(document.referrer).origin === window.location.origin
-                ) {
-                    window.history.back();
-                    return false;
-                }
-            "
+            class="back-link"
+            href="{% url 'search_results' %}"
         >
             ← Back to search results
         </a>

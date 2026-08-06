@@ -151,6 +151,7 @@ class SearchViewGroupingTests(TestCase):
         response = self.client.post(
             reverse("search"),
             {"query": "English text-generation model"},
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -205,6 +206,7 @@ class SearchTemplateGroupingTests(TestCase):
         response = self.client.post(
             reverse("search"),
             {"query": "English text-generation model"},
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -246,6 +248,7 @@ class SearchViewTooltipTests(TestCase):
             {
                 "query": "English text-generation model",
             },
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -299,6 +302,7 @@ class SearchViewTooltipTests(TestCase):
         response = self.client.post(
             reverse("search"),
             {"query": "English text-generation model"},
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -366,6 +370,7 @@ class SearchViewTooltipTests(TestCase):
         response = self.client.post(
             reverse("search"),
             {"query": "English text-generation model"},
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -418,6 +423,7 @@ class SearchViewTooltipTests(TestCase):
         response = self.client.post(
             reverse("search"),
             {"query": "English text-generation model"},
+            follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -622,7 +628,51 @@ class ModelDetailViewTests(TestCase):
             response,
             'aria-describedby="license-tooltip"',
         )
+
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_links_back_to_search_results(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-a",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-a"],
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'href="{reverse("search_results")}"',
+            count=1,
+        )
+        self.assertNotContains(response, "window.history.back()")
+
 class CompareModelsViewTests(TestCase):
+    def test_links_back_to_search_results(self):
+        response = self.client.get(
+            reverse("compare_models"),
+            {"model_ids": ["model-a"]},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'href="{reverse("search_results")}"',
+            count=1,
+        )
+
     def test_requires_two_or_three_models(self):
         response = self.client.get(
             reverse("compare_models"),
@@ -663,11 +713,11 @@ class CompareModelsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            'aria-describedby="comparison-library-tooltip-result-1"',
+            'aria-describedby="comparison-library-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-library-tooltip-result-2"',
+            'aria-describedby="comparison-library-tooltip-2"',
         )
 
     @patch("recommender.views.get_model_by_id")
@@ -799,11 +849,11 @@ class CompareModelsViewTests(TestCase):
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-task-tooltip-result-1"',
+            'aria-describedby="comparison-task-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-task-tooltip-result-2"',
+            'aria-describedby="comparison-task-tooltip-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_license_metadata_for_each_compared_model(
@@ -836,11 +886,11 @@ class CompareModelsViewTests(TestCase):
         self.assertContains(response, "mit")
         self.assertContains(
             response,
-            'aria-describedby="comparison-license-tooltip-result-1"',
+            'aria-describedby="comparison-license-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-license-tooltip-result-2"',
+            'aria-describedby="comparison-license-tooltip-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_base_model_metadata_for_each_compared_model(
@@ -885,11 +935,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-base-model-tooltip-result-1"',
+            'aria-describedby="comparison-base-model-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-base-model-tooltip-result-2"',
+            'aria-describedby="comparison-base-model-tooltip-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_model_type_for_each_compared_model(
@@ -934,11 +984,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-model-type-tooltip-result-1"',
+            'aria-describedby="comparison-model-type-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-model-type-tooltip-result-2"',
+            'aria-describedby="comparison-model-type-tooltip-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_feature_match_for_each_compared_model(
@@ -994,11 +1044,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-feature-match-tooltip-result-1"',
+            'aria-describedby="comparison-feature-match-tooltip-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-feature-match-tooltip-result-2"',
+            'aria-describedby="comparison-feature-match-tooltip-2"',
         )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
@@ -1116,7 +1166,7 @@ class DecisionStressViewTests(TestCase):
         for scenario_number in range(1, len(SCENARIOS) + 1):
             for tooltip_type in tooltip_types:
                 tooltip_id = (
-                    f"stress-{tooltip_type}-tooltip-result-"
+                    f"stress-{tooltip_type}-tooltip-"
                     f"{scenario_number}"
                 )
                 self.assertContains(
@@ -2235,4 +2285,123 @@ class DecisionStressOutcomeExplanationTests(SimpleTestCase):
                 "Its clearest advantage over model-b is Essential "
                 "(20.0 percentage points)."
             ),
+        )
+class SearchResultsViewTests(TestCase):
+    def test_displays_separate_search_results_page(self):
+        response = self.client.get(
+            reverse("search_results")
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "recommender/search_results.html",
+        )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_successful_search_redirects_and_stores_results(
+        self,
+        mock_search_models_feature_based,
+    ):
+        # Gerçek Gemini ve Elasticsearch çağrısı yerine
+        # kontrollü bir arama sonucu döndürür.
+        mock_results = [
+            {
+                "model_id": "author/model-a",
+                "basemodels": ["base/model"],
+                "score": 90.0,
+            }
+        ]
+        mock_search_models_feature_based.return_value = mock_results
+
+        # Kullanıcının arama formunu gönderme davranışını taklit eder.
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English text-generation model",
+            },
+        )
+
+        # Başarılı aramadan sonra ayrı sonuç sayfasına
+        # yönlendirme yapılmasını bekler.
+        self.assertRedirects(
+            response,
+            reverse("search_results"),
+            fetch_redirect_response=False,
+        )
+
+        # View tarafından oluşturulan güncel session verisini okur.
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+
+        # Sonuç sayfasının ihtiyaç duyacağı temel bilgilerin
+        # session'a kaydedildiğini doğrular.
+        self.assertEqual(
+            search_state["query"],
+            "English text-generation model",
+        )
+        self.assertEqual(
+            search_state["results"],
+            mock_results,
+        )
+        self.assertEqual(
+            search_state["search_mode"],
+            "feature-based",
+        )
+    def test_displays_results_stored_in_session(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English text-generation model",
+            "results": [
+                {
+                    "model_id": "author/model-a",
+                    "basemodels": ["base/shared"],
+                    "score": 90.0,
+                },
+                {
+                    "model_id": "author/model-b",
+                    "basemodels": ["base/shared"],
+                    "score": 80.0,
+                },
+            ],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+        }
+
+        session.save()
+
+        # Ayrı sonuç sayfasını açar.
+        response = self.client.get(
+            reverse("search_results")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            response.context["query"],
+            "English text-generation model",
+        )
+
+        self.assertEqual(
+            response.context["search_mode"],
+            "feature-based",
+        )
+
+        grouped_results = response.context["grouped_results"]
+
+        self.assertEqual(
+            grouped_results["single_base_model_groups"][0][
+                "base_model"
+            ],
+            "base/shared",
+        )
+
+        self.assertEqual(
+            len(
+                grouped_results["single_base_model_groups"][0][
+                    "results"
+                ]
+            ),
+            2,
         )

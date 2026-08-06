@@ -1,6 +1,6 @@
 import logging
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import  Http404
 from .services import (
     build_model_graph,
@@ -144,6 +144,16 @@ def search_view(request):
                 if result.get("model_id") and result.get("match_explanation")
             },
         }
+    if request.method == "POST":
+        request.session["hugselect_search_results"] = {
+            "query": query,
+            "results": results,
+            "warning": warning,
+            "error": error,
+            "search_mode": search_mode,
+        }
+
+        return redirect("search_results")
     grouped_results = group_search_results_by_base_model(
         results
     )
@@ -157,6 +167,37 @@ def search_view(request):
             "warning": warning,
             "error": error,
             "search_mode": search_mode,
+        },
+    )
+def search_results_view(request):
+    """
+    Display the most recently completed model search.
+    """
+
+    search_state = request.session.get(
+        "hugselect_search_results",
+        {},
+    )
+
+    results = search_state.get("results", [])
+
+
+    grouped_results = group_search_results_by_base_model(
+        results
+    )
+
+    return render(
+        request,
+        "recommender/search_results.html",
+        {
+            "query": search_state.get("query", ""),
+            "results": results,
+            "grouped_results": grouped_results,
+            "warning": search_state.get("warning"),
+            "error": search_state.get("error"),
+            "search_mode": search_state.get(
+                "search_mode"
+            ),
         },
     )
 
