@@ -52,7 +52,10 @@ def group_search_results_by_base_model(results):
     multiple_base_model_results = []
     no_base_model_results = []
 
-    for result in results:
+    for position, result in enumerate(results, start=1):
+
+        result["tooltip_key"] = f"result-{position}"
+
         base_models = _normalize_base_models(
             result.get("basemodels")
         )

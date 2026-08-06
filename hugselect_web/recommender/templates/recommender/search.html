@@ -123,177 +123,80 @@
         </button>
     </div>
 
-    <section class="results-grid">
-        {% for result in results %}
-            <article class="result-card">
-                <label class="compare-control">
-                    <input
-                        type="checkbox"
-                        name="model_ids"
-                        value="{{ result.model_id }}"
-                        class="compare-checkbox"
-                    >
-                    Add to comparison
-                </label>
+<div class="result-groups">
 
-                <h3>
-                    {% if result.url %}
-                        <a href="{{ result.url }}" target="_blank">
-                            {{ result.model_id }}
-                        </a>
-                    {% else %}
-                        {{ result.model_id }}
-                    {% endif %}
-                </h3>
+    {% if grouped_results.single_base_model_groups %}
+        <section class="result-category">
+            <div class="result-category__heading">
+                <span class="specimen-label">
+                    Group / Model families
+                </span>
 
-                <div class="meta">
-                    <span class="pill">
-                        Author: {{ result.author|default:"Unknown" }}
-                    </span>
+                <h3>Single base model</h3>
+            </div>
 
-                    <span class="pill metadata-tooltip">
-                        <span>
-                            Task:
-                            {{ result.pipeline_tag|default:"Unknown" }}
+            {% for group in grouped_results.single_base_model_groups %}
+                <section class="base-model-family">
+                    <div class="base-model-family__heading">
+                        <span class="field-code">
+                            Base model
                         </span>
 
-                        <button
-                            type="button"
-                            class="metadata-tooltip__trigger"
-                            aria-label="Explain task metadata for {{ result.model_id }}"
-                            aria-describedby="search-task-tooltip-{{ forloop.counter }}"
-                        >
-                            i
-                        </button>
+                        <h4>{{ group.base_model }}</h4>
 
-                        <span
-                            id="search-task-tooltip-{{ forloop.counter }}"
-                            class="metadata-tooltip__content"
-                            role="tooltip"
-                        >
-                            The task describes the model's primary capability
-                            on Hugging Face, such as text generation,
-                            summarization, translation, or question answering.
+                        <span class="result-count">
+                            {{ group.results|length }}
+                            model{{ group.results|length|pluralize }}
                         </span>
-                    </span>
+                    </div>
 
-                    <span class="pill metadata-tooltip">
-                        <span>
-                            License: {{ result.license|default:"Unknown" }}
-                        </span>
+                    <div class="results-grid">
+                        {% for result in group.results %}
+                            {% include "recommender/_search_result_card.html" %}
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endfor %}
+        </section>
+    {% endif %}
 
-                        <button
-                            type="button"
-                            class="metadata-tooltip__trigger"
-                            aria-label="Explain license metadata for {{ result.model_id }}"
-                            aria-describedby="search-license-tooltip-{{ forloop.counter }}"
-                        >
-                            i
-                        </button>
+    {% if grouped_results.multiple_base_model_results %}
+        <section class="result-category">
+            <div class="result-category__heading">
+                <span class="specimen-label">
+                    Group / Combined lineage
+                </span>
 
-                        <span
-                            id="search-license-tooltip-{{ forloop.counter }}"
-                            class="metadata-tooltip__content"
-                            role="tooltip"
-                        >
-                            The license describes the rules for using,
-                            modifying, and redistributing the model.
-                            Exact permissions and obligations depend on
-                            the specific license shown.
-                        </span>
-                    </span>
+                <h3>Multiple base models</h3>
+            </div>
 
-                    <span class="pill metadata-tooltip">
-                        <span>
-                            Library: {{ result.library_name|default:"Unknown" }}
-                        </span>
+            <div class="results-grid">
+                {% for result in grouped_results.multiple_base_model_results %}
+                    {% include "recommender/_search_result_card.html" %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
-                        <button
-                            type="button"
-                            class="metadata-tooltip__trigger"
-                            aria-label="Explain library metadata for {{ result.model_id }}"
-                            aria-describedby="search-library-tooltip-{{ forloop.counter }}"
-                        >
-                            i
-                        </button>
+    {% if grouped_results.no_base_model_results %}
+        <section class="result-category">
+            <div class="result-category__heading">
+                <span class="specimen-label">
+                    Group / Unspecified lineage
+                </span>
 
-                        <span
-                            id="search-library-tooltip-{{ forloop.counter }}"
-                            class="metadata-tooltip__content"
-                            role="tooltip"
-                        >
-                            The software library used to load, run,
-                            or fine-tune the model.
-                            {% if result.library_name == "transformers" %}
-                                “transformers” refers to Hugging Face’s
-                                library for working with pretrained models.
-                            {% endif %}
-                        </span>
-                    </span>
+                <h3>No base model</h3>
+            </div>
 
-                    <span class="pill">
-                        Downloads 30d:
-                        {{ result.downloads_last_30_days|default:"N/A" }}
-                    </span>
+            <div class="results-grid">
+                {% for result in grouped_results.no_base_model_results %}
+                    {% include "recommender/_search_result_card.html" %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
-                    <span class="pill">
-                        Likes: {{ result.likes|default:"N/A" }}
-                    </span>
-
-                    {% if search_mode == "feature-based" %}
-                        <span class="pill metadata-tooltip">
-                            <span>
-                                Feature match:
-                                {{ result.score|floatformat:1 }}%
-                            </span>
-
-                            <button
-                                type="button"
-                                class="metadata-tooltip__trigger"
-                                aria-label="Explain feature match for {{ result.model_id }}"
-                                aria-describedby="search-feature-match-tooltip-{{ forloop.counter }}"
-                            >
-                                i
-                            </button>
-
-                            <span
-                                id="search-feature-match-tooltip-{{ forloop.counter }}"
-                                class="metadata-tooltip__content"
-                                role="tooltip"
-                            >
-                                Feature match shows how much of your weighted
-                                requirements this model satisfies. It does not
-                                measure general model quality or benchmark performance.
-                            </span>
-                        </span>
-                    {% elif search_mode == "basic-fallback" %}
-                        <span class="pill">
-                            Relevance score:
-                            {{ result.score|floatformat:3 }}
-                        </span>
-                    {% endif %}
-                </div>
-
-                <a
-                    class="model-link"
-                    href="{% url 'model_detail' result.model_id %}"
-                >
-                    View details
-                </a>
-
-                {% if result.url %}
-                    <a
-                        class="model-link"
-                        href="{{ result.url }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Open on Hugging Face
-                    </a>
-                {% endif %}
-            </article>
-        {% endfor %}
-    </section>
+</div>
 </form>
         {% elif query and not error %}
             <div class="empty-state">

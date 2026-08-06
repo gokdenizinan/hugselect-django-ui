@@ -262,19 +262,19 @@ class SearchViewTooltipTests(TestCase):
         self.assertEqual(result_cards[0].count("Task:"), 1)
         self.assertEqual(result_cards[1].count("Task:"), 1)
         self.assertIn(
-            'aria-describedby="search-task-tooltip-1"',
+            'aria-describedby="search-task-tooltip-result-1"',
             result_cards[0],
         )
         self.assertIn(
-            'id="search-task-tooltip-1"',
+            'id="search-task-tooltip-result-1"',
             result_cards[0],
         )
         self.assertIn(
-            'aria-describedby="search-task-tooltip-2"',
+            'aria-describedby="search-task-tooltip-result-2"',
             result_cards[1],
         )
         self.assertIn(
-            'id="search-task-tooltip-2"',
+            'id="search-task-tooltip-result-2"',
             result_cards[1],
         )
 
@@ -312,11 +312,11 @@ class SearchViewTooltipTests(TestCase):
 
         self.assertEqual(len(result_cards), 2)
         self.assertIn(
-            'aria-describedby="search-library-tooltip-1"',
+            'aria-describedby="search-library-tooltip-result-1"',
             result_cards[0],
         )
         self.assertIn(
-            'id="search-library-tooltip-1"',
+            'id="search-library-tooltip-result-1"',
             result_cards[0],
         )
         self.assertRegex(
@@ -328,11 +328,11 @@ class SearchViewTooltipTests(TestCase):
             ),
         )
         self.assertIn(
-            'aria-describedby="search-library-tooltip-2"',
+            'aria-describedby="search-library-tooltip-result-2"',
             result_cards[1],
         )
         self.assertIn(
-            'id="search-library-tooltip-2"',
+            'id="search-library-tooltip-result-2"',
             result_cards[1],
         )
         self.assertRegex(result_cards[1], r"Library:\s+diffusers")
@@ -373,14 +373,14 @@ class SearchViewTooltipTests(TestCase):
         self.assertContains(response, "bsd-3-clause")
         self.assertContains(
             response,
-            'aria-describedby="search-license-tooltip-1"',
+            'aria-describedby="search-license-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="search-license-tooltip-2"',
+            'aria-describedby="search-license-tooltip-result-2"',
         )
-        self.assertContains(response, 'id="search-license-tooltip-1"')
-        self.assertContains(response, 'id="search-license-tooltip-2"')
+        self.assertContains(response, 'id="search-license-tooltip-result-1"')
+        self.assertContains(response, 'id="search-license-tooltip-result-2"')
 
         response_html = response.content.decode()
         result_cards = response_html.split(
@@ -425,19 +425,19 @@ class SearchViewTooltipTests(TestCase):
         self.assertContains(response, "80.0%")
         self.assertContains(
             response,
-            'aria-describedby="search-feature-match-tooltip-1"',
+            'aria-describedby="search-feature-match-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="search-feature-match-tooltip-2"',
+            'aria-describedby="search-feature-match-tooltip-result-2"',
         )
         self.assertContains(
             response,
-            'id="search-feature-match-tooltip-1"',
+            'id="search-feature-match-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'id="search-feature-match-tooltip-2"',
+            'id="search-feature-match-tooltip-result-2"',
         )
 
         response_html = response.content.decode()
@@ -663,11 +663,11 @@ class CompareModelsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            'aria-describedby="comparison-library-tooltip-1"',
+            'aria-describedby="comparison-library-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-library-tooltip-2"',
+            'aria-describedby="comparison-library-tooltip-result-2"',
         )
 
     @patch("recommender.views.get_model_by_id")
@@ -799,11 +799,11 @@ class CompareModelsViewTests(TestCase):
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-task-tooltip-1"',
+            'aria-describedby="comparison-task-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-task-tooltip-2"',
+            'aria-describedby="comparison-task-tooltip-result-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_license_metadata_for_each_compared_model(
@@ -836,11 +836,11 @@ class CompareModelsViewTests(TestCase):
         self.assertContains(response, "mit")
         self.assertContains(
             response,
-            'aria-describedby="comparison-license-tooltip-1"',
+            'aria-describedby="comparison-license-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-license-tooltip-2"',
+            'aria-describedby="comparison-license-tooltip-result-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_base_model_metadata_for_each_compared_model(
@@ -885,11 +885,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-base-model-tooltip-1"',
+            'aria-describedby="comparison-base-model-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-base-model-tooltip-2"',
+            'aria-describedby="comparison-base-model-tooltip-result-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_model_type_for_each_compared_model(
@@ -934,11 +934,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-model-type-tooltip-1"',
+            'aria-describedby="comparison-model-type-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-model-type-tooltip-2"',
+            'aria-describedby="comparison-model-type-tooltip-result-2"',
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_feature_match_for_each_compared_model(
@@ -994,11 +994,11 @@ class CompareModelsViewTests(TestCase):
 
         self.assertContains(
             response,
-            'aria-describedby="comparison-feature-match-tooltip-1"',
+            'aria-describedby="comparison-feature-match-tooltip-result-1"',
         )
         self.assertContains(
             response,
-            'aria-describedby="comparison-feature-match-tooltip-2"',
+            'aria-describedby="comparison-feature-match-tooltip-result-2"',
         )
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
@@ -1116,7 +1116,7 @@ class DecisionStressViewTests(TestCase):
         for scenario_number in range(1, len(SCENARIOS) + 1):
             for tooltip_type in tooltip_types:
                 tooltip_id = (
-                    f"stress-{tooltip_type}-tooltip-"
+                    f"stress-{tooltip_type}-tooltip-result-"
                     f"{scenario_number}"
                 )
                 self.assertContains(

@@ -1,0 +1,167 @@
+<article class="result-card">
+    <label class="compare-control">
+        <input
+            type="checkbox"
+            name="model_ids"
+            value="{{ result.model_id }}"
+            class="compare-checkbox"
+        >
+        Add to comparison
+    </label>
+
+    <h3>
+        {% if result.url %}
+            <a href="{{ result.url }}" target="_blank">
+                {{ result.model_id }}
+            </a>
+        {% else %}
+            {{ result.model_id }}
+        {% endif %}
+    </h3>
+
+    <div class="meta">
+        <span class="pill">
+            Author: {{ result.author|default:"Unknown" }}
+        </span>
+
+        <span class="pill metadata-tooltip">
+            <span>
+                Task:
+                {{ result.pipeline_tag|default:"Unknown" }}
+            </span>
+
+            <button
+                type="button"
+                class="metadata-tooltip__trigger"
+                aria-label="Explain task metadata for {{ result.model_id }}"
+                aria-describedby="search-task-tooltip-{{ result.tooltip_key }}"
+            >
+                i
+            </button>
+
+            <span
+                id="search-task-tooltip-{{ result.tooltip_key }}"
+                class="metadata-tooltip__content"
+                role="tooltip"
+            >
+                The task describes the model's primary capability
+                on Hugging Face, such as text generation,
+                summarization, translation, or question answering.
+            </span>
+        </span>
+
+        <span class="pill metadata-tooltip">
+            <span>
+                License: {{ result.license|default:"Unknown" }}
+            </span>
+
+            <button
+                type="button"
+                class="metadata-tooltip__trigger"
+                aria-label="Explain license metadata for {{ result.model_id }}"
+                aria-describedby="search-license-tooltip-{{ result.tooltip_key }}"
+            >
+                i
+            </button>
+
+            <span
+                id="search-license-tooltip-{{ result.tooltip_key }}"
+                class="metadata-tooltip__content"
+                role="tooltip"
+            >
+                The license describes the rules for using,
+                modifying, and redistributing the model.
+                Exact permissions and obligations depend on
+                the specific license shown.
+            </span>
+        </span>
+
+        <span class="pill metadata-tooltip">
+            <span>
+                Library: {{ result.library_name|default:"Unknown" }}
+            </span>
+
+            <button
+                type="button"
+                class="metadata-tooltip__trigger"
+                aria-label="Explain library metadata for {{ result.model_id }}"
+                aria-describedby="search-library-tooltip-{{ result.tooltip_key }}"
+            >
+                i
+            </button>
+
+            <span
+                id="search-library-tooltip-{{ result.tooltip_key }}"
+                class="metadata-tooltip__content"
+                role="tooltip"
+            >
+                The software library used to load, run,
+                or fine-tune the model.
+                {% if result.library_name == "transformers" %}
+                    “transformers” refers to Hugging Face’s
+                    library for working with pretrained models.
+                {% endif %}
+            </span>
+        </span>
+
+        <span class="pill">
+            Downloads 30d:
+            {{ result.downloads_last_30_days|default:"N/A" }}
+        </span>
+
+        <span class="pill">
+            Likes: {{ result.likes|default:"N/A" }}
+        </span>
+
+        {% if search_mode == "feature-based" %}
+            <span class="pill metadata-tooltip">
+                <span>
+                    Feature match:
+                    {{ result.score|floatformat:1 }}%
+                </span>
+
+                <button
+                    type="button"
+                    class="metadata-tooltip__trigger"
+                    aria-label="Explain feature match for {{ result.model_id }}"
+                    aria-describedby="search-feature-match-tooltip-{{ result.tooltip_key }}"
+                >
+                    i
+                </button>
+
+                <span
+                    id="search-feature-match-tooltip-{{ result.tooltip_key }}"
+                    class="metadata-tooltip__content"
+                    role="tooltip"
+                >
+                    Feature match shows how much of your weighted
+                    requirements this model satisfies. It does not
+                    measure general model quality or benchmark performance.
+                </span>
+            </span>
+        {% elif search_mode == "basic-fallback" %}
+            <span class="pill">
+                Relevance score:
+                {{ result.score|floatformat:3 }}
+            </span>
+        {% endif %}
+    </div>
+
+    <a
+        class="model-link"
+        href="{% url 'model_detail' result.model_id %}"
+    >
+        View details
+    </a>
+
+    {% if result.url %}
+        <a
+            class="model-link"
+            href="{{ result.url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Open on Hugging Face
+        </a>
+    {% endif %}
+</article>
