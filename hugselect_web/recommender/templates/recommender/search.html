@@ -57,6 +57,45 @@
                     required
                     placeholder="e.g. A recent, non-gated text-generation model with Apache-2.0 licensing and strong community adoption…"
                 >{{ query }}</textarea>
+                <div class="search-scope">
+                    <span class="specimen-label">
+                        Search scope
+                    </span>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="search_scope"
+                            value="all"
+                            checked
+                        >
+                        All models
+                    </label>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="search_scope"
+                            value="family"
+                        >
+                        Base-model family
+                    </label>
+
+                    <label for="base-model-family">
+                        Model family
+                    </label>
+
+                    <select
+                        id="base-model-family"
+                        name="base_model_family"
+                        disabled
+                    >
+                        <option value="llama">Llama</option>
+                        <option value="mistral">Mistral</option>
+                        <option value="qwen">Qwen</option>
+                        <option value="gemma">Gemma</option>
+                    </select>
+                </div>
 
                 <div class="form-actions">
                     <p>Describe task, domain, language, license, library, and quality preferences.</p>
@@ -69,6 +108,32 @@
     <script>
         const searchForm = document.getElementById("search-form");
         const searchButton = document.getElementById("search-button");
+        const searchScopeInputs = document.querySelectorAll(
+            'input[name="search_scope"]'
+        );
+        const familySelect = document.getElementById(
+            "base-model-family"
+        );
+
+        if (familySelect && searchScopeInputs.length) {
+            function updateFamilySelect() {
+                const selectedScope = document.querySelector(
+                    'input[name="search_scope"]:checked'
+                );
+
+                familySelect.disabled =
+                    !selectedScope || selectedScope.value !== "family";
+            }
+
+            searchScopeInputs.forEach((scopeInput) => {
+                scopeInput.addEventListener(
+                    "change",
+                    updateFamilySelect
+                );
+            });
+
+            updateFamilySelect();
+        }
 
         if (searchForm && searchButton) {
             searchForm.addEventListener("submit", () => {
@@ -76,7 +141,6 @@
                 searchButton.textContent = "Searching...";
             });
         }
-
     </script>
 </body>
 </html>

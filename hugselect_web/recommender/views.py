@@ -5,6 +5,7 @@ from django.http import  Http404
 from .services import (
     build_model_graph,
     get_model_by_id,
+    normalize_base_model_family,
     search_models_basic,
     search_models_feature_based,
 )
@@ -96,13 +97,34 @@ def search_view(request):
     warning = None
     error = None
     search_mode = None
+    search_scope = "all"
+    base_model_family = None
 
     if request.method == "POST":
         query = request.POST.get("query", "").strip()
+        requested_scope = request.POST.get(
+            "search_scope",
+            "all",
+        ).strip()
 
-        if query:
+        if requested_scope == "family":
+            search_scope = "family"
+            base_model_family = normalize_base_model_family(
+                request.POST.get("base_model_family")
+            )
+
+            if base_model_family is None:
+                error = (
+                    "Please select a supported base-model family."
+                )
+
+        if query and error is None:
             try:
-                results = search_models_feature_based(query, limit=10)
+                results = search_models_feature_based(
+                    query,
+                    limit=10,
+                    base_model_family=base_model_family,
+                )
                 search_mode = "feature-based"
 
             except Exception:
@@ -111,7 +133,11 @@ def search_view(request):
                 )
 
                 try:
-                    results = search_models_basic(query, limit=10)
+                    results = search_models_basic(
+                        query,
+                        limit=10,
+                        base_model_family=base_model_family,
+                    )
                     search_mode = "basic-fallback"
                     warning = (
                         "Advanced recommendation is temporarily unavailable. "
@@ -127,7 +153,8 @@ def search_view(request):
                         "Please check that Elasticsearch is running and try again."
                     )
         else:
-            error = "Please describe the model you need."
+            if not query:
+                error = "Please describe the model you need."
 
     if results and search_mode:
         request.session["hugselect_last_search"] = {
@@ -151,6 +178,8 @@ def search_view(request):
             "warning": warning,
             "error": error,
             "search_mode": search_mode,
+            "search_scope": search_scope,
+            "base_model_family": base_model_family,
         }
 
         return redirect("search_results")
@@ -180,11 +209,20 @@ def search_results_view(request):
     )
 
     results = search_state.get("results", [])
-
-
     grouped_results = group_search_results_by_base_model(
         results
     )
+    search_scope = search_state.get(
+        "search_scope",
+        "all",
+    )
+    base_model_family = normalize_base_model_family(
+        search_state.get("base_model_family")
+    )
+
+    if search_scope != "family" or base_model_family is None:
+        search_scope = "all"
+        base_model_family = None
 
     return render(
         request,
@@ -198,6 +236,8 @@ def search_results_view(request):
             "search_mode": search_state.get(
                 "search_mode"
             ),
+            "search_scope": search_scope,
+            "base_model_family": base_model_family,
         },
     )
 

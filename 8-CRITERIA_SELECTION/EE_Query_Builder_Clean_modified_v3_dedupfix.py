@@ -1352,7 +1352,15 @@ class ESQueryBuilderAdaptive:
         return False
 
 
-    def build_query(self, groups: List[FeatureGroup], *, include_explain: bool = False) -> Dict[str, Any]:
+    def build_query(
+        self,
+        groups: List[FeatureGroup],
+        *,
+        include_explain: bool = False,
+        extra_filter_clauses: Optional[
+            List[Dict[str, Any]]
+        ] = None,
+    ) -> Dict[str, Any]:
         """
         Returns an ES query dict using should-only positive matching.
         """
@@ -1362,6 +1370,9 @@ class ESQueryBuilderAdaptive:
             clause = self._last_modified_filter_clause(fg)
             if clause is not None:
                 filter_clauses.append(clause)
+
+        if extra_filter_clauses:
+            filter_clauses.extend(extra_filter_clauses)
 
         if should:
             bool_query: Dict[str, Any] = {
@@ -1544,11 +1555,11 @@ class ESQueryBuilderAdaptive:
             return resp.body
         return resp
     
-    def search(self, es_client: Any, index: str, features: Any, *, include_explain: bool = False, prebuilt_groups: Optional[List[FeatureGroup]] = None, ):
+    def search(self, es_client: Any, index: str, features: Any, *, include_explain: bool = False, prebuilt_groups: Optional[List[FeatureGroup]] = None, extra_filter_clauses: Optional[List[Dict[str, Any]]] = None,):
         groups = prebuilt_groups if prebuilt_groups is not None else self.build_feature_groups(features)
         fixed_max_score = max(1e-6, float(self.compute_max_score(groups)))
 
-        q = self.build_query(groups, include_explain=include_explain)
+        q = self.build_query(groups, include_explain=include_explain, extra_filter_clauses=extra_filter_clauses)
         resp = es_client.search(index=index, body=q)
         resp_dict = self._ensure_dict(resp)
 

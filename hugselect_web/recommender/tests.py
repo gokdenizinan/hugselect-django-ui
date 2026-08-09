@@ -2,7 +2,13 @@ from django.test import SimpleTestCase
 from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
-from .services import build_model_graph
+from .services import (
+    _base_model_family_filter,
+    _make_feature_search_builder,
+    build_model_graph,
+    search_models_basic,
+    search_models_feature_based,
+)
 from .decision_stress import (
     SCENARIOS,
     category_for_feature,
@@ -2404,4 +2410,375 @@ class SearchResultsViewTests(TestCase):
                 ]
             ),
             2,
+        )
+    def test_preserves_family_filter_in_results_context(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English code-generation model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "family",
+            "base_model_family": "llama",
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("search_results")
+        )
+
+        self.assertEqual(
+            response.context["search_scope"],
+            "family",
+        )
+        self.assertEqual(
+            response.context["base_model_family"],
+            "llama",
+        )
+        self.assertContains(
+            response,
+            "Base-model family: Llama",
+        )
+
+    def test_displays_all_models_scope(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English code-generation model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "all",
+            "base_model_family": None,
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("search_results")
+        )
+
+        self.assertEqual(response.context["search_scope"], "all")
+        self.assertIsNone(
+            response.context["base_model_family"]
+        )
+        self.assertContains(response, "All models")
+
+
+class SearchFormFamilyFilterTests(TestCase):
+    def test_displays_supported_family_options(self):
+        response = self.client.get(reverse("search"))
+
+        self.assertEqual(response.status_code, 200)
+
+        for family, label in (
+            ("llama", "Llama"),
+            ("mistral", "Mistral"),
+            ("qwen", "Qwen"),
+            ("gemma", "Gemma"),
+        ):
+            with self.subTest(family=family):
+                self.assertContains(
+                    response,
+                    f'<option value="{family}">{label}</option>',
+                )
+
+    def test_defaults_to_all_models_with_family_select_disabled(self):
+        response = self.client.get(reverse("search"))
+        response_html = response.content.decode()
+
+        self.assertRegex(
+            response_html,
+            (
+                r'<input\s+type="radio"\s+'
+                r'name="search_scope"\s+'
+                r'value="all"\s+checked'
+            ),
+        )
+        self.assertRegex(
+            response_html,
+            (
+                r'<select\s+id="base-model-family"\s+'
+                r'name="base_model_family"\s+disabled'
+            ),
+        )
+
+
+class BaseModelFamilyFilterTests(SimpleTestCase):
+    def test_builds_supported_family_filters(self):
+        for family, pattern in (
+            ("llama", "*llama*"),
+            ("mistral", "*mistral*"),
+            ("qwen", "*qwen*"),
+            ("gemma", "*gemma*"),
+        ):
+            with self.subTest(family=family):
+                self.assertEqual(
+                    _base_model_family_filter(family),
+                    {
+                        "wildcard": {
+                            "Metadata.basemodels": {
+                                "value": pattern,
+                                "case_insensitive": True,
+                            }
+                        }
+                    }
+                )
+
+    def test_returns_none_without_family(self):
+        self.assertIsNone(
+            _base_model_family_filter(None)
+        )
+
+    def test_returns_none_for_unsupported_family(self):
+        self.assertIsNone(
+            _base_model_family_filter("arbitrary-family")
+        )
+
+
+class BasicSearchFamilyFilterTests(SimpleTestCase):
+    @patch("recommender.services.Elasticsearch")
+    def test_applies_family_filter_before_result_limit(
+        self,
+        mock_elasticsearch,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.search.return_value = {
+            "hits": {"hits": []}
+        }
+
+        search_models_basic(
+            "English text-generation model",
+            limit=10,
+            base_model_family="qwen",
+        )
+
+        search_body = mock_es.search.call_args.kwargs["body"]
+        self.assertEqual(search_body["size"], 10)
+        self.assertIn(
+            "Metadata.basemodels",
+            search_body["_source"],
+        )
+        self.assertEqual(
+            search_body["query"]["bool"]["filter"],
+            [
+                {
+                    "wildcard": {
+                        "Metadata.basemodels": {
+                            "value": "*qwen*",
+                            "case_insensitive": True,
+                        }
+                    }
+                }
+            ],
+        )
+        self.assertEqual(
+            search_body["query"]["bool"]["must"][0][
+                "multi_match"
+            ]["query"],
+            "English text-generation model",
+        )
+
+    @patch("recommender.services.Elasticsearch")
+    def test_preserves_basic_text_query_without_family(
+        self,
+        mock_elasticsearch,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.search.return_value = {
+            "hits": {"hits": []}
+        }
+
+        search_models_basic(
+            "English text-generation model",
+            limit=10,
+        )
+
+        search_body = mock_es.search.call_args.kwargs["body"]
+        self.assertIn("multi_match", search_body["query"])
+        self.assertNotIn("bool", search_body["query"])
+
+
+class FeatureQueryBuilderFilterTests(SimpleTestCase):
+    def test_places_extra_filter_inside_query_before_limit(self):
+        builder = _make_feature_search_builder(limit=10)
+        family_filter = _base_model_family_filter("gemma")
+
+        query = builder.build_query(
+            [],
+            extra_filter_clauses=[family_filter],
+        )
+        filtered_query = query["query"]
+
+        if "function_score" in filtered_query:
+            filtered_query = filtered_query[
+                "function_score"
+            ]["query"]
+
+        self.assertEqual(query["size"], 10)
+        self.assertEqual(
+            filtered_query["bool"]["filter"],
+            [family_filter],
+        )
+
+
+class FeatureSearchFamilyFilterTests(SimpleTestCase):
+    @patch("recommender.services._make_feature_search_builder")
+    @patch("recommender.services._extract_feature_bundle")
+    @patch("recommender.services.Elasticsearch")
+    def test_passes_llama_filter_to_builder_search(
+        self,
+        mock_elasticsearch,
+        mock_extract_feature_bundle,
+        mock_make_builder,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.indices.exists.return_value = True
+
+        mock_extract_feature_bundle.return_value = object()
+
+        mock_builder = mock_make_builder.return_value
+        mock_builder.precompute_feature_group_cache.return_value = []
+        mock_builder.search.return_value = (
+            {"hits": {"hits": []}},
+            {},
+            [],
+        )
+
+        search_models_feature_based(
+            "English text-generation model",
+            limit=10,
+            base_model_family="llama",
+        )
+
+        mock_builder.search.assert_called_once_with(
+            es_client=mock_es,
+            index="models_t7",
+            features=mock_extract_feature_bundle.return_value,
+            prebuilt_groups=[],
+            include_explain=False,
+            extra_filter_clauses=[
+                {
+                    "wildcard": {
+                        "Metadata.basemodels": {
+                            "value": "*llama*",
+                            "case_insensitive": True,
+                        }
+                    }
+                }
+            ],
+        )
+class SearchViewFamilyFilterTests(TestCase):
+    @patch("recommender.views.search_models_feature_based")
+    def test_passes_selected_family_to_feature_search(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = []
+
+        for submitted_family, expected_family in (
+            ("Llama", "llama"),
+            ("Mistral", "mistral"),
+            ("QWEN", "qwen"),
+            ("gemma", "gemma"),
+        ):
+            with self.subTest(family=expected_family):
+                mock_search_models_feature_based.reset_mock()
+
+                self.client.post(
+                    reverse("search"),
+                    {
+                        "query": "English code-generation model",
+                        "search_scope": "family",
+                        "base_model_family": submitted_family,
+                    },
+                )
+
+                mock_search_models_feature_based.assert_called_once_with(
+                    "English code-generation model",
+                    limit=10,
+                    base_model_family=expected_family,
+                )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_all_models_passes_no_family_filter(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = []
+
+        self.client.post(
+            reverse("search"),
+            {
+                "query": "English code-generation model",
+                "search_scope": "all",
+                "base_model_family": "qwen",
+            },
+        )
+
+        mock_search_models_feature_based.assert_called_once_with(
+            "English code-generation model",
+            limit=10,
+            base_model_family=None,
+        )
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+        self.assertEqual(search_state["search_scope"], "all")
+        self.assertIsNone(search_state["base_model_family"])
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_rejects_missing_or_unsupported_family(
+        self,
+        mock_search_models_feature_based,
+    ):
+        for submitted_family in ("", "unsupported-family"):
+            with self.subTest(family=submitted_family):
+                self.client.post(
+                    reverse("search"),
+                    {
+                        "query": "English code-generation model",
+                        "search_scope": "family",
+                        "base_model_family": submitted_family,
+                    },
+                )
+
+                search_state = self.client.session[
+                    "hugselect_search_results"
+                ]
+                self.assertEqual(
+                    search_state["error"],
+                    "Please select a supported base-model family.",
+                )
+                self.assertIsNone(
+                    search_state["base_model_family"]
+                )
+
+        mock_search_models_feature_based.assert_not_called()
+
+    @patch("recommender.views.search_models_basic")
+    @patch("recommender.views.search_models_feature_based")
+    def test_passes_family_to_basic_fallback(
+        self,
+        mock_search_models_feature_based,
+        mock_search_models_basic,
+    ):
+        mock_search_models_feature_based.side_effect = RuntimeError(
+            "Feature search unavailable"
+        )
+        mock_search_models_basic.return_value = []
+
+        self.client.post(
+            reverse("search"),
+            {
+                "query": "English code-generation model",
+                "search_scope": "family",
+                "base_model_family": "Mistral",
+            },
+        )
+
+        mock_search_models_basic.assert_called_once_with(
+            "English code-generation model",
+            limit=10,
+            base_model_family="mistral",
         )

@@ -8,6 +8,53 @@ from elasticsearch import Elasticsearch
 
 ES_URL = "http://localhost:9200"
 INDEX_NAME = "models_t7"
+BASE_MODEL_FAMILY_PATTERNS = {
+    "llama": "*llama*",
+    "mistral": "*mistral*",
+    "qwen": "*qwen*",
+    "gemma": "*gemma*",
+}
+
+
+def normalize_base_model_family(base_model_family):
+    """Return a supported normalized family key, or None."""
+
+    normalized_family = str(
+        base_model_family or ""
+    ).strip().casefold()
+
+    if normalized_family in BASE_MODEL_FAMILY_PATTERNS:
+        return normalized_family
+
+    return None
+
+
+def _base_model_family_filter(
+    base_model_family,
+):
+    """
+    Build an Elasticsearch candidate filter for a model family.
+    """
+
+    normalized_family = normalize_base_model_family(
+        base_model_family,
+    )
+
+    if normalized_family is None:
+        return None
+
+    pattern = BASE_MODEL_FAMILY_PATTERNS[
+        normalized_family
+    ]
+
+    return {
+        "wildcard": {
+            "Metadata.basemodels": {
+                "value": pattern,
+                "case_insensitive": True,
+            }
+        }
+    }
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CRITERIA_DIR = REPO_ROOT / "8-CRITERIA_SELECTION"
@@ -54,11 +101,41 @@ def clean_results(response, limit=10):
     return results
 
 
-def search_models_basic(user_text, limit=10):
+def search_models_basic(
+    user_text,
+    limit=10,
+    base_model_family=None,
+):
     if not user_text:
         return []
 
     es = Elasticsearch(ES_URL)
+
+    text_query = {
+        "multi_match": {
+            "query": user_text,
+            "fields": [
+                "modelID^2",
+                "author",
+                "Metadata.pipeline_tag^3",
+                "Features^2",
+                "description",
+            ],
+        }
+    }
+    family_filter = _base_model_family_filter(
+        base_model_family
+    )
+
+    query_clause = text_query
+
+    if family_filter is not None:
+        query_clause = {
+            "bool": {
+                "must": [text_query],
+                "filter": [family_filter],
+            }
+        }
 
     query = {
         "size": limit,
@@ -68,22 +145,12 @@ def search_models_basic(user_text, limit=10):
             "Metadata.pipeline_tag",
             "Metadata.license",
             "Metadata.library_name",
+            "Metadata.basemodels",
             "Metadata.downloads_last_30_days",
             "Metadata.likes",
             "Features",
         ],
-        "query": {
-            "multi_match": {
-                "query": user_text,
-                "fields": [
-                    "modelID^2",
-                    "author",
-                    "Metadata.pipeline_tag^3",
-                    "Features^2",
-                    "description",
-                ],
-            }
-        },
+        "query": query_clause,
     }
 
     response = es.search(index=INDEX_NAME, body=query)
@@ -312,7 +379,11 @@ def _make_feature_search_builder(limit=10):
     )
 
 
-def search_models_feature_based(user_text, limit=10):
+def search_models_feature_based(
+    user_text,
+    limit=10,
+    base_model_family=None,
+):
     if not user_text:
         return []
 
@@ -342,12 +413,22 @@ def search_models_feature_based(user_text, limit=10):
     precompute_seconds = time.perf_counter() - precompute_start
 
     search_start = time.perf_counter()
+    family_filter = _base_model_family_filter(
+        base_model_family
+    )
+
+    extra_filter_clauses = (
+        [family_filter]
+        if family_filter is not None
+        else None
+    )
     response, final_query, final_feature_groups = builder.search(
         es_client=es,
         index=INDEX_NAME,
         features=bundle,
         prebuilt_groups=prebuilt_groups,
         include_explain=False,
+        extra_filter_clauses=extra_filter_clauses,
     )
     search_seconds = time.perf_counter() - search_start
 

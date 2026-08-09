@@ -49,6 +49,14 @@
             </div>
         {% endif %}
 
+        <div class="search-mode">
+            {% if search_scope == "family" and base_model_family %}
+                Base-model family: {{ base_model_family|title }}
+            {% else %}
+                All models
+            {% endif %}
+        </div>
+
         {% if results %}
             <div class="section-heading">
                 <div>
