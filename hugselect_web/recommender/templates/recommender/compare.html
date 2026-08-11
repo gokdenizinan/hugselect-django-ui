@@ -341,7 +341,7 @@
 
                                     {% if decision_summary.is_tie %}
                                         <span class="decision-summary__status">
-                                            Feature-match tie
+                                            Feature match tie
                                         </span>
                                     {% else %}
                                         <span class="decision-summary__status">
@@ -377,7 +377,7 @@
                                         </strong>
 
                                         <small>
-                                            Used only when feature-match
+                                            Used only when feature match
                                             scores are equal
                                         </small>
                                     </div>
@@ -427,18 +427,18 @@
 
                             <div>
                                 <span class="specimen-label">
-                                    Analysis / Robustness
+                                    Analysis / Decision Stress
                                 </span>
 
                                 <p>
-                                    Test whether the recommended model
-                                    remains strongest when requirement
-                                    priorities change.
+                                    Decision Stress reuses stored match evidence
+                                    to test whether the leading model changes when
+                                    requirement priorities change.
                                 </p>
                             </div>
 
                             <button type="submit">
-                                Run decision stress test
+                                Run Decision Stress
                                 <span>→</span>
                             </button>
                         </form>
@@ -446,6 +446,12 @@
 
                     <section class="requirement-comparison">
                         <h2>Requirement coverage</h2>
+
+                        <p class="data-note">
+                            Requirement coverage shows whether stored match evidence
+                            says each model satisfies each query requirement. It is
+                            not independent benchmark evidence.
+                        </p>
 
                         {% if coverage_rows %}
                             <div class="comparison-table-wrapper">

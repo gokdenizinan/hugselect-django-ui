@@ -696,6 +696,58 @@ class ModelDetailViewTests(TestCase):
 
     @patch("recommender.views.build_model_graph")
     @patch("recommender.views.get_model_by_id")
+    def test_explains_base_model_model_type_and_feature_match(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-a",
+            "basemodels": ["base/model"],
+            "model_type": "llama",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "search_mode": "feature-based",
+            "scores": {"author/model-a": 91.0},
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("model_detail", args=["author/model-a"])
+        )
+
+        self.assertContains(
+            response,
+            'aria-describedby="detail-base-model-tooltip"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="detail-model-type-tooltip"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="detail-feature-match-tooltip"',
+        )
+        self.assertContains(
+            response,
+            "The base model is the starting model used before",
+        )
+        self.assertContains(
+            response,
+            "Model type names the architecture or configuration",
+        )
+        self.assertContains(
+            response,
+            "It is not a benchmark-quality score.",
+        )
+
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
     def test_links_back_to_search_results(
         self,
         mock_get_model_by_id,
@@ -760,7 +812,15 @@ class ModelDetailViewTests(TestCase):
             response.context["search_context"]["availability"],
             {"status": "available", "http_status": 200},
         )
-        self.assertContains(response, "Available")
+        self.assertContains(response, "Availability: Available")
+        self.assertContains(
+            response,
+            'aria-describedby="availability-tooltip"',
+        )
+        self.assertContains(
+            response,
+            "Available means HugSelect could reach this model on",
+        )
 
 class CompareModelsViewTests(TestCase):
     def test_links_back_to_search_results(self):
@@ -925,6 +985,15 @@ class CompareModelsViewTests(TestCase):
         self.assertEqual(
             comparison_state["coverage_rows"],
             coverage_rows,
+        )
+        self.assertContains(
+            response,
+            "Requirement coverage shows whether stored match evidence",
+        )
+        self.assertContains(response, "Run Decision Stress")
+        self.assertContains(
+            response,
+            "Decision Stress reuses stored match evidence",
         )
     @patch("recommender.views.get_model_by_id")
     def test_explains_task_metadata_for_each_compared_model(
@@ -1527,6 +1596,12 @@ class DecisionStressViewTests(TestCase):
             response,
             "English text-generation model",
         )
+        self.assertContains(response, "Decision Stress")
+        self.assertContains(
+            response,
+            "It does not rerun search or benchmark the models.",
+        )
+        self.assertContains(response, "Essential requirements")
 
         self.assertEqual(
             response.context["stress_summary"]["leaders"],
@@ -2708,6 +2783,7 @@ class SearchResultsViewTests(
             response,
             "recommender/search_results.html",
         )
+        self.assertContains(response, "<h1>Search results</h1>", html=True)
 
     @patch("recommender.views.search_models_feature_based")
     def test_successful_search_redirects_and_stores_results(
@@ -2830,6 +2906,51 @@ class SearchResultsViewTests(
             ),
             2,
         )
+
+    def test_explains_availability_for_each_available_result(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "Available models",
+            "results": [
+                {
+                    "model_id": "author/model-a",
+                    "score": 90.0,
+                    "availability": {"status": "available"},
+                },
+                {
+                    "model_id": "author/model-b",
+                    "score": 80.0,
+                    "availability": {"status": "available"},
+                },
+            ],
+            "search_mode": "feature-based",
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertContains(
+            response,
+            'aria-describedby="search-availability-tooltip-result-1"',
+        )
+        self.assertContains(
+            response,
+            'aria-describedby="search-availability-tooltip-result-2"',
+        )
+        self.assertContains(
+            response,
+            'id="search-availability-tooltip-result-1"',
+        )
+        self.assertContains(
+            response,
+            'id="search-availability-tooltip-result-2"',
+        )
+        self.assertContains(
+            response,
+            "Available means HugSelect could reach this model on",
+            count=2,
+        )
+
     def test_preserves_family_filter_in_results_context(self):
         session = self.client.session
         session["hugselect_search_results"] = {
@@ -2911,10 +3032,14 @@ class SearchResultsViewTests(
             requirements,
         )
         for text in (
-            "Must Have",
-            "Should Have",
-            "Could Have",
-            "Won&#x27;t Have",
+            "MUST",
+            "SHOULD",
+            "COULD",
+            "WON'T",
+            "Required. Missing it excludes a model.",
+            "Important soft preference.",
+            "Lower-priority soft preference.",
+            "Forbidden. Matching it excludes a model.",
             "English",
             "transformers",
             "squad",
@@ -3202,6 +3327,11 @@ class SearchFormFamilyFilterTests(TestCase):
                 r'name="base_model_family"\s+disabled'
             ),
         )
+        self.assertContains(
+            response,
+            "Base-model family limits results to models whose Hugging Face",
+        )
+        self.assertContains(response, "Base-model family")
 
 
 class ExplicitRequirementFormTests(TestCase):
@@ -3233,6 +3363,14 @@ class ExplicitRequirementFormTests(TestCase):
         self.assertContains(response, "+ Add requirement")
         self.assertContains(response, 'class="remove-requirement"')
         self.assertContains(response, 'name="requirement_value"')
+        for explanation in (
+            "Required. Missing it excludes a model.",
+            "Important soft preference.",
+            "Lower-priority soft preference.",
+            "Forbidden. Matching it excludes a model.",
+        ):
+            with self.subTest(explanation=explanation):
+                self.assertContains(response, explanation)
 
     def test_does_not_expose_downloads_or_likes_as_requirements(self):
         response = self.client.get(reverse("search"))

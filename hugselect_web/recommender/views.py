@@ -913,7 +913,7 @@ def decision_stress_view(request):
             "recommender/decision_stress.html",
             {
                 "error": (
-                    "Decision stress testing is available only "
+                    "Decision Stress is available only "
                     "for feature-based recommendations."
                 ),
                 "models": [],

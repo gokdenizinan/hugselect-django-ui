@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Decision Stress Test — HugSelect</title>
+    <title>Decision Stress — HugSelect</title>
 
     <link
         rel="stylesheet"
@@ -43,13 +43,16 @@
         {% else %}
             <section class="search-card">
                 <span class="specimen-label">
-                    Analysis / Decision stress test
+                    Analysis / Decision Stress
                 </span>
 
-                <h1>
-                    Test the stability<br>
-                    of your decision.
-                </h1>
+                <h1>Decision Stress</h1>
+
+                <p class="page-intro">
+                    Decision Stress reuses stored match evidence under several
+                    priority settings to show whether the leading model changes.
+                    It does not rerun search or benchmark the models.
+                </p>
 
                 {% if search_context.query %}
                     <div class="comparison-query">
@@ -67,11 +70,11 @@
                         Input / Enforced essentials
                     </span>
 
-                    <h2>Core requirements</h2>
+                    <h2>Essential requirements</h2>
 
                     <p class="stress-essentials__intro">
                         These requirements were classified as essential from your query.
-                        Missing one only causes exclusion in the Strict Essentials scenario.
+                        Missing one only causes exclusion in the Strict essentials scenario.
                     </p>
 
                     {% if essential_requirements %}
@@ -165,9 +168,9 @@
                                             class="metadata-tooltip__content"
                                             role="tooltip"
                                         >
-                                        This metric shows how often the leading model wins alone across all tested
-                                        priority scenarios. Ties and scenarios with no eligible model do not count
-                                        as outright wins.
+                                            This metric shows how often the leading model wins alone
+                                            across all tested priority scenarios. Ties and scenarios
+                                            with no eligible model do not count as outright wins.
                                         </span>
                                     </span>
                                 </small>
@@ -264,8 +267,9 @@
                                                         class="metadata-tooltip__content"
                                                         role="tooltip"
                                                     >
-                                                    This rule applies only in the Strict essentials scenario.
-                                                    A model becomes ineligible if it misses even one essential requirement.
+                                                        This rule applies only in the Strict essentials
+                                                        scenario. A model becomes ineligible if it misses
+                                                        even one essential requirement.
                                                     </span>
                                                 </span>
                                             {% else %}
@@ -308,8 +312,6 @@
                                     </p>
                                 </div>
                             {% endif %}
-
-                            <div class="comparison-table-wrapper">
 
                                 <div class="comparison-table-wrapper">
                                     <table class="comparison-table">
@@ -436,7 +438,7 @@
                                                         </span>
                                                     </span>
                                                 </th>
-                                                <th>Essential rule</th>
+                                                <th>Strict essentials rule</th>
                                             </tr>
                                         </thead>
 

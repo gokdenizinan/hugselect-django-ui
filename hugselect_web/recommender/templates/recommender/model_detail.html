@@ -16,7 +16,7 @@
     <header class="site-header">
         <div class="nav">
             <a class="logo" href="{% url 'search' %}"><span class="logo-mark">HS</span><span>HugSelect</span></a>
-            <div class="nav-subtitle"></span> Specimen record</div>
+            <div class="nav-subtitle">Specimen record</div>
         </div>
     </header>
 
@@ -30,11 +30,32 @@
 
         <section class="search-card">
             <span class="specimen-label">Model / Knowledge record</span>
-            <h1>{{ model.model_id }}</h1>
+            <h1 class="model-record-title">{{ model.model_id }}</h1>
 
             <div class="meta">
                 {% if search_context.availability.status == "available" %}
-                    <span class="pill">Available</span>
+                    <span class="pill metadata-tooltip">
+                        <span>Availability: Available</span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain availability status"
+                            aria-describedby="availability-tooltip"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="availability-tooltip"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            Available means HugSelect could reach this model on
+                            Hugging Face when the search ran. It does not guarantee
+                            that access will remain available later.
+                        </span>
+                    </span>
                 {% endif %}
 
                 <span class="pill">
@@ -132,6 +153,56 @@
                 <span class="pill">
                     Likes: {{ model.likes|default:"N/A" }}
                 </span>
+
+                {% if model.basemodels %}
+                    <span class="pill metadata-tooltip">
+                        <span>
+                            Base model: {{ model.basemodels|join:", " }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain base model metadata"
+                            aria-describedby="detail-base-model-tooltip"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="detail-base-model-tooltip"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            The base model is the starting model used before
+                            additional training or fine-tuning.
+                        </span>
+                    </span>
+                {% endif %}
+
+                {% if model.model_type %}
+                    <span class="pill metadata-tooltip">
+                        <span>Model type: {{ model.model_type }}</span>
+
+                        <button
+                            type="button"
+                            class="metadata-tooltip__trigger"
+                            aria-label="Explain model type metadata"
+                            aria-describedby="detail-model-type-tooltip"
+                        >
+                            i
+                        </button>
+
+                        <span
+                            id="detail-model-type-tooltip"
+                            class="metadata-tooltip__content"
+                            role="tooltip"
+                        >
+                            Model type names the architecture or configuration
+                            family recorded in the model metadata.
+                        </span>
+                    </span>
+                {% endif %}
             </div>
 
             {% if search_context.search_mode %}
@@ -153,7 +224,26 @@
 
                         {% if search_context.score != None %}
                             <p>
-                                <strong>Feature match:</strong>
+                                <strong class="metadata-tooltip">
+                                    <span>Feature match</span>
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain feature match"
+                                        aria-describedby="detail-feature-match-tooltip"
+                                    >
+                                        i
+                                    </button>
+                                    <span
+                                        id="detail-feature-match-tooltip"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        Feature match is the percentage of weighted
+                                        query requirements satisfied by stored match
+                                        evidence. It is not a benchmark-quality score.
+                                    </span>
+                                </strong>:
                                 {{ search_context.score|floatformat:1 }}%
                             </p>
                         {% endif %}
@@ -217,7 +307,7 @@
             {% endif %}
 
             <section class="search-card">
-                <h2>Knowledge Graph</h2>
+                <h2>Knowledge graph</h2>
                 <div id="model-graph"></div>
             </section>
 

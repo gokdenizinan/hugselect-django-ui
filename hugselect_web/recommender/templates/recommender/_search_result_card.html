@@ -21,7 +21,28 @@
 
     <div class="meta">
         {% if result.availability.status == "available" %}
-            <span class="pill">Available</span>
+            <span class="pill metadata-tooltip">
+                <span>Availability: Available</span>
+
+                <button
+                    type="button"
+                    class="metadata-tooltip__trigger"
+                    aria-label="Explain availability status for {{ result.model_id }}"
+                    aria-describedby="search-availability-tooltip-{{ result.tooltip_key }}"
+                >
+                    i
+                </button>
+
+                <span
+                    id="search-availability-tooltip-{{ result.tooltip_key }}"
+                    class="metadata-tooltip__content"
+                    role="tooltip"
+                >
+                    Available means HugSelect could reach this model on
+                    Hugging Face when the search ran. It does not guarantee
+                    that access will remain available later.
+                </span>
+            </span>
         {% endif %}
 
         <span class="pill">

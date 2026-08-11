@@ -27,6 +27,15 @@
             </a>
         </div>
 
+        <header class="page-heading">
+            <span class="specimen-label">Analysis / Search results</span>
+            <h1>Search results</h1>
+            <p>
+                Review ranked models and their stored match evidence, then select
+                two or three models for side-by-side comparison.
+            </p>
+        </header>
+
         {% if query %}
             <div class="query-box">
                 <strong>Your query:</strong> {{ query }}
@@ -88,6 +97,13 @@
                     same feature and value.
                 </p>
 
+                <div class="moscow-key" aria-label="MoSCoW priority definitions">
+                    <div><strong>MUST</strong><span>Required. Missing it excludes a model.</span></div>
+                    <div><strong>SHOULD</strong><span>Important soft preference.</span></div>
+                    <div><strong>COULD</strong><span>Lower-priority soft preference.</span></div>
+                    <div><strong>WON'T</strong><span>Forbidden. Matching it excludes a model.</span></div>
+                </div>
+
                 <div class="moscow-summary__groups">
                     {% for group in explicit_requirement_groups %}
                         <div class="moscow-summary__group">
@@ -118,14 +134,26 @@
                 </div>
 
                 <p class="data-note">
-                    Must Have and Won't Have determine eligibility. Should Have
-                    and Could Have influence the ranking of eligible models.
+                    HugSelect inferred these priorities from the query.
                 </p>
+
+                <div class="moscow-key" aria-label="MoSCoW priority definitions">
+                    <div><strong>MUST</strong><span>Required. Missing it excludes a model.</span></div>
+                    <div><strong>SHOULD</strong><span>Important soft preference.</span></div>
+                    <div><strong>COULD</strong><span>Lower-priority soft preference.</span></div>
+                    <div><strong>WON'T</strong><span>Forbidden. Matching it excludes a model.</span></div>
+                </div>
 
                 <div class="moscow-summary__groups">
                     {% for group in moscow_requirement_groups %}
                         <div class="moscow-summary__group">
-                            <h3>{{ group.label }}</h3>
+                            <h3>
+                                {% if group.label == "Must Have" %}MUST
+                                {% elif group.label == "Should Have" %}SHOULD
+                                {% elif group.label == "Could Have" %}COULD
+                                {% elif group.label == "Won't Have" %}WON'T
+                                {% else %}{{ group.label }}{% endif %}
+                            </h3>
                             {% if group.requirements %}
                                 <ul>
                                     {% for requirement in group.requirements %}
@@ -156,7 +184,10 @@
             </div>
 
             <p class="data-note">
-                Model availability was verified on Hugging Face when this search ran.
+                Availability indicates that HugSelect could reach the model on
+                Hugging Face when this search ran; it does not guarantee future access.
+                A base model is the starting model used before additional training or
+                fine-tuning, and family groups use that stored metadata.
             </p>
 
             <form

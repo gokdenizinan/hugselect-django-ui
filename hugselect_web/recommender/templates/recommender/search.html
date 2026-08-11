@@ -16,7 +16,7 @@
                 <span class="logo-mark">HS</span>
                 <span>HugSelect</span>
             </a>
-            <div class="nav-subtitle"></span> AI model discovery laboratory</div>
+            <div class="nav-subtitle">AI model discovery laboratory</div>
         </div>
     </header>
 
@@ -70,6 +70,25 @@
                         Explicit choices override an automatically extracted
                         priority for the same feature and value.
                     </p>
+
+                    <div class="moscow-key" aria-label="MoSCoW priority definitions">
+                        <div>
+                            <strong>MUST</strong>
+                            <span>Required. Missing it excludes a model.</span>
+                        </div>
+                        <div>
+                            <strong>SHOULD</strong>
+                            <span>Important soft preference.</span>
+                        </div>
+                        <div>
+                            <strong>COULD</strong>
+                            <span>Lower-priority soft preference.</span>
+                        </div>
+                        <div>
+                            <strong>WON'T</strong>
+                            <span>Forbidden. Matching it excludes a model.</span>
+                        </div>
+                    </div>
 
                     <div
                         id="requirement-rows"
@@ -130,10 +149,20 @@
                     </template>
                 </fieldset>
 
-                <div class="search-scope">
-                    <span class="specimen-label">
+                <div
+                    class="search-scope"
+                    role="group"
+                    aria-labelledby="search-scope-label"
+                    aria-describedby="search-scope-help"
+                >
+                    <span class="specimen-label" id="search-scope-label">
                         Search scope
                     </span>
+
+                    <p class="form-help" id="search-scope-help">
+                        Base-model family limits results to models whose Hugging Face
+                        base-model metadata matches the selected family.
+                    </p>
 
                     <label>
                         <input
@@ -155,7 +184,7 @@
                     </label>
 
                     <label for="base-model-family">
-                        Model family
+                        Base-model family
                     </label>
 
                     <select
