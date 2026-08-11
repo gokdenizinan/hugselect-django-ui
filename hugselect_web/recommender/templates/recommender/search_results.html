@@ -57,6 +57,80 @@
             {% endif %}
         </div>
 
+        {% if search_mode == "feature-based" and explicit_requirements %}
+            <section class="moscow-summary" aria-labelledby="explicit-priority-summary-title">
+                <div>
+                    <span class="specimen-label">
+                        Requirements / User selected
+                    </span>
+                    <h2 id="explicit-priority-summary-title">
+                        Explicit priorities
+                    </h2>
+                </div>
+
+                <p class="data-note">
+                    These priorities override automatic extraction for the
+                    same feature and value.
+                </p>
+
+                <div class="moscow-summary__groups">
+                    {% for group in explicit_requirement_groups %}
+                        <div class="moscow-summary__group">
+                            <h3>{{ group.label }}</h3>
+                            {% if group.requirements %}
+                                <ul>
+                                    {% for requirement in group.requirements %}
+                                        <li>
+                                            <strong>{{ requirement.feature_label }}:</strong>
+                                            {{ requirement.value }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="moscow-summary__empty">
+                                    None selected
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% elif search_mode == "feature-based" and moscow_requirements %}
+            <section class="moscow-summary" aria-labelledby="moscow-summary-title">
+                <div>
+                    <span class="specimen-label">Requirements / MoSCoW</span>
+                    <h2 id="moscow-summary-title">Extracted priorities</h2>
+                </div>
+
+                <p class="data-note">
+                    Must Have and Won't Have determine eligibility. Should Have
+                    and Could Have influence the ranking of eligible models.
+                </p>
+
+                <div class="moscow-summary__groups">
+                    {% for group in moscow_requirement_groups %}
+                        <div class="moscow-summary__group">
+                            <h3>{{ group.label }}</h3>
+                            {% if group.requirements %}
+                                <ul>
+                                    {% for requirement in group.requirements %}
+                                        <li>
+                                            <span class="field-code">
+                                                {{ requirement.feature_key }}
+                                            </span>
+                                            {{ requirement.value }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="moscow-summary__empty">None extracted</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
         {% if results %}
             <div class="section-heading">
                 <div>
@@ -67,7 +141,7 @@
             </div>
 
             <p class="data-note">
-                Some indexed models may have been renamed, removed, or made private on Hugging Face.
+                Model availability was verified on Hugging Face when this search ran.
             </p>
 
             <form
@@ -165,7 +239,11 @@
             </form>
         {% elif query and not error %}
             <div class="empty-state">
-                No matching models were found for this query.
+                {% if availability_summary.candidate_count %}
+                    No matching models could be verified as currently available.
+                {% else %}
+                    No matching models were found for this query.
+                {% endif %}
             </div>
         {% endif %}
 

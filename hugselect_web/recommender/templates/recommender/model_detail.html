@@ -33,6 +33,10 @@
             <h1>{{ model.model_id }}</h1>
 
             <div class="meta">
+                {% if search_context.availability.status == "available" %}
+                    <span class="pill">Available</span>
+                {% endif %}
+
                 <span class="pill">
                     Author: {{ model.author|default:"Unknown" }}
                 </span>

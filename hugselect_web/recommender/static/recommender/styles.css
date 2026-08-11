@@ -225,6 +225,52 @@ textarea {
 textarea::placeholder { color: #878c83; }
 textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(23, 71, 209, .11); }
 
+.requirement-builder {
+    margin: 24px 0 0;
+    padding: 20px;
+    border: 1px solid var(--line-strong);
+    background: #f8f7f2;
+}
+
+.requirement-builder legend {
+    padding: 0 8px;
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    font-weight: 650;
+}
+
+.requirement-builder legend .specimen-label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.requirement-builder__help {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+.requirement-rows { display: grid; gap: 10px; }
+
+.requirement-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr .8fr auto;
+    align-items: end;
+    gap: 10px;
+}
+
+.requirement-row label { display: grid; gap: 6px; }
+.requirement-row label > span { color: var(--muted); font: 700 .62rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.requirement-row select,
+.requirement-row input { width: 100%; min-height: 42px; padding: 8px 10px; color: var(--ink); border: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); font: .78rem var(--mono); }
+.requirement-row select:focus,
+.requirement-row input:focus { border-color: var(--blue); outline: 3px solid rgba(23, 71, 209, .11); }
+.requirement-row .remove-requirement { min-height: 42px; padding: 0 12px; background: transparent; color: var(--danger) !important; border-color: var(--danger); }
+.requirement-row .remove-requirement:hover { color: white !important; background: var(--danger); }
+.requirement-builder .secondary-button { margin-top: 12px; color: var(--blue) !important; border-color: var(--blue); background: transparent; }
+.requirement-builder .secondary-button:hover { color: white !important; background: var(--blue); }
+
 .form-actions { margin-top: 18px; }
 .form-actions p { margin: 0; color: var(--muted); font-family: var(--mono); font-size: .68rem; line-height: 1.5; }
 
@@ -278,6 +324,22 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .section-title { margin: 5px 0 0; font-family: var(--serif); font-size: 2.5rem; letter-spacing: -.035em; }
 .result-count { color: var(--muted); }
 .data-note { margin: 0 0 22px; color: var(--muted); font-size: .8rem; }
+
+.moscow-summary {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+}
+
+.moscow-summary h2 { margin: 5px 0 8px; font-family: var(--serif); }
+.moscow-summary .data-note { margin-bottom: 16px; }
+.moscow-summary__groups { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); }
+.moscow-summary__group { min-width: 0; padding: 13px; background: var(--paper); }
+.moscow-summary__group h3 { margin: 0 0 9px; color: var(--blue); font: 700 .7rem var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+.moscow-summary__group ul { margin: 0; padding-left: 18px; }
+.moscow-summary__group li { margin: 5px 0; font-size: .78rem; overflow-wrap: anywhere; }
+.moscow-summary__empty { color: var(--muted); font-size: .75rem; }
 
 .compare-toolbar {
     position: sticky;
@@ -553,6 +615,8 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     line-height: 1.4;
 }
 @media (max-width: 760px) {
+    .moscow-summary__groups { grid-template-columns: 1fr 1fr; }
+
     .nav, .container { width: min(100% - 32px, 1160px); }
     .nav { min-height: 65px; }
     .nav-subtitle { display: none; }
@@ -564,6 +628,8 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     .form-heading, .form-actions, .section-heading, .compare-toolbar, .decision-summary__top, .decision-summary__tie-breakers { align-items: stretch; flex-direction: column; }
     .field-code { display: none; }
     .search-card { padding: 21px; box-shadow: 5px 5px 0 rgba(17, 19, 15, .055); }
+    .requirement-row { grid-template-columns: 1fr; }
+    .requirement-row .remove-requirement { width: 100%; }
     .form-actions button, .compare-toolbar button { width: 100%; }
     .results-grid { grid-template-columns: 1fr; }
     .compare-toolbar { position: static; }

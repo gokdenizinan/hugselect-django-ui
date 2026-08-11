@@ -20,6 +20,10 @@
     </h3>
 
     <div class="meta">
+        {% if result.availability.status == "available" %}
+            <span class="pill">Available</span>
+        {% endif %}
+
         <span class="pill">
             Author: {{ result.author|default:"Unknown" }}
         </span>

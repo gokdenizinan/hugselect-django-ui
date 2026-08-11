@@ -1,13 +1,21 @@
 from django.test import SimpleTestCase
-from unittest.mock import patch
+from urllib.error import HTTPError, URLError
+from unittest.mock import Mock, patch
 from django.test import TestCase
 from django.urls import reverse
 from .services import (
+    AVAILABILITY_CANDIDATE_LIMIT,
+    DISPLAY_RESULT_LIMIT,
+    EXPLICIT_REQUIREMENT_FEATURE_GROUPS,
+    EXPLICIT_REQUIREMENT_PRIORITIES,
     _base_model_family_filter,
     _make_feature_search_builder,
     build_model_graph,
+    check_model_availability,
+    parse_explicit_requirements,
     search_models_basic,
     search_models_feature_based,
+    select_available_results,
 )
 from .decision_stress import (
     SCENARIOS,
@@ -18,6 +26,40 @@ from .decision_stress import (
     summarize_decision_stress_test,
 
 )
+from EE_Query_Builder_Clean_modified_v3_dedupfix import (
+    EXPLICIT_MOSCOW_PRIORITIES,
+    FeatureGroup,
+    PRIORITY_TO_MOSCOW,
+)
+
+
+def _select_mock_results_as_available(
+    ranked_results,
+    display_limit=DISPLAY_RESULT_LIMIT,
+):
+    selected_results = list(ranked_results[:display_limit])
+
+    return selected_results, {
+        "candidate_count": len(ranked_results),
+        "checked_count": len(selected_results),
+        "http_check_count": len(selected_results),
+        "available_count": len(selected_results),
+        "unavailable_count": 0,
+        "unknown_count": 0,
+        "display_limit": display_limit,
+        "shortfall": max(0, display_limit - len(selected_results)),
+    }
+
+
+class MockAvailabilitySelectionMixin:
+    def setUp(self):
+        super().setUp()
+        patcher = patch(
+            "recommender.views.select_available_results",
+            side_effect=_select_mock_results_as_available,
+        )
+        self.addCleanup(patcher.stop)
+        self.mock_select_available_results = patcher.start()
 
 class BuildModelGraphTests(SimpleTestCase):
     def test_builds_expected_graph(self):
@@ -122,7 +164,10 @@ class SearchResultGroupingTests(SimpleTestCase):
             grouped_results["no_base_model_results"],
             [results[3]],
         )
-class SearchViewGroupingTests(TestCase):
+class SearchViewGroupingTests(
+    MockAvailabilitySelectionMixin,
+    TestCase,
+):
     @patch("recommender.views.search_models_feature_based")
     def test_adds_grouped_results_to_search_context(
         self,
@@ -190,7 +235,10 @@ class SearchViewGroupingTests(TestCase):
             ][0]["model_id"],
             "author/model-d",
         )
-class SearchTemplateGroupingTests(TestCase):
+class SearchTemplateGroupingTests(
+    MockAvailabilitySelectionMixin,
+    TestCase,
+):
     @patch("recommender.views.search_models_feature_based")
     def test_hides_empty_base_model_categories(
         self,
@@ -228,7 +276,10 @@ class SearchTemplateGroupingTests(TestCase):
             response,
             "No base model",
         )
-class SearchViewTooltipTests(TestCase):
+class SearchViewTooltipTests(
+    MockAvailabilitySelectionMixin,
+    TestCase,
+):
     @patch("recommender.views.search_models_feature_based")
     def test_explains_task_metadata_for_each_search_result(
         self,
@@ -664,6 +715,44 @@ class ModelDetailViewTests(TestCase):
             count=1,
         )
         self.assertNotContains(response, "window.history.back()")
+
+    @patch("recommender.views.build_model_graph")
+    @patch("recommender.views.get_model_by_id")
+    def test_reuses_stored_availability_on_model_detail(
+        self,
+        mock_get_model_by_id,
+        mock_build_model_graph,
+    ):
+        mock_get_model_by_id.return_value = {
+            "model_id": "author/model-a",
+        }
+        mock_build_model_graph.return_value = {
+            "nodes": [],
+            "edges": [],
+        }
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "availability": {
+                "author/model-a": {
+                    "status": "available",
+                    "http_status": 200,
+                }
+            }
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse(
+                "model_detail",
+                args=["author/model-a"],
+            )
+        )
+
+        self.assertEqual(
+            response.context["search_context"]["availability"],
+            {"status": "available", "http_status": 200},
+        )
+        self.assertContains(response, "Available")
 
 class CompareModelsViewTests(TestCase):
     def test_links_back_to_search_results(self):
@@ -2292,7 +2381,10 @@ class DecisionStressOutcomeExplanationTests(SimpleTestCase):
                 "(20.0 percentage points)."
             ),
         )
-class SearchResultsViewTests(TestCase):
+class SearchResultsViewTests(
+    MockAvailabilitySelectionMixin,
+    TestCase,
+):
     def test_displays_separate_search_results_page(self):
         response = self.client.get(
             reverse("search_results")
@@ -2315,6 +2407,15 @@ class SearchResultsViewTests(TestCase):
                 "model_id": "author/model-a",
                 "basemodels": ["base/model"],
                 "score": 90.0,
+                "moscow_requirements": [
+                    {
+                        "feature_key": "language",
+                        "value": "English",
+                        "priority": "must",
+                        "moscow_priority": "Must Have",
+                        "constraint_kind": "hard_positive",
+                    }
+                ],
             }
         ]
         mock_search_models_feature_based.return_value = mock_results
@@ -2353,6 +2454,10 @@ class SearchResultsViewTests(TestCase):
         self.assertEqual(
             search_state["search_mode"],
             "feature-based",
+        )
+        self.assertEqual(
+            search_state["moscow_requirements"],
+            mock_results[0]["moscow_requirements"],
         )
     def test_displays_results_stored_in_session(self):
         session = self.client.session
@@ -2441,6 +2546,88 @@ class SearchResultsViewTests(TestCase):
             "Base-model family: Llama",
         )
 
+    def test_displays_structured_moscow_priority_summary(self):
+        requirements = [
+            {
+                "feature_key": "language",
+                "value": "English",
+                "priority": "must",
+                "moscow_priority": "Must Have",
+                "constraint_kind": "hard_positive",
+            },
+            {
+                "feature_key": "library_name",
+                "value": "transformers",
+                "priority": "strong_prefer",
+                "moscow_priority": "Should Have",
+                "constraint_kind": "soft_positive",
+            },
+            {
+                "feature_key": "datasets",
+                "value": "squad",
+                "priority": "prefer",
+                "moscow_priority": "Could Have",
+                "constraint_kind": "soft_positive",
+            },
+            {
+                "feature_key": "license_name",
+                "value": "gpl-3.0",
+                "priority": "avoid",
+                "moscow_priority": "Won't Have",
+                "constraint_kind": "hard_negative",
+            },
+        ]
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "all",
+            "base_model_family": None,
+            "moscow_requirements": requirements,
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertEqual(
+            response.context["moscow_requirements"],
+            requirements,
+        )
+        for text in (
+            "Must Have",
+            "Should Have",
+            "Could Have",
+            "Won&#x27;t Have",
+            "English",
+            "transformers",
+            "squad",
+            "gpl-3.0",
+        ):
+            with self.subTest(text=text):
+                self.assertContains(response, text, html=False)
+
+    def test_basic_fallback_does_not_claim_moscow_reasoning(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "basic-fallback",
+            "search_scope": "all",
+            "base_model_family": None,
+            "moscow_requirements": [],
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertNotContains(response, "Requirements / MoSCoW")
+        self.assertContains(response, "Basic fallback search")
+
     def test_displays_all_models_scope(self):
         session = self.client.session
         session["hugselect_search_results"] = {
@@ -2504,6 +2691,638 @@ class SearchFormFamilyFilterTests(TestCase):
         )
 
 
+class ExplicitRequirementFormTests(TestCase):
+    def test_form_exposes_supported_features_and_priorities(self):
+        response = self.client.get(reverse("search"))
+        response_html = response.content.decode()
+
+        for _, feature_options in EXPLICIT_REQUIREMENT_FEATURE_GROUPS:
+            for feature_key, feature_label in feature_options:
+                with self.subTest(feature=feature_key):
+                    self.assertRegex(
+                        response_html,
+                        (
+                            rf'<option value="{feature_key}">\s+'
+                            rf'{feature_label}\s+</option>'
+                        ),
+                    )
+
+        for priority, priority_label in EXPLICIT_REQUIREMENT_PRIORITIES:
+            with self.subTest(priority=priority):
+                self.assertRegex(
+                    response_html,
+                    (
+                        rf'<option value="{priority}">\s+'
+                        rf'{priority_label.replace("'", "&#x27;")}'
+                    ),
+                )
+
+        self.assertContains(response, "+ Add requirement")
+        self.assertContains(response, 'class="remove-requirement"')
+        self.assertContains(response, 'name="requirement_value"')
+
+    def test_does_not_expose_downloads_or_likes_as_requirements(self):
+        response = self.client.get(reverse("search"))
+
+        self.assertNotContains(
+            response,
+            'value="downloads_last_30_days"',
+        )
+        self.assertNotContains(response, 'value="likes"')
+
+
+class ExplicitRequirementParsingTests(SimpleTestCase):
+    def test_parses_all_explicit_moscow_priorities(self):
+        requirements = parse_explicit_requirements(
+            ["task", "language", "Reliability", "gated"],
+            ["text-generation", "English", "0.8", "true"],
+            ["must", "should", "could", "wont"],
+        )
+
+        self.assertEqual(
+            requirements,
+            [
+                {
+                    "feature_key": "task",
+                    "value": "text-generation",
+                    "priority": "must",
+                },
+                {
+                    "feature_key": "language",
+                    "value": "English",
+                    "priority": "should",
+                },
+                {
+                    "feature_key": "Reliability",
+                    "value": "0.8",
+                    "priority": "could",
+                },
+                {
+                    "feature_key": "gated",
+                    "value": "true",
+                    "priority": "wont",
+                },
+            ],
+        )
+
+    def test_ignores_an_unselected_empty_row(self):
+        self.assertEqual(
+            parse_explicit_requirements(
+                [""],
+                [""],
+                ["must"],
+            ),
+            [],
+        )
+
+    def test_rejects_duplicate_requirement(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Duplicate requirement: Language = english\.",
+        ):
+            parse_explicit_requirements(
+                ["language", "language"],
+                ["English", "english"],
+                ["must", "must"],
+            )
+
+    def test_rejects_unsupported_feature_priority_and_missing_value(self):
+        invalid_cases = (
+            (
+                ["downloads_last_30_days"],
+                ["1000"],
+                ["must"],
+                "unsupported feature",
+            ),
+            (
+                ["language"],
+                ["English"],
+                ["urgent"],
+                "unsupported priority",
+            ),
+            (
+                ["language"],
+                [""],
+                ["must"],
+                "must include a value",
+            ),
+        )
+
+        for features, values, priorities, message in invalid_cases:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    parse_explicit_requirements(
+                        features,
+                        values,
+                        priorities,
+                    )
+
+    def test_rejects_contradictory_requirement(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            (
+                r"Contradictory requirements: Language = English "
+                r"cannot be both MUST and WON'T\."
+            ),
+        ):
+            parse_explicit_requirements(
+                ["language", "language"],
+                ["English", "English"],
+                ["must", "wont"],
+            )
+
+
+class MoscowPrioritySemanticsTests(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.builder = _make_feature_search_builder(
+            limit=AVAILABILITY_CANDIDATE_LIMIT
+        )
+
+    def _group(
+        self,
+        priority,
+        value,
+        field="Metadata.language",
+        *,
+        base_weight=1.0,
+        explicit_priority=None,
+    ):
+        return FeatureGroup(
+            feature_key="language",
+            priority=priority,
+            include=[value],
+            fields=[field],
+            base_weight=base_weight,
+            explicit_priority=explicit_priority,
+        )
+
+    def test_maps_existing_priorities_to_moscow(self):
+        self.assertEqual(
+            PRIORITY_TO_MOSCOW,
+            {
+                "must": {
+                    "label": "Must Have",
+                    "kind": "hard_positive",
+                },
+                "strong_prefer": {
+                    "label": "Should Have",
+                    "kind": "soft_positive",
+                },
+                "prefer": {
+                    "label": "Could Have",
+                    "kind": "soft_positive",
+                },
+                "avoid": {
+                    "label": "Won't Have",
+                    "kind": "hard_negative",
+                },
+            },
+        )
+
+    def test_must_match_remains_eligible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"language": ["English"]}},
+            prebuilt_groups=[self._group("must", "English")],
+        )
+
+        self.assertTrue(explanation["hard_filters_passed"])
+        self.assertEqual(
+            explanation["hard_filters"][0]["moscow_priority"],
+            "Must Have",
+        )
+
+    def test_must_non_match_is_infeasible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"language": ["French"]}},
+            prebuilt_groups=[self._group("must", "English")],
+        )
+
+        hard_result = explanation["hard_filters"][0]
+        self.assertFalse(explanation["hard_filters_passed"])
+        self.assertEqual(hard_result["evidence_status"], "non_match")
+        self.assertEqual(
+            hard_result["exclusion_reason"],
+            "must_not_satisfied",
+        )
+
+    def test_missing_must_evidence_is_not_called_a_confirmed_non_match(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {}},
+            prebuilt_groups=[self._group("must", "English")],
+        )
+
+        hard_result = explanation["hard_filters"][0]
+        self.assertFalse(explanation["hard_filters_passed"])
+        self.assertEqual(
+            hard_result["evidence_status"],
+            "missing_evidence",
+        )
+        self.assertEqual(
+            hard_result["exclusion_reason"],
+            "missing_evidence",
+        )
+
+    def test_wont_match_is_infeasible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"license": "gpl-3.0"}},
+            prebuilt_groups=[
+                self._group("avoid", "gpl-3.0", "Metadata.license")
+            ],
+        )
+
+        hard_result = explanation["hard_filters"][0]
+        self.assertFalse(explanation["hard_filters_passed"])
+        self.assertEqual(
+            hard_result["exclusion_reason"],
+            "prohibited_value_matched",
+        )
+
+    def test_wont_non_match_remains_eligible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"license": "apache-2.0"}},
+            prebuilt_groups=[
+                self._group("avoid", "gpl-3.0", "Metadata.license")
+            ],
+        )
+
+        hard_result = explanation["hard_filters"][0]
+        self.assertTrue(explanation["hard_filters_passed"])
+        self.assertEqual(hard_result["evidence_status"], "non_match")
+        self.assertIsNone(hard_result["exclusion_reason"])
+
+    def test_missing_wont_evidence_does_not_exclude_or_claim_non_match(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {}},
+            prebuilt_groups=[
+                self._group("avoid", "gpl-3.0", "Metadata.license")
+            ],
+        )
+
+        hard_result = explanation["hard_filters"][0]
+        self.assertTrue(explanation["hard_filters_passed"])
+        self.assertEqual(
+            hard_result["evidence_status"],
+            "missing_evidence",
+        )
+        self.assertIsNone(hard_result["exclusion_reason"])
+
+    def test_missing_should_and_could_do_not_exclude(self):
+        for priority, label in (
+            ("strong_prefer", "Should Have"),
+            ("prefer", "Could Have"),
+        ):
+            with self.subTest(priority=priority):
+                explanation = self.builder.compare_bundle_to_sample(
+                    None,
+                    {"Metadata": {}},
+                    prebuilt_groups=[
+                        self._group(priority, "English")
+                    ],
+                )
+                self.assertTrue(explanation["hard_filters_passed"])
+                self.assertEqual(
+                    explanation["per_feature"][0]["moscow_priority"],
+                    label,
+                )
+                self.assertFalse(
+                    explanation["per_feature"][0]["matches"][0][
+                        "matched"
+                    ]
+                )
+
+    def test_should_match_outweighs_comparable_could_match(self):
+        should_group = self._group(
+            "strong_prefer",
+            "English",
+            base_weight=9.5,
+            explicit_priority="should",
+        )
+        could_group = self._group(
+            "prefer",
+            "apache-2.0",
+            "Metadata.license",
+            base_weight=9.5,
+            explicit_priority="could",
+        )
+
+        should_model = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"language": ["English"]}},
+            prebuilt_groups=[should_group, could_group],
+        )
+        could_model = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"license": "apache-2.0"}},
+            prebuilt_groups=[should_group, could_group],
+        )
+
+        self.assertEqual(
+            should_model["per_feature"][0]["effective_weight"],
+            9.5,
+        )
+        self.assertEqual(
+            could_model["per_feature"][1]["effective_weight"],
+            4.75,
+        )
+        self.assertGreater(
+            should_model["total_match_score"],
+            could_model["total_match_score"],
+        )
+
+    def test_explicit_soft_multiplier_configuration_is_exact(self):
+        self.assertEqual(
+            self.builder.feature_weight_groups["preference"]["language"],
+            9.5,
+        )
+        self.assertEqual(
+            EXPLICIT_MOSCOW_PRIORITIES["should"]["multiplier"],
+            1.0,
+        )
+        self.assertEqual(
+            EXPLICIT_MOSCOW_PRIORITIES["could"]["multiplier"],
+            0.5,
+        )
+
+    def test_explicit_priority_overrides_extraction_without_double_counting(self):
+        extracted_group = self._group("prefer", "English")
+        merged_groups = self.builder.apply_explicit_requirements(
+            [extracted_group],
+            [
+                {
+                    "feature_key": "language",
+                    "value": "English",
+                    "priority": "must",
+                }
+            ],
+        )
+
+        self.assertEqual(len(merged_groups), 1)
+        self.assertEqual(merged_groups[0].include, ["English"])
+        self.assertEqual(merged_groups[0].explicit_priority, "must")
+        self.assertEqual(merged_groups[0].priority, "must")
+        self.assertEqual(
+            len(
+                self.builder.summarize_moscow_requirements(
+                    merged_groups
+                )
+            ),
+            1,
+        )
+
+    def test_no_explicit_requirements_preserves_extracted_groups(self):
+        extracted_groups = [self._group("prefer", "English")]
+
+        merged_groups = self.builder.apply_explicit_requirements(
+            extracted_groups,
+            [],
+        )
+
+        self.assertIs(merged_groups, extracted_groups)
+
+    def test_explicit_must_missing_is_infeasible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {}},
+            prebuilt_groups=[
+                self._group(
+                    "must",
+                    "English",
+                    explicit_priority="must",
+                )
+            ],
+        )
+
+        self.assertFalse(explanation["hard_filters_passed"])
+        self.assertEqual(
+            explanation["hard_filters"][0]["priority"],
+            "must",
+        )
+        self.assertEqual(
+            explanation["hard_filters"][0]["priority_source"],
+            "explicit",
+        )
+
+    def test_explicit_wont_match_is_infeasible(self):
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"license": "gpl-3.0"}},
+            prebuilt_groups=[
+                self._group(
+                    "avoid",
+                    "gpl-3.0",
+                    "Metadata.license",
+                    explicit_priority="wont",
+                )
+            ],
+        )
+
+        self.assertFalse(explanation["hard_filters_passed"])
+        self.assertEqual(
+            explanation["hard_filters"][0]["exclusion_reason"],
+            "prohibited_value_matched",
+        )
+
+    def test_explicit_should_and_could_non_matches_remain_feasible(self):
+        for explicit_priority, legacy_priority in (
+            ("should", "strong_prefer"),
+            ("could", "prefer"),
+        ):
+            with self.subTest(priority=explicit_priority):
+                explanation = self.builder.compare_bundle_to_sample(
+                    None,
+                    {"Metadata": {}},
+                    prebuilt_groups=[
+                        self._group(
+                            legacy_priority,
+                            "English",
+                            explicit_priority=explicit_priority,
+                        )
+                    ],
+                )
+
+                self.assertTrue(explanation["hard_filters_passed"])
+                self.assertFalse(
+                    explanation["per_feature"][0]["matches"][0][
+                        "matched"
+                    ]
+                )
+
+    def test_hard_constraints_are_inside_query_before_candidate_limit(self):
+        must_group = self._group("must", "English")
+        wont_group = self._group(
+            "avoid",
+            "gpl-3.0",
+            "Metadata.license",
+        )
+        should_group = self._group("strong_prefer", "German")
+        family_filter = _base_model_family_filter("gemma")
+
+        query = self.builder.build_query(
+            [must_group, wont_group, should_group],
+            extra_filter_clauses=[family_filter],
+        )
+        ranked_query = query["query"]
+        if "function_score" in ranked_query:
+            ranked_query = ranked_query["function_score"]["query"]
+        bool_query = ranked_query["bool"]
+
+        self.assertEqual(
+            query["size"],
+            AVAILABILITY_CANDIDATE_LIMIT,
+        )
+        self.assertIn(family_filter, bool_query["filter"])
+        self.assertEqual(len(bool_query["filter"]), 2)
+        self.assertEqual(len(bool_query["must_not"]), 1)
+        self.assertEqual(bool_query["minimum_should_match"], 0)
+
+    def test_explicit_hard_constraints_use_the_same_early_query_filters(self):
+        query = self.builder.build_query(
+            [
+                self._group(
+                    "must",
+                    "English",
+                    explicit_priority="must",
+                ),
+                self._group(
+                    "avoid",
+                    "gpl-3.0",
+                    "Metadata.license",
+                    explicit_priority="wont",
+                ),
+            ]
+        )
+        ranked_query = query["query"]
+        if "function_score" in ranked_query:
+            ranked_query = ranked_query["function_score"]["query"]
+
+        self.assertEqual(
+            query["size"],
+            AVAILABILITY_CANDIDATE_LIMIT,
+        )
+        self.assertEqual(len(ranked_query["bool"]["filter"]), 1)
+        self.assertEqual(
+            len(ranked_query["bool"]["must_not"]),
+            1,
+        )
+
+
+class MoscowFeatureSearchTests(SimpleTestCase):
+    @patch("recommender.services._make_feature_search_builder")
+    @patch("recommender.services._extract_feature_bundle")
+    @patch("recommender.services.Elasticsearch")
+    def test_only_feasible_hits_continue_to_results(
+        self,
+        mock_elasticsearch,
+        mock_extract_feature_bundle,
+        mock_make_builder,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.indices.exists.return_value = True
+        mock_extract_feature_bundle.return_value = object()
+
+        infeasible_hit = {
+            "_id": "author__blocked.json",
+            "_source": {"modelID": "author/blocked"},
+        }
+        feasible_hit = {
+            "_id": "author__eligible.json",
+            "_source": {"modelID": "author/eligible"},
+        }
+        mock_builder = mock_make_builder.return_value
+        mock_builder.precompute_feature_group_cache.return_value = []
+        mock_builder.search.return_value = (
+            {"hits": {"hits": [infeasible_hit, feasible_hit]}},
+            {},
+            [],
+        )
+        mock_builder.summarize_moscow_requirements.return_value = [
+            {
+                "feature_key": "language",
+                "value": "English",
+                "priority": "must",
+                "moscow_priority": "Must Have",
+                "constraint_kind": "hard_positive",
+            }
+        ]
+        mock_builder.compare_bundle_to_sample.side_effect = [
+            {"hard_filters_passed": False},
+            {"hard_filters_passed": True},
+        ]
+
+        results = search_models_feature_based("English model", limit=10)
+
+        self.assertEqual(
+            [result["model_id"] for result in results],
+            ["author/eligible"],
+        )
+        self.assertEqual(
+            results[0]["moscow_requirements"][0]["moscow_priority"],
+            "Must Have",
+        )
+
+    @patch("recommender.services._make_feature_search_builder")
+    @patch("recommender.services._extract_feature_bundle")
+    @patch("recommender.services.Elasticsearch")
+    def test_explicit_requirements_are_merged_before_search(
+        self,
+        mock_elasticsearch,
+        mock_extract_feature_bundle,
+        mock_make_builder,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.indices.exists.return_value = True
+        bundle = mock_extract_feature_bundle.return_value
+        extracted_groups = [object()]
+        merged_groups = [object()]
+        explicit_requirements = [
+            {
+                "feature_key": "language",
+                "value": "English",
+                "priority": "must",
+            }
+        ]
+
+        mock_builder = mock_make_builder.return_value
+        mock_builder.precompute_feature_group_cache.return_value = (
+            extracted_groups
+        )
+        mock_builder.apply_explicit_requirements.return_value = (
+            merged_groups
+        )
+        mock_builder.search.return_value = (
+            {"hits": {"hits": []}},
+            {},
+            merged_groups,
+        )
+        mock_builder.summarize_moscow_requirements.return_value = []
+
+        search_models_feature_based(
+            "English model",
+            explicit_requirements=explicit_requirements,
+        )
+
+        mock_builder.apply_explicit_requirements.assert_called_once_with(
+            extracted_groups,
+            explicit_requirements,
+        )
+        mock_builder.search.assert_called_once_with(
+            es_client=mock_es,
+            index="models_t7",
+            features=bundle,
+            prebuilt_groups=merged_groups,
+            include_explain=False,
+            extra_filter_clauses=None,
+        )
+
+
 class BaseModelFamilyFilterTests(SimpleTestCase):
     def test_builds_supported_family_filters(self):
         for family, pattern in (
@@ -2549,12 +3368,15 @@ class BasicSearchFamilyFilterTests(SimpleTestCase):
 
         search_models_basic(
             "English text-generation model",
-            limit=10,
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
             base_model_family="qwen",
         )
 
         search_body = mock_es.search.call_args.kwargs["body"]
-        self.assertEqual(search_body["size"], 10)
+        self.assertEqual(
+            search_body["size"],
+            AVAILABILITY_CANDIDATE_LIMIT,
+        )
         self.assertIn(
             "Metadata.basemodels",
             search_body["_source"],
@@ -2601,7 +3423,9 @@ class BasicSearchFamilyFilterTests(SimpleTestCase):
 
 class FeatureQueryBuilderFilterTests(SimpleTestCase):
     def test_places_extra_filter_inside_query_before_limit(self):
-        builder = _make_feature_search_builder(limit=10)
+        builder = _make_feature_search_builder(
+            limit=AVAILABILITY_CANDIDATE_LIMIT
+        )
         family_filter = _base_model_family_filter("gemma")
 
         query = builder.build_query(
@@ -2615,7 +3439,10 @@ class FeatureQueryBuilderFilterTests(SimpleTestCase):
                 "function_score"
             ]["query"]
 
-        self.assertEqual(query["size"], 10)
+        self.assertEqual(
+            query["size"],
+            AVAILABILITY_CANDIDATE_LIMIT,
+        )
         self.assertEqual(
             filtered_query["bool"]["filter"],
             [family_filter],
@@ -2647,8 +3474,12 @@ class FeatureSearchFamilyFilterTests(SimpleTestCase):
 
         search_models_feature_based(
             "English text-generation model",
-            limit=10,
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
             base_model_family="llama",
+        )
+
+        mock_make_builder.assert_called_once_with(
+            limit=AVAILABILITY_CANDIDATE_LIMIT
         )
 
         mock_builder.search.assert_called_once_with(
@@ -2696,7 +3527,7 @@ class SearchViewFamilyFilterTests(TestCase):
 
                 mock_search_models_feature_based.assert_called_once_with(
                     "English code-generation model",
-                    limit=10,
+                    limit=AVAILABILITY_CANDIDATE_LIMIT,
                     base_model_family=expected_family,
                 )
 
@@ -2718,7 +3549,7 @@ class SearchViewFamilyFilterTests(TestCase):
 
         mock_search_models_feature_based.assert_called_once_with(
             "English code-generation model",
-            limit=10,
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
             base_model_family=None,
         )
         search_state = self.client.session[
@@ -2779,6 +3610,658 @@ class SearchViewFamilyFilterTests(TestCase):
 
         mock_search_models_basic.assert_called_once_with(
             "English code-generation model",
-            limit=10,
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
             base_model_family="mistral",
+        )
+
+
+class ExplicitRequirementViewTests(TestCase):
+    @patch("recommender.views.search_models_feature_based")
+    def test_passes_parsed_explicit_requirements_to_feature_search(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = []
+        explicit_requirements = [
+            {
+                "feature_key": "task",
+                "value": "text-generation",
+                "priority": "must",
+            },
+            {
+                "feature_key": "language",
+                "value": "English",
+                "priority": "should",
+            },
+            {
+                "feature_key": "Reliability",
+                "value": "0.8",
+                "priority": "could",
+            },
+            {
+                "feature_key": "gated",
+                "value": "true",
+                "priority": "wont",
+            },
+        ]
+
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English text-generation model",
+                "requirement_feature": [
+                    requirement["feature_key"]
+                    for requirement in explicit_requirements
+                ],
+                "requirement_value": [
+                    requirement["value"]
+                    for requirement in explicit_requirements
+                ],
+                "requirement_priority": [
+                    requirement["priority"]
+                    for requirement in explicit_requirements
+                ],
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("search_results"),
+            fetch_redirect_response=False,
+        )
+        mock_search_models_feature_based.assert_called_once_with(
+            "English text-generation model",
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
+            base_model_family=None,
+            explicit_requirements=explicit_requirements,
+        )
+        self.assertEqual(
+            self.client.session["hugselect_search_results"][
+                "explicit_requirements"
+            ],
+            explicit_requirements,
+        )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_contradictory_requirements_return_clear_validation_error(
+        self,
+        mock_search_models_feature_based,
+    ):
+        self.client.post(
+            reverse("search"),
+            {
+                "query": "English model",
+                "requirement_feature": ["language", "language"],
+                "requirement_value": ["English", "English"],
+                "requirement_priority": ["must", "wont"],
+            },
+        )
+
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+        self.assertEqual(
+            search_state["error"],
+            (
+                "Contradictory requirements: Language = English "
+                "cannot be both MUST and WON'T."
+            ),
+        )
+        self.assertEqual(search_state["explicit_requirements"], [])
+        mock_search_models_feature_based.assert_not_called()
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_no_explicit_rows_preserves_natural_language_call(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = []
+
+        self.client.post(
+            reverse("search"),
+            {
+                "query": "English model",
+                "requirement_feature": [""],
+                "requirement_value": [""],
+                "requirement_priority": ["must"],
+            },
+        )
+
+        mock_search_models_feature_based.assert_called_once_with(
+            "English model",
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
+            base_model_family=None,
+        )
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_results_page_displays_explicit_priorities_from_session(
+        self,
+        mock_search_models_feature_based,
+    ):
+        mock_search_models_feature_based.return_value = []
+
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English model",
+                "requirement_feature": [
+                    "task",
+                    "language",
+                    "Reliability",
+                    "gated",
+                ],
+                "requirement_value": [
+                    "text-generation",
+                    "English",
+                    "0.8",
+                    "true",
+                ],
+                "requirement_priority": [
+                    "must",
+                    "should",
+                    "could",
+                    "wont",
+                ],
+            },
+            follow=True,
+        )
+
+        self.assertTemplateUsed(
+            response,
+            "recommender/search_results.html",
+        )
+        self.assertContains(response, "Explicit priorities")
+        for text in (
+            "MUST",
+            "SHOULD",
+            "COULD",
+            "WON&#x27;T",
+            "Task:",
+            "text-generation",
+            "Language:",
+            "English",
+            "Reliability:",
+            "0.8",
+            "Gated:",
+            "true",
+        ):
+            with self.subTest(text=text):
+                self.assertContains(response, text)
+
+
+class ModelAvailabilityCheckTests(SimpleTestCase):
+    @patch("recommender.services.urlopen")
+    def test_http_200_is_available(self, mock_urlopen):
+        response = mock_urlopen.return_value.__enter__.return_value
+        response.status = 200
+
+        availability = check_model_availability(
+            "https://huggingface.co/author/model"
+        )
+
+        self.assertEqual(
+            availability,
+            {"status": "available", "http_status": 200},
+        )
+        self.assertEqual(
+            mock_urlopen.call_args.kwargs["timeout"],
+            3.0,
+        )
+
+    @patch("recommender.services.urlopen")
+    def test_redirect_ending_in_http_200_is_available(
+        self,
+        mock_urlopen,
+    ):
+        response = mock_urlopen.return_value.__enter__.return_value
+        response.status = 200
+        response.geturl.return_value = (
+            "https://huggingface.co/new-author/new-model"
+        )
+
+        availability = check_model_availability(
+            "https://huggingface.co/old-author/old-model"
+        )
+
+        self.assertEqual(availability["status"], "available")
+        self.assertEqual(availability["http_status"], 200)
+
+    @patch("recommender.services.urlopen")
+    def test_http_404_and_410_are_unavailable(
+        self,
+        mock_urlopen,
+    ):
+        for http_status in (404, 410):
+            with self.subTest(http_status=http_status):
+                mock_urlopen.side_effect = HTTPError(
+                    "https://huggingface.co/missing/model",
+                    http_status,
+                    "missing",
+                    None,
+                    None,
+                )
+
+                self.assertEqual(
+                    check_model_availability(
+                        "https://huggingface.co/missing/model"
+                    ),
+                    {
+                        "status": "unavailable",
+                        "http_status": http_status,
+                    },
+                )
+
+    @patch("recommender.services.urlopen")
+    def test_ambiguous_http_errors_are_unknown(
+        self,
+        mock_urlopen,
+    ):
+        for http_status in (401, 403, 429, 500):
+            with self.subTest(http_status=http_status):
+                mock_urlopen.side_effect = HTTPError(
+                    "https://huggingface.co/author/model",
+                    http_status,
+                    "ambiguous",
+                    None,
+                    None,
+                )
+
+                self.assertEqual(
+                    check_model_availability(
+                        "https://huggingface.co/author/model"
+                    ),
+                    {
+                        "status": "unknown",
+                        "http_status": http_status,
+                    },
+                )
+
+    @patch("recommender.services.urlopen")
+    def test_timeout_and_network_failure_are_unknown(
+        self,
+        mock_urlopen,
+    ):
+        for failure in (
+            TimeoutError("timed out"),
+            URLError("network unavailable"),
+        ):
+            with self.subTest(failure=type(failure).__name__):
+                mock_urlopen.side_effect = failure
+
+                self.assertEqual(
+                    check_model_availability(
+                        "https://huggingface.co/author/model"
+                    ),
+                    {"status": "unknown", "http_status": None},
+                )
+
+
+class AvailableResultSelectionTests(SimpleTestCase):
+    def test_skips_unavailable_results_without_reordering(self):
+        ranked_results = [
+            {"model_id": model_id, "score": score}
+            for model_id, score in (
+                ("A", 50),
+                ("B", 40),
+                ("C", 30),
+                ("D", 20),
+                ("E", 10),
+            )
+        ]
+        statuses = {
+            "A": "available",
+            "B": "unavailable",
+            "C": "available",
+            "D": "unavailable",
+            "E": "available",
+        }
+
+        def checker(url):
+            model_id = url.rsplit("/", 1)[-1]
+            status = statuses[model_id]
+            return {
+                "status": status,
+                "http_status": 200 if status == "available" else 404,
+            }
+
+        selected, summary = select_available_results(
+            ranked_results,
+            availability_checker=checker,
+        )
+
+        self.assertEqual(
+            [result["model_id"] for result in selected],
+            ["A", "C", "E"],
+        )
+        self.assertEqual(
+            [result["score"] for result in selected],
+            [50, 30, 10],
+        )
+        self.assertEqual(summary["unavailable_count"], 2)
+        self.assertEqual(summary["shortfall"], 7)
+
+    def test_later_candidates_replace_unavailable_top_ten(self):
+        ranked_results = [
+            {"model_id": f"author/model-{rank}", "score": 101 - rank}
+            for rank in range(1, 13)
+        ]
+        checker = Mock(
+            side_effect=lambda url: {
+                "status": (
+                    "unavailable"
+                    if url.endswith(("model-2", "model-5"))
+                    else "available"
+                ),
+                "http_status": (
+                    404
+                    if url.endswith(("model-2", "model-5"))
+                    else 200
+                ),
+            }
+        )
+
+        selected, summary = select_available_results(
+            ranked_results,
+            availability_checker=checker,
+        )
+
+        self.assertEqual(len(selected), 10)
+        self.assertEqual(
+            [result["model_id"] for result in selected],
+            [
+                "author/model-1",
+                "author/model-3",
+                "author/model-4",
+                "author/model-6",
+                "author/model-7",
+                "author/model-8",
+                "author/model-9",
+                "author/model-10",
+                "author/model-11",
+                "author/model-12",
+            ],
+        )
+        self.assertEqual(
+            [result["score"] for result in selected],
+            [100, 98, 97, 95, 94, 93, 92, 91, 90, 89],
+        )
+        self.assertEqual(summary["shortfall"], 0)
+        self.assertEqual(checker.call_count, 12)
+
+    def test_unknown_and_checker_failure_are_skipped_safely(self):
+        ranked_results = [
+            {"model_id": "author/unknown"},
+            {"model_id": "author/failure"},
+            {"model_id": "author/available"},
+        ]
+
+        def checker(url):
+            if url.endswith("unknown"):
+                return {"status": "unknown", "http_status": 429}
+            if url.endswith("failure"):
+                raise OSError("connection failed")
+            return {"status": "available", "http_status": 200}
+
+        selected, summary = select_available_results(
+            ranked_results,
+            availability_checker=checker,
+        )
+
+        self.assertEqual(
+            [result["model_id"] for result in selected],
+            ["author/available"],
+        )
+        self.assertEqual(summary["unknown_count"], 2)
+        self.assertEqual(summary["unavailable_count"], 0)
+
+    def test_stops_after_ten_available_results(self):
+        checker = Mock(
+            return_value={"status": "available", "http_status": 200}
+        )
+        ranked_results = [
+            {"model_id": f"author/model-{rank}"}
+            for rank in range(1, 21)
+        ]
+
+        selected, summary = select_available_results(
+            ranked_results,
+            availability_checker=checker,
+        )
+
+        self.assertEqual(len(selected), 10)
+        self.assertEqual(checker.call_count, 10)
+        self.assertEqual(summary["http_check_count"], 10)
+
+    def test_checks_duplicate_urls_only_once(self):
+        checker = Mock(
+            return_value={"status": "available", "http_status": 200}
+        )
+        ranked_results = [
+            {"model_id": "author/model"},
+            {"model_id": "author/model"},
+        ]
+
+        selected, summary = select_available_results(
+            ranked_results,
+            availability_checker=checker,
+        )
+
+        self.assertEqual(len(selected), 2)
+        self.assertEqual(checker.call_count, 1)
+        self.assertEqual(summary["http_check_count"], 1)
+
+
+class SearchAvailabilityIntegrationTests(TestCase):
+    @patch("recommender.services.check_model_availability")
+    @patch("recommender.views.search_models_feature_based")
+    def test_feature_search_backfills_verified_results_before_grouping(
+        self,
+        mock_search_models_feature_based,
+        mock_check_model_availability,
+    ):
+        candidate_results = [
+            {
+                "model_id": f"author/model-{rank}",
+                "url": f"https://huggingface.co/author/model-{rank}",
+                "basemodels": ["meta-llama/shared"],
+                "score": 101 - rank,
+            }
+            for rank in range(1, 13)
+        ]
+        mock_search_models_feature_based.return_value = candidate_results
+
+        def availability(url):
+            unavailable = url.endswith(("model-2", "model-5"))
+            return {
+                "status": "unavailable" if unavailable else "available",
+                "http_status": 404 if unavailable else 200,
+            }
+
+        mock_check_model_availability.side_effect = availability
+
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English code-generation model",
+                "search_scope": "family",
+                "base_model_family": "llama",
+            },
+            follow=True,
+        )
+
+        mock_search_models_feature_based.assert_called_once_with(
+            "English code-generation model",
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
+            base_model_family="llama",
+        )
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+        self.assertEqual(len(search_state["results"]), 10)
+        self.assertEqual(
+            [result["model_id"] for result in search_state["results"]],
+            [
+                "author/model-1",
+                "author/model-3",
+                "author/model-4",
+                "author/model-6",
+                "author/model-7",
+                "author/model-8",
+                "author/model-9",
+                "author/model-10",
+                "author/model-11",
+                "author/model-12",
+            ],
+        )
+        self.assertTrue(
+            all(
+                result["availability"]["status"] == "available"
+                for result in search_state["results"]
+            )
+        )
+        self.assertEqual(
+            len(
+                response.context["grouped_results"]
+                ["single_base_model_groups"][0]["results"]
+            ),
+            10,
+        )
+        self.assertNotContains(response, "author/model-2")
+        self.assertContains(response, "author/model-12")
+
+    @patch("recommender.services.check_model_availability")
+    @patch("recommender.views.search_models_basic")
+    @patch("recommender.views.search_models_feature_based")
+    def test_basic_fallback_uses_larger_candidate_pool(
+        self,
+        mock_search_models_feature_based,
+        mock_search_models_basic,
+        mock_check_model_availability,
+    ):
+        mock_search_models_feature_based.side_effect = RuntimeError(
+            "feature search unavailable"
+        )
+        mock_search_models_basic.return_value = [
+            {
+                "model_id": f"author/model-{rank}",
+                "url": f"https://huggingface.co/author/model-{rank}",
+                "score": 20 - rank,
+            }
+            for rank in range(1, 16)
+        ]
+        mock_check_model_availability.return_value = {
+            "status": "available",
+            "http_status": 200,
+        }
+
+        self.client.post(
+            reverse("search"),
+            {
+                "query": "English text-generation model",
+                "search_scope": "family",
+                "base_model_family": "qwen",
+            },
+        )
+
+        mock_search_models_basic.assert_called_once_with(
+            "English text-generation model",
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
+            base_model_family="qwen",
+        )
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+        self.assertEqual(len(search_state["results"]), 10)
+        self.assertEqual(
+            search_state["warning"],
+            (
+                "Advanced recommendation is temporarily unavailable. "
+                "Showing basic search results instead."
+            ),
+        )
+
+    def test_results_page_shows_availability_and_shortfall_warning(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "available model",
+            "results": [
+                {
+                    "model_id": "author/model",
+                    "availability": {
+                        "status": "available",
+                        "http_status": 200,
+                    },
+                    "score": 90.0,
+                }
+            ],
+            "warning": (
+                "Only 1 model could be verified as currently available."
+            ),
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "all",
+            "base_model_family": None,
+            "availability_summary": {
+                "candidate_count": 3,
+                "available_count": 1,
+                "shortfall": 9,
+            },
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertContains(response, "Available")
+        self.assertContains(
+            response,
+            "Only 1 model could be verified as currently available.",
+        )
+        self.assertContains(response, 'id="compare-form"')
+        self.assertContains(
+            response,
+            'id="search-task-tooltip-result-1"',
+        )
+
+    @patch("recommender.services.check_model_availability")
+    @patch("recommender.views.search_models_feature_based")
+    def test_search_warns_when_candidate_pool_cannot_fill_ten(
+        self,
+        mock_search_models_feature_based,
+        mock_check_model_availability,
+    ):
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": f"author/model-{rank}",
+                "url": f"https://huggingface.co/author/model-{rank}",
+            }
+            for rank in range(1, 6)
+        ]
+        mock_check_model_availability.side_effect = [
+            {"status": "available", "http_status": 200},
+            {"status": "unavailable", "http_status": 404},
+            {"status": "unknown", "http_status": 429},
+            {"status": "available", "http_status": 200},
+            {"status": "available", "http_status": 200},
+        ]
+
+        self.client.post(
+            reverse("search"),
+            {"query": "English model"},
+        )
+
+        search_state = self.client.session[
+            "hugselect_search_results"
+        ]
+        self.assertEqual(len(search_state["results"]), 3)
+        self.assertEqual(
+            search_state["warning"],
+            "Only 3 models could be verified as currently available.",
+        )
+        self.assertEqual(
+            search_state["availability_summary"]["unknown_count"],
+            1,
+        )
+        self.assertEqual(
+            search_state["availability_summary"]["unavailable_count"],
+            1,
         )

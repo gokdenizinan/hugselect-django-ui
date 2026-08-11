@@ -57,6 +57,79 @@
                     required
                     placeholder="e.g. A recent, non-gated text-generation model with Apache-2.0 licensing and strong community adoption…"
                 >{{ query }}</textarea>
+
+                <fieldset class="requirement-builder">
+                    <legend>
+                        <span class="specimen-label">
+                            Explicit priorities / Optional
+                        </span>
+                        Add requirements whose priority you want to control.
+                    </legend>
+
+                    <p class="requirement-builder__help">
+                        Explicit choices override an automatically extracted
+                        priority for the same feature and value.
+                    </p>
+
+                    <div
+                        id="requirement-rows"
+                        class="requirement-rows"
+                        aria-live="polite"
+                    ></div>
+
+                    <button
+                        type="button"
+                        id="add-requirement"
+                        class="secondary-button"
+                    >+ Add requirement</button>
+
+                    <template id="requirement-row-template">
+                        <div class="requirement-row">
+                            <label>
+                                <span>Feature</span>
+                                <select name="requirement_feature">
+                                    <option value="">Select feature</option>
+                                    {% for group_label, feature_options in explicit_requirement_feature_groups %}
+                                        <optgroup label="{{ group_label }}">
+                                            {% for feature_key, feature_label in feature_options %}
+                                                <option value="{{ feature_key }}">
+                                                    {{ feature_label }}
+                                                </option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <label>
+                                <span>Value</span>
+                                <input
+                                    type="text"
+                                    name="requirement_value"
+                                    placeholder="e.g. English"
+                                >
+                            </label>
+
+                            <label>
+                                <span>Priority</span>
+                                <select name="requirement_priority">
+                                    {% for priority, priority_label in explicit_requirement_priorities %}
+                                        <option value="{{ priority }}">
+                                            {{ priority_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <button
+                                type="button"
+                                class="remove-requirement"
+                                aria-label="Remove requirement"
+                            >Remove</button>
+                        </div>
+                    </template>
+                </fieldset>
+
                 <div class="search-scope">
                     <span class="specimen-label">
                         Search scope
@@ -114,6 +187,44 @@
         const familySelect = document.getElementById(
             "base-model-family"
         );
+        const requirementRows = document.getElementById(
+            "requirement-rows"
+        );
+        const requirementTemplate = document.getElementById(
+            "requirement-row-template"
+        );
+        const addRequirementButton = document.getElementById(
+            "add-requirement"
+        );
+
+        if (
+            requirementRows &&
+            requirementTemplate &&
+            addRequirementButton
+        ) {
+            function addRequirementRow() {
+                requirementRows.appendChild(
+                    requirementTemplate.content.cloneNode(true)
+                );
+            }
+
+            addRequirementButton.addEventListener(
+                "click",
+                addRequirementRow
+            );
+
+            requirementRows.addEventListener("click", (event) => {
+                const removeButton = event.target.closest(
+                    ".remove-requirement"
+                );
+
+                if (removeButton) {
+                    removeButton.closest(".requirement-row").remove();
+                }
+            });
+
+            addRequirementRow();
+        }
 
         if (familySelect && searchScopeInputs.length) {
             function updateFamilySelect() {

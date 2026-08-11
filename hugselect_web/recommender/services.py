@@ -1,19 +1,341 @@
 import os
+import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from elasticsearch import Elasticsearch
 
 
 ES_URL = "http://localhost:9200"
 INDEX_NAME = "models_t7"
+DISPLAY_RESULT_LIMIT = 10
+AVAILABILITY_CANDIDATE_LIMIT = 30
+AVAILABILITY_HTTP_TIMEOUT_SECONDS = 3.0
+AVAILABILITY_MAX_WORKERS = 5
 BASE_MODEL_FAMILY_PATTERNS = {
     "llama": "*llama*",
     "mistral": "*mistral*",
     "qwen": "*qwen*",
     "gemma": "*gemma*",
 }
+
+EXPLICIT_REQUIREMENT_FEATURE_GROUPS = (
+    (
+        "Core",
+        (
+            ("task", "Task"),
+            ("domain", "Domain"),
+            ("author", "Author"),
+            ("objective", "Objective"),
+            ("model_name", "Model name"),
+        ),
+    ),
+    (
+        "Metadata",
+        (
+            ("license_name", "License"),
+            ("library_name", "Library"),
+            ("basemodels", "Base models"),
+            ("datasets", "Datasets"),
+            ("language", "Language"),
+            ("metrics", "Metrics"),
+            ("gated", "Gated"),
+            ("last_modified_year", "Last modified year"),
+        ),
+    ),
+    (
+        "Functional",
+        (("functional", "Functional requirement"),),
+    ),
+    (
+        "Quality",
+        (
+            ("Functional_Suitability", "Functional suitability"),
+            ("Compatibility", "Compatibility"),
+            ("Performance_Efficiency", "Performance efficiency"),
+            ("Reliability", "Reliability"),
+            ("Interaction_Capability", "Interaction capability"),
+            ("Security", "Security"),
+            ("Maintainability", "Maintainability"),
+            ("Flexibility", "Flexibility"),
+        ),
+    ),
+)
+EXPLICIT_REQUIREMENT_FEATURE_LABELS = {
+    feature_key: label
+    for _, options in EXPLICIT_REQUIREMENT_FEATURE_GROUPS
+    for feature_key, label in options
+}
+EXPLICIT_REQUIREMENT_PRIORITIES = (
+    ("must", "MUST"),
+    ("should", "SHOULD"),
+    ("could", "COULD"),
+    ("wont", "WON'T"),
+)
+EXPLICIT_REQUIREMENT_PRIORITY_LABELS = dict(
+    EXPLICIT_REQUIREMENT_PRIORITIES
+)
+
+
+def parse_explicit_requirements(
+    feature_keys,
+    values,
+    priorities,
+):
+    """Validate and normalize explicit MoSCoW form rows."""
+    row_count = max(len(feature_keys), len(values), len(priorities), 0)
+    requirements = []
+    seen = {}
+
+    for index in range(row_count):
+        feature_key = (
+            feature_keys[index].strip()
+            if index < len(feature_keys)
+            else ""
+        )
+        value = values[index].strip() if index < len(values) else ""
+        priority = (
+            priorities[index].strip().casefold()
+            if index < len(priorities)
+            else ""
+        )
+
+        if not feature_key and not value:
+            continue
+
+        row_number = index + 1
+        if feature_key not in EXPLICIT_REQUIREMENT_FEATURE_LABELS:
+            raise ValueError(
+                f"Requirement {row_number} has an unsupported feature."
+            )
+        if not value:
+            raise ValueError(
+                f"Requirement {row_number} must include a value."
+            )
+        if priority not in EXPLICIT_REQUIREMENT_PRIORITY_LABELS:
+            raise ValueError(
+                f"Requirement {row_number} has an unsupported priority."
+            )
+
+        canonical_key = (
+            feature_key,
+            " ".join(
+                re.sub(
+                    r"[^a-z0-9]+",
+                    " ",
+                    value.casefold(),
+                ).split()
+            ),
+        )
+        if canonical_key in seen:
+            previous_priority = seen[canonical_key]
+            feature_label = EXPLICIT_REQUIREMENT_FEATURE_LABELS[
+                feature_key
+            ]
+            if previous_priority == priority:
+                raise ValueError(
+                    f"Duplicate requirement: {feature_label} = {value}."
+                )
+            raise ValueError(
+                "Contradictory requirements: "
+                f"{feature_label} = {value} cannot be both "
+                f"{EXPLICIT_REQUIREMENT_PRIORITY_LABELS[previous_priority]} "
+                f"and {EXPLICIT_REQUIREMENT_PRIORITY_LABELS[priority]}."
+            )
+
+        seen[canonical_key] = priority
+        requirements.append({
+            "feature_key": feature_key,
+            "value": value,
+            "priority": priority,
+        })
+
+    return requirements
+
+
+def check_model_availability(
+    url,
+    timeout=AVAILABILITY_HTTP_TIMEOUT_SECONDS,
+):
+    """Return the current availability status for a model page."""
+
+    if not url:
+        return {
+            "status": "unknown",
+            "http_status": None,
+        }
+
+    request = Request(
+        url,
+        headers={
+            "User-Agent": "HugSelect availability check",
+            "Accept": "text/html",
+        },
+    )
+
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            http_status = response.status
+    except HTTPError as exc:
+        http_status = exc.code
+    except (TimeoutError, URLError, OSError):
+        return {
+            "status": "unknown",
+            "http_status": None,
+        }
+
+    if http_status == 200:
+        status = "available"
+    elif http_status in (404, 410):
+        status = "unavailable"
+    else:
+        status = "unknown"
+
+    return {
+        "status": status,
+        "http_status": http_status,
+    }
+
+
+def _result_availability_url(result):
+    url = result.get("url")
+
+    if url:
+        return url
+
+    model_id = result.get("model_id")
+
+    if model_id:
+        return f"https://huggingface.co/{model_id}"
+
+    return None
+
+
+def select_available_results(
+    ranked_results,
+    display_limit=DISPLAY_RESULT_LIMIT,
+    availability_checker=None,
+    max_workers=AVAILABILITY_MAX_WORKERS,
+):
+    """
+    Keep the first verified-available results in their ranked order.
+
+    Checks run in small batches so request time is bounded without
+    continuing through the whole candidate pool after enough results
+    have been selected. Duplicate URLs are checked only once.
+    """
+
+    if availability_checker is None:
+        availability_checker = check_model_availability
+
+    candidates = list(ranked_results)
+    selected_results = []
+    availability_by_url = {}
+    summary = {
+        "candidate_count": len(candidates),
+        "checked_count": 0,
+        "http_check_count": 0,
+        "available_count": 0,
+        "unavailable_count": 0,
+        "unknown_count": 0,
+        "display_limit": display_limit,
+        "shortfall": display_limit,
+    }
+
+    if display_limit <= 0 or not candidates:
+        return selected_results, summary
+
+    worker_count = max(1, int(max_workers))
+
+    with ThreadPoolExecutor(max_workers=worker_count) as executor:
+        for batch_start in range(0, len(candidates), worker_count):
+            if len(selected_results) >= display_limit:
+                break
+
+            batch = candidates[
+                batch_start:batch_start + worker_count
+            ]
+            urls = [
+                _result_availability_url(result)
+                for result in batch
+            ]
+            pending_checks = {}
+
+            for url in urls:
+                if (
+                    url
+                    and url not in availability_by_url
+                    and url not in pending_checks
+                ):
+                    pending_checks[url] = executor.submit(
+                        availability_checker,
+                        url,
+                    )
+
+            summary["http_check_count"] += len(pending_checks)
+
+            for url, future in pending_checks.items():
+                try:
+                    availability = future.result()
+                except Exception:
+                    availability = {
+                        "status": "unknown",
+                        "http_status": None,
+                    }
+
+                if not isinstance(availability, dict):
+                    availability = {
+                        "status": "unknown",
+                        "http_status": None,
+                    }
+
+                if availability.get("status") not in {
+                    "available",
+                    "unavailable",
+                    "unknown",
+                }:
+                    availability = {
+                        "status": "unknown",
+                        "http_status": availability.get(
+                            "http_status"
+                        ),
+                    }
+
+                availability_by_url[url] = availability
+
+            for result, url in zip(batch, urls):
+                if len(selected_results) >= display_limit:
+                    break
+
+                availability = availability_by_url.get(
+                    url,
+                    {
+                        "status": "unknown",
+                        "http_status": None,
+                    },
+                )
+                status = availability["status"]
+
+                summary["checked_count"] += 1
+                summary[f"{status}_count"] += 1
+
+                if status == "available":
+                    retained_result = dict(result)
+                    retained_result["availability"] = dict(
+                        availability
+                    )
+                    selected_results.append(retained_result)
+
+    summary["shortfall"] = max(
+        0,
+        display_limit - len(selected_results),
+    )
+
+    return selected_results, summary
 
 
 def normalize_base_model_family(base_model_family):
@@ -95,6 +417,8 @@ def clean_results(response, limit=10):
             "likes": metadata.get("likes"),
             "score": hit.get("display_score", hit.get("_score")),
             "match_explanation": hit.get("match_explanation"),
+            "moscow_requirements": hit.get("moscow_requirements"),
+            "explicit_requirements": hit.get("explicit_requirements"),
             "url": f"https://huggingface.co/{model_id}" if model_id else None,
         })
 
@@ -383,6 +707,7 @@ def search_models_feature_based(
     user_text,
     limit=10,
     base_model_family=None,
+    explicit_requirements=None,
 ):
     if not user_text:
         return []
@@ -410,6 +735,11 @@ def search_models_feature_based(
 
     precompute_start = time.perf_counter()
     prebuilt_groups = builder.precompute_feature_group_cache(bundle)
+    if explicit_requirements:
+        prebuilt_groups = builder.apply_explicit_requirements(
+            prebuilt_groups,
+            explicit_requirements,
+        )
     precompute_seconds = time.perf_counter() - precompute_start
 
     search_start = time.perf_counter()
@@ -433,6 +763,10 @@ def search_models_feature_based(
     search_seconds = time.perf_counter() - search_start
 
     explanations_start = time.perf_counter()
+    moscow_requirements = builder.summarize_moscow_requirements(
+        final_feature_groups
+    )
+    feasible_hits = []
     for hit in response.get("hits", {}).get("hits", []):
         source = hit.get("_source", {}) or {}
 
@@ -441,6 +775,12 @@ def search_models_feature_based(
             source,
             prebuilt_groups=final_feature_groups,
         )
+        if not hit["match_explanation"]["hard_filters_passed"]:
+            continue
+        hit["moscow_requirements"] = moscow_requirements
+        hit["explicit_requirements"] = explicit_requirements or []
+        feasible_hits.append(hit)
+    response.setdefault("hits", {})["hits"] = feasible_hits
     explanations_seconds = time.perf_counter() - explanations_start
 
     total_seconds = time.perf_counter() - total_start

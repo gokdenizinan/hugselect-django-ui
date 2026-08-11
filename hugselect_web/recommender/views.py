@@ -3,11 +3,18 @@ import logging
 from django.shortcuts import render, redirect
 from django.http import  Http404
 from .services import (
+    AVAILABILITY_CANDIDATE_LIMIT,
+    DISPLAY_RESULT_LIMIT,
+    EXPLICIT_REQUIREMENT_FEATURE_GROUPS,
+    EXPLICIT_REQUIREMENT_FEATURE_LABELS,
+    EXPLICIT_REQUIREMENT_PRIORITIES,
     build_model_graph,
     get_model_by_id,
     normalize_base_model_family,
+    parse_explicit_requirements,
     search_models_basic,
     search_models_feature_based,
+    select_available_results,
 )
 from .decision_stress import (
     collect_essential_requirements,
@@ -16,6 +23,52 @@ from .decision_stress import (
 )
 
 logger = logging.getLogger(__name__)
+
+MOSCOW_PRIORITY_LABELS = (
+    "Must Have",
+    "Should Have",
+    "Could Have",
+    "Won't Have",
+)
+
+
+def group_moscow_requirements(requirements):
+    requirements = requirements or []
+    return [
+        {
+            "label": label,
+            "requirements": [
+                requirement
+                for requirement in requirements
+                if requirement.get("moscow_priority") == label
+            ],
+        }
+        for label in MOSCOW_PRIORITY_LABELS
+    ]
+
+
+def group_explicit_requirements(requirements):
+    requirements = requirements or []
+    return [
+        {
+            "label": priority_label,
+            "requirements": [
+                {
+                    **requirement,
+                    "feature_label": (
+                        EXPLICIT_REQUIREMENT_FEATURE_LABELS[
+                            requirement["feature_key"]
+                        ]
+                    ),
+                }
+                for requirement in requirements
+                if requirement.get("priority") == priority
+            ],
+        }
+        for priority, priority_label in (
+            EXPLICIT_REQUIREMENT_PRIORITIES
+        )
+    ]
 
 def _normalize_base_models(value):
     """
@@ -99,9 +152,22 @@ def search_view(request):
     search_mode = None
     search_scope = "all"
     base_model_family = None
+    availability_summary = None
+    candidate_results = []
+    moscow_requirements = []
+    explicit_requirements = []
 
     if request.method == "POST":
         query = request.POST.get("query", "").strip()
+        try:
+            explicit_requirements = parse_explicit_requirements(
+                request.POST.getlist("requirement_feature"),
+                request.POST.getlist("requirement_value"),
+                request.POST.getlist("requirement_priority"),
+            )
+        except ValueError as exc:
+            error = str(exc)
+
         requested_scope = request.POST.get(
             "search_scope",
             "all",
@@ -113,19 +179,33 @@ def search_view(request):
                 request.POST.get("base_model_family")
             )
 
-            if base_model_family is None:
+            if base_model_family is None and error is None:
                 error = (
                     "Please select a supported base-model family."
                 )
 
         if query and error is None:
             try:
-                results = search_models_feature_based(
+                search_kwargs = {
+                    "limit": AVAILABILITY_CANDIDATE_LIMIT,
+                    "base_model_family": base_model_family,
+                }
+                if explicit_requirements:
+                    search_kwargs["explicit_requirements"] = (
+                        explicit_requirements
+                    )
+                candidate_results = search_models_feature_based(
                     query,
-                    limit=10,
-                    base_model_family=base_model_family,
+                    **search_kwargs,
                 )
                 search_mode = "feature-based"
+                if candidate_results:
+                    moscow_requirements = (
+                        candidate_results[0].get(
+                            "moscow_requirements"
+                        )
+                        or []
+                    )
 
             except Exception:
                 logger.exception(
@@ -133,9 +213,9 @@ def search_view(request):
                 )
 
                 try:
-                    results = search_models_basic(
+                    candidate_results = search_models_basic(
                         query,
-                        limit=10,
+                        limit=AVAILABILITY_CANDIDATE_LIMIT,
                         base_model_family=base_model_family,
                     )
                     search_mode = "basic-fallback"
@@ -143,6 +223,11 @@ def search_view(request):
                         "Advanced recommendation is temporarily unavailable. "
                         "Showing basic search results instead."
                     )
+                    if explicit_requirements:
+                        warning += (
+                            " Explicit MoSCoW priorities are not applied "
+                            "by the basic fallback."
+                        )
 
                 except Exception:
                     logger.exception(
@@ -152,8 +237,31 @@ def search_view(request):
                         "Model search is temporarily unavailable. "
                         "Please check that Elasticsearch is running and try again."
                     )
+
+            if search_mode and error is None and candidate_results:
+                results, availability_summary = select_available_results(
+                    candidate_results,
+                    display_limit=DISPLAY_RESULT_LIMIT,
+                )
+
+                if len(results) < DISPLAY_RESULT_LIMIT:
+                    model_label = (
+                        "model" if len(results) == 1 else "models"
+                    )
+                    availability_warning = (
+                        f"Only {len(results)} {model_label} could be verified "
+                        "as currently available."
+                    )
+                    warning = " ".join(
+                        message
+                        for message in (
+                            warning,
+                            availability_warning,
+                        )
+                        if message
+                    )
         else:
-            if not query:
+            if not query and error is None:
                 error = "Please describe the model you need."
 
     if results and search_mode:
@@ -170,6 +278,13 @@ def search_view(request):
                 for result in results
                 if result.get("model_id") and result.get("match_explanation")
             },
+            "availability": {
+                result["model_id"]: result.get("availability")
+                for result in results
+                if result.get("model_id") and result.get("availability")
+            },
+            "moscow_requirements": moscow_requirements,
+            "explicit_requirements": explicit_requirements,
         }
     if request.method == "POST":
         request.session["hugselect_search_results"] = {
@@ -180,6 +295,9 @@ def search_view(request):
             "search_mode": search_mode,
             "search_scope": search_scope,
             "base_model_family": base_model_family,
+            "availability_summary": availability_summary,
+            "moscow_requirements": moscow_requirements,
+            "explicit_requirements": explicit_requirements,
         }
 
         return redirect("search_results")
@@ -196,6 +314,12 @@ def search_view(request):
             "warning": warning,
             "error": error,
             "search_mode": search_mode,
+            "explicit_requirement_feature_groups": (
+                EXPLICIT_REQUIREMENT_FEATURE_GROUPS
+            ),
+            "explicit_requirement_priorities": (
+                EXPLICIT_REQUIREMENT_PRIORITIES
+            ),
         },
     )
 def search_results_view(request):
@@ -219,6 +343,14 @@ def search_results_view(request):
     base_model_family = normalize_base_model_family(
         search_state.get("base_model_family")
     )
+    moscow_requirements = search_state.get(
+        "moscow_requirements",
+        [],
+    )
+    explicit_requirements = search_state.get(
+        "explicit_requirements",
+        [],
+    )
 
     if search_scope != "family" or base_model_family is None:
         search_scope = "all"
@@ -238,6 +370,21 @@ def search_results_view(request):
             ),
             "search_scope": search_scope,
             "base_model_family": base_model_family,
+            "availability_summary": search_state.get(
+                "availability_summary"
+            ),
+            "moscow_requirements": moscow_requirements,
+            "explicit_requirements": explicit_requirements,
+            "explicit_requirement_groups": (
+                group_explicit_requirements(
+                    explicit_requirements
+                )
+            ),
+            "moscow_requirement_groups": (
+                group_moscow_requirements(
+                    moscow_requirements
+                )
+            ),
         },
     )
 
@@ -249,12 +396,14 @@ def model_detail_view(request, model_id):
     last_search = request.session.get("hugselect_last_search", {})
     explanations = last_search.get("explanations", {})
     scores = last_search.get("scores", {})
+    availability = last_search.get("availability", {})
 
     search_context = {
         "query": last_search.get("query"),
         "search_mode": last_search.get("search_mode"),
         "score": scores.get(model_id),
         "explanation": explanations.get(model_id),
+        "availability": availability.get(model_id),
     }
 
     return render(
