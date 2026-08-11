@@ -26,6 +26,10 @@ from .decision_stress import (
     summarize_decision_stress_test,
 
 )
+from .reporting import (
+    build_analysis_report_data,
+    generate_analysis_report,
+)
 from EE_Query_Builder_Clean_modified_v3_dedupfix import (
     EXPLICIT_MOSCOW_PRIORITIES,
     FeatureGroup,
@@ -907,6 +911,17 @@ class CompareModelsViewTests(TestCase):
                 },
             ],
         )
+        comparison_state = self.client.session[
+            "hugselect_comparison"
+        ]
+        self.assertEqual(
+            comparison_state["model_ids"],
+            ["author/model-a", "author/model-b"],
+        )
+        self.assertEqual(
+            comparison_state["coverage_rows"],
+            coverage_rows,
+        )
     @patch("recommender.views.get_model_by_id")
     def test_explains_task_metadata_for_each_compared_model(
         self,
@@ -1228,6 +1243,17 @@ class DecisionStressViewTests(TestCase):
         self.assertEqual(
             response.context["stress_summary"]["leaders"],
             ["author/model-a"],
+        )
+        stored_stress = self.client.session[
+            "hugselect_decision_stress"
+        ]
+        self.assertEqual(
+            stored_stress["stress_summary"]["leaders"],
+            ["author/model-a"],
+        )
+        self.assertEqual(
+            stored_stress["model_ids"],
+            ["author/model-a", "author/model-b"],
         )
         self.assertContains(
             response,
@@ -2650,6 +2676,205 @@ class SearchResultsViewTests(
             response.context["base_model_family"]
         )
         self.assertContains(response, "All models")
+
+
+class AnalysisReportTests(TestCase):
+    def _search_state(self):
+        return {
+            "query": "English text-generation model",
+            "search_mode": "feature-based",
+            "search_scope": "family",
+            "base_model_family": "llama",
+            "explicit_requirements": [
+                {
+                    "feature_key": "language",
+                    "value": "English",
+                    "priority": "must",
+                },
+                {
+                    "feature_key": "license_name",
+                    "value": "apache-2.0",
+                    "priority": "should",
+                },
+            ],
+            "results": [
+                {
+                    "model_id": "author/model-a",
+                    "author": "author",
+                    "pipeline_tag": "text-generation",
+                    "license": "apache-2.0",
+                    "library_name": "transformers",
+                    "basemodels": ["meta-llama/Llama-3"],
+                    "score": 91.25,
+                    "availability": {
+                        "status": "available",
+                    },
+                    "url": "https://huggingface.co/author/model-a",
+                }
+            ],
+        }
+
+    @patch("recommender.views.search_models_basic")
+    @patch("recommender.views.search_models_feature_based")
+    @patch("recommender.views.generate_analysis_report")
+    def test_endpoint_returns_attachment_from_current_session_without_search(
+        self,
+        mock_generate_report,
+        mock_feature_search,
+        mock_basic_search,
+    ):
+        search_state = self._search_state()
+        comparison_state = {
+            "model_ids": ["author/model-a", "author/model-b"],
+            "models": [{"model_id": "author/model-a"}],
+            "coverage_rows": [],
+        }
+        stress_state = {
+            "stress_summary": {
+                "stability_label": "Stable winner",
+            },
+            "stress_result": {"scenarios": []},
+        }
+        session = self.client.session
+        session["hugselect_search_results"] = search_state
+        session["hugselect_comparison"] = comparison_state
+        session["hugselect_decision_stress"] = stress_state
+        session.save()
+        mock_generate_report.return_value = b"%PDF-1.4\nmock report"
+
+        response = self.client.get(reverse("analysis_report"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="hugselect-analysis-report.pdf"',
+        )
+        report_kwargs = mock_generate_report.call_args.kwargs
+        self.assertEqual(report_kwargs["search_state"], search_state)
+        self.assertEqual(
+            report_kwargs["search_state"]["query"],
+            "English text-generation model",
+        )
+        self.assertEqual(
+            report_kwargs["search_state"]["base_model_family"],
+            "llama",
+        )
+        self.assertEqual(
+            report_kwargs["search_state"]["explicit_requirements"],
+            search_state["explicit_requirements"],
+        )
+        self.assertEqual(
+            report_kwargs["search_state"]["results"],
+            search_state["results"],
+        )
+        self.assertEqual(
+            report_kwargs["comparison_state"],
+            comparison_state,
+        )
+        self.assertEqual(
+            report_kwargs["decision_stress_state"],
+            stress_state,
+        )
+        mock_feature_search.assert_not_called()
+        mock_basic_search.assert_not_called()
+
+    def test_normalizes_all_available_report_sections(self):
+        comparison_state = {
+            "models": [
+                {
+                    "model_id": "author/model-a",
+                    "comparison_score": 91.25,
+                }
+            ],
+            "coverage_rows": [
+                {
+                    "feature_key": "language",
+                    "user_value": "English",
+                    "model_statuses": [
+                        {
+                            "model_id": "author/model-a",
+                            "matched": True,
+                        }
+                    ],
+                }
+            ],
+            "decision_summary": {
+                "leaders": ["author/model-a"],
+            },
+        }
+        stress_state = {
+            "stress_summary": {
+                "stability_label": "Stable winner",
+                "stability_percentage": 100.0,
+                "leaders": ["author/model-a"],
+                "scenario_count": 5,
+            },
+            "stress_result": {
+                "scenarios": [
+                    {
+                        "label": "Starting priorities",
+                        "winners": ["author/model-a"],
+                        "model_results": [],
+                    }
+                ]
+            },
+        }
+
+        report_data = build_analysis_report_data(
+            search_state=self._search_state(),
+            comparison_state=comparison_state,
+            decision_stress_state=stress_state,
+        )
+
+        self.assertEqual(
+            report_data["overview"]["query"],
+            "English text-generation model",
+        )
+        self.assertEqual(
+            report_data["overview"]["base_model_family"],
+            "llama",
+        )
+        self.assertEqual(
+            report_data["explicit_requirements"]["must"][0],
+            {"feature": "Language", "value": "English"},
+        )
+        self.assertEqual(
+            report_data["explicit_requirements"]["should"][0],
+            {"feature": "License Name", "value": "apache-2.0"},
+        )
+        self.assertEqual(
+            report_data["recommended_models"][0]["model_id"],
+            "author/model-a",
+        )
+        self.assertEqual(report_data["comparison"], comparison_state)
+        self.assertEqual(report_data["decision_stress"], stress_state)
+
+    def test_missing_optional_sections_generate_a_valid_pdf(self):
+        pdf_bytes = generate_analysis_report(
+            search_state={
+                "query": "A summarization model",
+                "search_scope": "all",
+            },
+            comparison_state=None,
+            decision_stress_state=None,
+        )
+
+        self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+        self.assertGreater(len(pdf_bytes), 1000)
+
+    def test_results_page_exposes_download_action(self):
+        session = self.client.session
+        session["hugselect_search_results"] = self._search_state()
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertContains(response, "Download report")
+        self.assertContains(
+            response,
+            f'href="{reverse("analysis_report")}"',
+        )
 
 
 class SearchFormFamilyFilterTests(TestCase):

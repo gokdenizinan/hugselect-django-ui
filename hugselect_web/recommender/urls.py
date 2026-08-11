@@ -9,6 +9,11 @@ urlpatterns = [
         name="search_results",
     ),
     path(
+        "results/report.pdf",
+        views.analysis_report_view,
+        name="analysis_report",
+    ),
+    path(
         "models/<path:model_id>/",
         views.model_detail_view,
         name="model_detail",

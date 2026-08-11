@@ -57,6 +57,15 @@
             {% endif %}
         </div>
 
+        {% if query or results %}
+            <a
+                class="model-link report-download"
+                href="{% url 'analysis_report' %}"
+            >
+                Download report
+            </a>
+        {% endif %}
+
         {% if search_mode == "feature-based" and explicit_requirements %}
             <section class="moscow-summary" aria-labelledby="explicit-priority-summary-title">
                 <div>

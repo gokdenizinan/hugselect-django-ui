@@ -319,6 +319,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .empty-state { border-style: dashed; color: var(--muted); }
 
 .search-mode { display: inline-block; margin-bottom: 18px; padding: 6px 9px; background: var(--blue-pale); border: 1px solid #b9c8ff; }
+.report-download { margin: 0 0 18px 8px; vertical-align: middle; }
 
 .section-heading { align-items: flex-end; margin: 58px 0 12px; padding-bottom: 16px; border-bottom: 1px solid var(--ink); }
 .section-title { margin: 5px 0 0; font-family: var(--serif); font-size: 2.5rem; letter-spacing: -.035em; }

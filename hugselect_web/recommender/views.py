@@ -1,7 +1,8 @@
 import logging
 
 from django.shortcuts import render, redirect
-from django.http import  Http404
+from django.http import Http404, HttpResponse
+from django.utils import timezone
 from .services import (
     AVAILABILITY_CANDIDATE_LIMIT,
     DISPLAY_RESULT_LIMIT,
@@ -21,6 +22,7 @@ from .decision_stress import (
     run_decision_stress_test,
     summarize_decision_stress_test,
 )
+from .reporting import generate_analysis_report
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +160,8 @@ def search_view(request):
     explicit_requirements = []
 
     if request.method == "POST":
+        request.session.pop("hugselect_comparison", None)
+        request.session.pop("hugselect_decision_stress", None)
         query = request.POST.get("query", "").strip()
         try:
             explicit_requirements = parse_explicit_requirements(
@@ -627,6 +631,30 @@ def compare_models_view(request):
                 "is_tie": len(score_leaders) > 1,
                 "tie_breaker_model": tie_breaker_model,
             }
+
+    request.session["hugselect_comparison"] = {
+        "model_ids": [model["model_id"] for model in models],
+        "models": [
+            {
+                key: model.get(key)
+                for key in (
+                    "model_id",
+                    "author",
+                    "pipeline_tag",
+                    "license",
+                    "library_name",
+                    "basemodels",
+                    "comparison_score",
+                )
+            }
+            for model in models
+        ],
+        "coverage_rows": coverage_rows,
+        "decision_summary": decision_summary,
+        "search_mode": search_mode,
+    }
+    request.session.pop("hugselect_decision_stress", None)
+
     return render(
         request,
         "recommender/compare.html",
@@ -715,6 +743,14 @@ def decision_stress_view(request):
         stress_result
     )
 
+    request.session["hugselect_decision_stress"] = {
+        "model_ids": model_ids,
+        "stress_result": stress_result,
+        "stress_summary": stress_summary,
+        "essential_requirements": essential_requirements,
+        "missing_explanation_ids": missing_explanation_ids,
+    }
+
     return render(
         request,
         "recommender/decision_stress.html",
@@ -727,3 +763,30 @@ def decision_stress_view(request):
             "missing_explanation_ids": missing_explanation_ids,
         },
     )
+
+
+def analysis_report_view(request):
+    """Download the currently saved HugSelect analysis as a PDF."""
+    pdf_bytes = generate_analysis_report(
+        search_state=request.session.get(
+            "hugselect_search_results",
+            {},
+        ),
+        comparison_state=request.session.get(
+            "hugselect_comparison",
+            {},
+        ),
+        decision_stress_state=request.session.get(
+            "hugselect_decision_stress",
+            {},
+        ),
+        generated_at=timezone.localtime(),
+    )
+    response = HttpResponse(
+        pdf_bytes,
+        content_type="application/pdf",
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="hugselect-analysis-report.pdf"'
+    )
+    return response
