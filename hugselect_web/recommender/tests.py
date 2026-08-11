@@ -30,6 +30,10 @@ from .reporting import (
     build_analysis_report_data,
     generate_analysis_report,
 )
+from .views import (
+    MAX_SAVED_COMPARISONS,
+    SAVED_COMPARISONS_SESSION_KEY,
+)
 from EE_Query_Builder_Clean_modified_v3_dedupfix import (
     EXPLICIT_MOSCOW_PRIORITIES,
     FeatureGroup,
@@ -1160,6 +1164,290 @@ class CompareModelsViewTests(TestCase):
             response,
             'aria-describedby="comparison-feature-match-tooltip-2"',
         )
+class SavedComparisonTests(TestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = patch("recommender.views.get_model_by_id")
+        self.addCleanup(patcher.stop)
+        self.mock_get_model_by_id = patcher.start()
+        self.mock_get_model_by_id.side_effect = lambda model_id: {
+            "model_id": model_id,
+            "author": model_id.split("/", 1)[0],
+            "pipeline_tag": "text-generation",
+            "library_name": "transformers",
+        }
+
+    def _open_comparison(
+        self,
+        model_ids,
+        query="Original model search",
+    ):
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": query,
+            "search_mode": "feature-based",
+            "scores": {
+                model_id: 90.0 - index
+                for index, model_id in enumerate(model_ids)
+            },
+            "explanations": {
+                model_id: {
+                    "per_feature": [
+                        {
+                            "matches": [
+                                {
+                                    "feature_key": "pipeline_tag",
+                                    "user_value": "text-generation",
+                                    "matched": True,
+                                }
+                            ]
+                        }
+                    ]
+                }
+                for model_id in model_ids
+            },
+        }
+        session.save()
+        response = self.client.get(
+            reverse("compare_models"),
+            {"model_ids": model_ids},
+        )
+        self.assertEqual(response.status_code, 200)
+        return response
+
+    def _save_current(self, model_ids, label="", follow=False):
+        return self.client.post(
+            reverse("save_comparison"),
+            {
+                "model_ids": model_ids,
+                "label": label,
+            },
+            follow=follow,
+        )
+
+    def test_saves_two_model_comparison_in_session_without_login(self):
+        model_ids = ["author/model-a", "author/model-b"]
+        self._open_comparison(model_ids)
+
+        response = self._save_current(model_ids)
+
+        self.assertRedirects(response, reverse("saved_comparisons"))
+        saved_comparisons = self.client.session[
+            SAVED_COMPARISONS_SESSION_KEY
+        ]
+        self.assertEqual(len(saved_comparisons), 1)
+        self.assertEqual(saved_comparisons[0]["model_ids"], model_ids)
+        self.assertEqual(
+            saved_comparisons[0]["label"],
+            "Comparison — model-a vs model-b",
+        )
+        self.assertEqual(
+            saved_comparisons[0]["search_context"]["query"],
+            "Original model search",
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        list_response = self.client.get(reverse("saved_comparisons"))
+        self.assertContains(list_response, "Comparison — model-a vs model-b")
+        self.assertContains(list_response, "author/model-a")
+        self.assertContains(list_response, "author/model-b")
+        self.assertContains(list_response, "Original model search")
+        self.assertContains(list_response, "Saved ")
+        self.assertContains(list_response, "Open")
+        self.assertContains(list_response, "Remove")
+
+    def test_saves_three_model_comparison_with_optional_label(self):
+        model_ids = [
+            "author/model-a",
+            "author/model-b",
+            "author/model-c",
+        ]
+        self._open_comparison(model_ids)
+
+        response = self._save_current(
+            model_ids,
+            label="Multilingual shortlist",
+        )
+
+        self.assertRedirects(response, reverse("saved_comparisons"))
+        saved = self.client.session[SAVED_COMPARISONS_SESSION_KEY][0]
+        self.assertEqual(saved["model_ids"], model_ids)
+        self.assertEqual(saved["label"], "Multilingual shortlist")
+
+    def test_reopens_same_models_with_saved_search_context(self):
+        model_ids = ["author/model-a", "author/model-b"]
+        self._open_comparison(model_ids, query="Saved query")
+        self._save_current(model_ids)
+        saved = self.client.session[SAVED_COMPARISONS_SESSION_KEY][0]
+
+        session = self.client.session
+        session["hugselect_last_search"] = {
+            "query": "Newer unrelated query",
+            "search_mode": "basic-fallback",
+            "scores": {},
+            "explanations": {},
+        }
+        session.save()
+
+        response = self.client.get(
+            reverse("open_saved_comparison", args=[saved["id"]]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [model["model_id"] for model in response.context["models"]],
+            model_ids,
+        )
+        self.assertEqual(
+            response.context["search_context"]["query"],
+            "Saved query",
+        )
+        self.assertEqual(
+            response.context["models"][0]["comparison_score"],
+            90.0,
+        )
+
+    def test_remove_deletes_only_selected_saved_comparison(self):
+        first_ids = ["author/model-a", "author/model-b"]
+        second_ids = ["author/model-c", "author/model-d"]
+        self._open_comparison(first_ids, query="First query")
+        self._save_current(first_ids)
+        self._open_comparison(second_ids, query="Second query")
+        self._save_current(second_ids)
+        saved = self.client.session[SAVED_COMPARISONS_SESSION_KEY]
+
+        response = self.client.post(
+            reverse("remove_saved_comparison", args=[saved[0]["id"]]),
+        )
+
+        self.assertRedirects(response, reverse("saved_comparisons"))
+        remaining = self.client.session[SAVED_COMPARISONS_SESSION_KEY]
+        self.assertEqual(len(remaining), 1)
+        self.assertEqual(remaining[0]["model_ids"], second_ids)
+
+    def test_invalid_saved_id_returns_404_for_open_and_remove(self):
+        open_response = self.client.get(
+            reverse("open_saved_comparison", args=["missing"]),
+        )
+        remove_response = self.client.post(
+            reverse("remove_saved_comparison", args=["missing"]),
+        )
+
+        self.assertEqual(open_response.status_code, 404)
+        self.assertEqual(remove_response.status_code, 404)
+
+    def test_duplicate_save_keeps_single_entry_and_explains_result(self):
+        model_ids = ["author/model-a", "author/model-b"]
+        self._open_comparison(model_ids)
+        self._save_current(model_ids)
+
+        response = self._save_current(model_ids, follow=True)
+
+        self.assertEqual(
+            len(self.client.session[SAVED_COMPARISONS_SESSION_KEY]),
+            1,
+        )
+        self.assertContains(
+            response,
+            "This comparison is already saved for the same search context.",
+        )
+
+    def test_maximum_limit_preserves_existing_entries(self):
+        session = self.client.session
+        session[SAVED_COMPARISONS_SESSION_KEY] = [
+            {
+                "id": f"saved-{index}",
+                "label": f"Saved comparison {index}",
+                "model_ids": [f"author/model-{index}", "author/model-z"],
+                "saved_at": "2026-08-11T12:00:00+00:00",
+                "search_context": {
+                    "query": f"Saved query {index}",
+                    "search_mode": "feature-based",
+                    "scores": {},
+                    "explanations": {},
+                },
+            }
+            for index in range(MAX_SAVED_COMPARISONS)
+        ]
+        session.save()
+        model_ids = ["author/new-model-a", "author/new-model-b"]
+        self._open_comparison(model_ids, query="New query")
+
+        response = self._save_current(model_ids, follow=True)
+
+        self.assertEqual(
+            len(self.client.session[SAVED_COMPARISONS_SESSION_KEY]),
+            MAX_SAVED_COMPARISONS,
+        )
+        self.assertContains(
+            response,
+            f"You can save up to {MAX_SAVED_COMPARISONS} comparisons",
+        )
+
+    def test_saved_comparisons_are_isolated_by_session(self):
+        model_ids = ["author/model-a", "author/model-b"]
+        self._open_comparison(model_ids)
+        self._save_current(model_ids, label="Private session list")
+        other_client = self.client_class()
+
+        response = other_client.get(reverse("saved_comparisons"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "No comparisons have been saved in this session yet.",
+        )
+        self.assertNotContains(response, "Private session list")
+        self.assertNotIn(
+            SAVED_COMPARISONS_SESSION_KEY,
+            other_client.session,
+        )
+
+    def test_save_and_remove_reject_get_requests(self):
+        save_response = self.client.get(reverse("save_comparison"))
+        remove_response = self.client.get(
+            reverse("remove_saved_comparison", args=["missing"]),
+        )
+
+        self.assertEqual(save_response.status_code, 405)
+        self.assertEqual(remove_response.status_code, 405)
+
+    def test_state_changes_require_csrf_token(self):
+        csrf_client = self.client_class(enforce_csrf_checks=True)
+        model_ids = ["author/model-a", "author/model-b"]
+        session = csrf_client.session
+        session["hugselect_comparison"] = {
+            "model_ids": model_ids,
+            "search_context": {},
+        }
+        session.save()
+
+        save_response = csrf_client.post(
+            reverse("save_comparison"),
+            {"model_ids": model_ids},
+        )
+        remove_response = csrf_client.post(
+            reverse("remove_saved_comparison", args=["missing"]),
+        )
+
+        self.assertEqual(save_response.status_code, 403)
+        self.assertEqual(remove_response.status_code, 403)
+
+    def test_comparison_and_results_link_to_saved_list(self):
+        model_ids = ["author/model-a", "author/model-b"]
+        comparison_response = self._open_comparison(model_ids)
+        results_response = self.client.get(reverse("search_results"))
+
+        saved_url = reverse("saved_comparisons")
+        self.assertContains(comparison_response, f'href="{saved_url}"')
+        self.assertContains(results_response, f'href="{saved_url}"')
+        self.assertContains(
+            comparison_response,
+            'name="csrfmiddlewaretoken"',
+        )
+
+
 class DecisionStressViewTests(TestCase):
     def test_requires_two_or_three_models(self):
         response = self.client.get(

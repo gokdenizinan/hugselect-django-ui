@@ -320,6 +320,9 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 
 .search-mode { display: inline-block; margin-bottom: 18px; padding: 6px 9px; background: var(--blue-pale); border: 1px solid #b9c8ff; }
 .report-download { margin: 0 0 18px 8px; vertical-align: middle; }
+.page-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+.page-actions .back-link { margin-bottom: 0; }
+.page-actions--end { justify-content: flex-end; }
 
 .section-heading { align-items: flex-end; margin: 58px 0 12px; padding-bottom: 16px; border-bottom: 1px solid var(--ink); }
 .section-title { margin: 5px 0 0; font-family: var(--serif); font-size: 2.5rem; letter-spacing: -.035em; }
@@ -513,6 +516,36 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 }.comparison-query__label { flex: 0 0 auto; color: var(--blue); font: 700 .62rem var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .comparison-query__text { font-size: .85rem; line-height: 1.55; }
 
+.saved-comparison-save {
+    display: grid;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 14px;
+    border: 1px solid var(--line-strong);
+    background: #f7f6f1;
+}
+.saved-comparison-save label { color: var(--muted); font: 700 .64rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.saved-comparison-save input { width: 100%; min-height: 44px; padding: 9px 11px; color: var(--ink); border: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); font: .78rem var(--mono); }
+.saved-comparison-save input:focus { border-color: var(--blue); outline: 3px solid rgba(23, 71, 209, .11); }
+
+.saved-comparisons-page > h1 { margin-bottom: 14px; }
+.saved-message { margin: 16px 0; padding: 14px 16px; border: 1px solid var(--line-strong); border-left: 4px solid var(--blue); background: var(--blue-pale); font-size: .84rem; }
+.saved-message--error { border-left-color: var(--danger); background: #fff0ed; color: #711e18; }
+.saved-comparison-list { display: grid; gap: 14px; margin-top: 24px; }
+.saved-comparison-card { padding: 20px; border: 1px solid var(--line-strong); background: var(--surface); }
+.saved-comparison-card__heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.saved-comparison-card__heading h2 { margin: 6px 0 0; font: 650 1.3rem/1.35 var(--serif); overflow-wrap: anywhere; }
+.saved-comparison-card__heading time { flex: 0 0 auto; color: var(--muted); font: .66rem var(--mono); }
+.saved-comparison-models { display: grid; gap: 6px; margin: 16px 0; padding: 0; list-style: none; }
+.saved-comparison-models li { padding: 8px 10px; border: 1px solid var(--line); background: #f1f1eb; font: .75rem var(--mono); overflow-wrap: anywhere; }
+.saved-comparison-query { color: var(--muted); font-size: .82rem; line-height: 1.55; }
+.saved-comparison-actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+.saved-comparison-actions form { margin: 0; }
+.saved-comparison-actions .secondary-action { color: var(--danger) !important; border-color: var(--danger); background: transparent; }
+.saved-comparison-actions .secondary-action:hover { color: white !important; background: var(--danger); }
+
 .decision-summary { margin-top: 28px; padding: 24px; border: 1px solid var(--blue); background: var(--blue-pale); }
 .decision-summary__top { align-items: flex-start; padding-bottom: 18px; border-bottom: 1px solid #bac7ef; }
 .decision-summary__top > div:first-child { display: grid; gap: 8px; }
@@ -616,6 +649,11 @@ button:disabled { opacity: .38; cursor: not-allowed; }
     line-height: 1.4;
 }
 @media (max-width: 760px) {
+    .page-actions,
+    .saved-comparison-card__heading { align-items: stretch; flex-direction: column; }
+    .page-actions--end { align-items: flex-end; }
+    .saved-comparison-save { grid-template-columns: 1fr; }
+
     .moscow-summary__groups { grid-template-columns: 1fr 1fr; }
 
     .nav, .container { width: min(100% - 32px, 1160px); }

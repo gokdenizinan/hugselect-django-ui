@@ -21,6 +21,12 @@
     </header>
 
     <main class="container">
+        <div class="page-actions page-actions--end">
+            <a class="model-link" href="{% url 'saved_comparisons' %}">
+                Saved comparisons ({{ saved_comparison_count|default:0 }})
+            </a>
+        </div>
+
         {% if query %}
             <div class="query-box">
                 <strong>Your query:</strong> {{ query }}

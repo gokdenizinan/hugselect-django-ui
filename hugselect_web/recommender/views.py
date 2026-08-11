@@ -1,8 +1,14 @@
 import logging
+import uuid
+from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_GET, require_POST
 from .services import (
     AVAILABILITY_CANDIDATE_LIMIT,
     DISPLAY_RESULT_LIMIT,
@@ -32,6 +38,51 @@ MOSCOW_PRIORITY_LABELS = (
     "Could Have",
     "Won't Have",
 )
+SAVED_COMPARISONS_SESSION_KEY = "hugselect_saved_comparisons"
+MAX_SAVED_COMPARISONS = 10
+
+
+def _saved_comparisons(request):
+    saved_comparisons = request.session.get(
+        SAVED_COMPARISONS_SESSION_KEY,
+        [],
+    )
+    return saved_comparisons if isinstance(saved_comparisons, list) else []
+
+
+def _saved_comparison_or_404(request, saved_id):
+    for comparison in _saved_comparisons(request):
+        if comparison.get("id") == saved_id:
+            return comparison
+    raise Http404("Saved comparison not found.")
+
+
+def _comparison_search_context(search_state, model_ids):
+    search_state = search_state or {}
+    scores = search_state.get("scores", {}) or {}
+    explanations = search_state.get("explanations", {}) or {}
+    return {
+        "query": search_state.get("query"),
+        "search_mode": search_state.get("search_mode"),
+        "scores": {
+            model_id: scores[model_id]
+            for model_id in model_ids
+            if model_id in scores
+        },
+        "explanations": {
+            model_id: explanations[model_id]
+            for model_id in model_ids
+            if model_id in explanations
+        },
+    }
+
+
+def _generated_comparison_label(model_ids):
+    model_names = [
+        model_id.rsplit("/", 1)[-1]
+        for model_id in model_ids
+    ]
+    return f"Comparison — {' vs '.join(model_names)}"
 
 
 def group_moscow_requirements(requirements):
@@ -389,6 +440,9 @@ def search_results_view(request):
                     moscow_requirements
                 )
             ),
+            "saved_comparison_count": len(
+                _saved_comparisons(request)
+            ),
         },
     )
 
@@ -421,9 +475,20 @@ def model_detail_view(request, model_id):
     )
 
 def compare_models_view(request):
-    model_ids = list(
-        dict.fromkeys(request.GET.getlist("model_ids"))
-    )
+    saved_id = request.GET.get("saved_comparison")
+    saved_comparison = None
+
+    if saved_id:
+        saved_comparison = _saved_comparison_or_404(
+            request,
+            saved_id,
+        )
+        model_ids = saved_comparison.get("model_ids", [])
+    else:
+        model_ids = request.GET.getlist("model_ids")
+
+    model_ids = list(dict.fromkeys(model_ids))
+    saved_comparison_count = len(_saved_comparisons(request))
 
     if len(model_ids) < 2 or len(model_ids) > 3:
         return render(
@@ -432,6 +497,7 @@ def compare_models_view(request):
             {
                 "error": "Please select two or three models to compare.",
                 "models": [],
+                "saved_comparison_count": saved_comparison_count,
             },
         )
 
@@ -453,13 +519,17 @@ def compare_models_view(request):
                     "could not be found."
                 ),
                 "models": models,
+                "saved_comparison_count": saved_comparison_count,
             },
         )
 
-    last_search = request.session.get(
-        "hugselect_last_search",
-        {},
-    )
+    if saved_comparison is not None:
+        last_search = saved_comparison.get("search_context", {}) or {}
+    else:
+        last_search = request.session.get(
+            "hugselect_last_search",
+            {},
+        )
 
     search_mode = last_search.get("search_mode")
     scores = last_search.get("scores", {})
@@ -652,6 +722,10 @@ def compare_models_view(request):
         "coverage_rows": coverage_rows,
         "decision_summary": decision_summary,
         "search_mode": search_mode,
+        "search_context": _comparison_search_context(
+            last_search,
+            [model["model_id"] for model in models],
+        ),
     }
     request.session.pop("hugselect_decision_stress", None)
 
@@ -666,8 +740,147 @@ def compare_models_view(request):
                 "query": last_search.get("query"),
                 "search_mode": search_mode,
             },
+            "saved_comparison": saved_comparison,
+            "saved_context_unavailable": (
+                saved_comparison is not None
+                and not any((
+                    last_search.get("query"),
+                    last_search.get("search_mode"),
+                    last_search.get("scores"),
+                    last_search.get("explanations"),
+                ))
+            ),
+            "saved_comparison_count": saved_comparison_count,
         },
     )
+
+
+@require_POST
+def save_comparison_view(request):
+    model_ids = list(
+        dict.fromkeys(request.POST.getlist("model_ids"))
+    )
+    current_comparison = request.session.get(
+        "hugselect_comparison",
+        {},
+    )
+    current_model_ids = current_comparison.get("model_ids", [])
+
+    if (
+        len(model_ids) < 2
+        or len(model_ids) > 3
+        or model_ids != current_model_ids
+    ):
+        return HttpResponseBadRequest(
+            "Only the current two- or three-model comparison can be saved."
+        )
+
+    search_context = current_comparison.get("search_context")
+    if not search_context:
+        search_context = _comparison_search_context(
+            request.session.get("hugselect_last_search", {}),
+            model_ids,
+        )
+
+    saved_comparisons = list(_saved_comparisons(request))
+    duplicate = next(
+        (
+            comparison
+            for comparison in saved_comparisons
+            if set(comparison.get("model_ids", [])) == set(model_ids)
+            and (
+                comparison.get("search_context", {}).get("query")
+                == search_context.get("query")
+            )
+            and (
+                comparison.get("search_context", {}).get("search_mode")
+                == search_context.get("search_mode")
+            )
+        ),
+        None,
+    )
+    if duplicate is not None:
+        messages.info(
+            request,
+            "This comparison is already saved for the same search context.",
+        )
+        return redirect("saved_comparisons")
+
+    if len(saved_comparisons) >= MAX_SAVED_COMPARISONS:
+        messages.error(
+            request,
+            (
+                f"You can save up to {MAX_SAVED_COMPARISONS} comparisons "
+                "in this session. Remove one before saving another."
+            ),
+        )
+        return redirect("saved_comparisons")
+
+    requested_label = request.POST.get("label", "").strip()
+    label = (
+        requested_label[:100]
+        if requested_label
+        else _generated_comparison_label(model_ids)
+    )
+    saved_comparisons.append({
+        "id": uuid.uuid4().hex,
+        "label": label,
+        "model_ids": model_ids,
+        "saved_at": timezone.now().isoformat(),
+        "search_context": search_context,
+    })
+    request.session[SAVED_COMPARISONS_SESSION_KEY] = saved_comparisons
+    messages.success(request, "Comparison saved for this session.")
+    return redirect("saved_comparisons")
+
+
+@require_GET
+def saved_comparisons_view(request):
+    saved_comparisons = []
+    for comparison in _saved_comparisons(request):
+        saved_at = parse_datetime(comparison.get("saved_at") or "")
+        if saved_at is not None:
+            if timezone.is_naive(saved_at):
+                saved_at = timezone.make_aware(saved_at)
+            saved_at_display = timezone.localtime(saved_at).strftime(
+                "%d %b %Y, %H:%M"
+            )
+        else:
+            saved_at_display = "Time unavailable"
+        saved_comparisons.append({
+            **comparison,
+            "saved_at_display": saved_at_display,
+        })
+
+    return render(
+        request,
+        "recommender/saved_comparisons.html",
+        {
+            "saved_comparisons": saved_comparisons,
+            "maximum_saved_comparisons": MAX_SAVED_COMPARISONS,
+        },
+    )
+
+
+@require_GET
+def open_saved_comparison_view(request, saved_id):
+    _saved_comparison_or_404(request, saved_id)
+    query_string = urlencode({"saved_comparison": saved_id})
+    return redirect(f"{reverse('compare_models')}?{query_string}")
+
+
+@require_POST
+def remove_saved_comparison_view(request, saved_id):
+    saved_comparison = _saved_comparison_or_404(request, saved_id)
+    request.session[SAVED_COMPARISONS_SESSION_KEY] = [
+        comparison
+        for comparison in _saved_comparisons(request)
+        if comparison.get("id") != saved_comparison.get("id")
+    ]
+    messages.success(request, "Saved comparison removed.")
+    return redirect("saved_comparisons")
+
+
 def decision_stress_view(request):
     model_ids = list(
         dict.fromkeys(request.GET.getlist("model_ids"))

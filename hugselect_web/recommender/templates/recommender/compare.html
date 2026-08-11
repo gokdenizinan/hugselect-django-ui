@@ -28,9 +28,15 @@
     </header>
 
     <main class="container">
-        <a class="back-link" href="{% url 'search_results' %}">
-            ← Back to search results
-        </a>
+        <div class="page-actions">
+            <a class="back-link" href="{% url 'search_results' %}">
+                ← Back to search results
+            </a>
+
+            <a class="model-link" href="{% url 'saved_comparisons' %}">
+                Saved comparisons ({{ saved_comparison_count|default:0 }})
+            </a>
+        </div>
 
         {% if error %}
             <div class="error">
@@ -44,6 +50,19 @@
 
                 <h1>Explainable model comparison</h1>
 
+                {% if saved_comparison %}
+                    <div class="query-box">
+                        <strong>Reopened:</strong>
+                        {{ saved_comparison.label }}
+
+                        {% if saved_context_unavailable %}
+                            <br>
+                            Search-specific scores and explanations are no longer
+                            available, but the saved models are still shown.
+                        {% endif %}
+                    </div>
+                {% endif %}
+
                 {% if search_context.query %}
                     <div class="comparison-query">
                         <span class="comparison-query__label">
@@ -55,6 +74,34 @@
                         </span>
                     </div>
                 {% endif %}
+
+                <form
+                    class="saved-comparison-save"
+                    method="post"
+                    action="{% url 'save_comparison' %}"
+                >
+                    {% csrf_token %}
+
+                    {% for model in models %}
+                        <input
+                            type="hidden"
+                            name="model_ids"
+                            value="{{ model.model_id }}"
+                        >
+                    {% endfor %}
+
+                    <label for="comparison-label">
+                        Optional label
+                    </label>
+                    <input
+                        id="comparison-label"
+                        name="label"
+                        type="text"
+                        maxlength="100"
+                        placeholder="e.g. Multilingual shortlist"
+                    >
+                    <button type="submit">Save comparison</button>
+                </form>
 
                 <div class="comparison-grid">
                     {% for model in models %}
