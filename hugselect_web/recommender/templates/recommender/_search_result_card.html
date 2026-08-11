@@ -21,7 +21,7 @@
 
     <div class="meta">
         {% if result.availability.status == "available" %}
-            <span class="pill metadata-tooltip">
+            <span class="pill pill--status metadata-tooltip">
                 <span>Availability: Available</span>
 
                 <button
@@ -139,7 +139,7 @@
         </span>
 
         {% if search_mode == "feature-based" %}
-            <span class="pill metadata-tooltip">
+            <span class="pill pill--score metadata-tooltip">
                 <span>
                     Feature match:
                     {{ result.score|floatformat:1 }}%
@@ -165,28 +165,30 @@
                 </span>
             </span>
         {% elif search_mode == "basic-fallback" %}
-            <span class="pill">
+            <span class="pill pill--score">
                 Relevance score:
                 {{ result.score|floatformat:3 }}
             </span>
         {% endif %}
     </div>
 
-    <a
-        class="model-link"
-        href="{% url 'model_detail' result.model_id %}"
-    >
-        View details
-    </a>
-
-    {% if result.url %}
+    <div class="result-card__actions">
         <a
             class="model-link"
-            href="{{ result.url }}"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="{% url 'model_detail' result.model_id %}"
         >
-            Open on Hugging Face
+            View details
         </a>
-    {% endif %}
+
+        {% if result.url %}
+            <a
+                class="model-link"
+                href="{{ result.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Open on Hugging Face
+            </a>
+        {% endif %}
+    </div>
 </article>

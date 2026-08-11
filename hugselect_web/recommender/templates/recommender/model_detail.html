@@ -16,7 +16,7 @@
     <header class="site-header">
         <div class="nav">
             <a class="logo" href="{% url 'search' %}"><span class="logo-mark">HS</span><span>HugSelect</span></a>
-            <div class="nav-subtitle">Specimen record</div>
+            <div class="nav-subtitle">Model details</div>
         </div>
     </header>
 
@@ -29,12 +29,12 @@
         </a>
 
         <section class="search-card">
-            <span class="specimen-label">Model / Knowledge record</span>
+            <span class="specimen-label">Model details</span>
             <h1 class="model-record-title">{{ model.model_id }}</h1>
 
             <div class="meta">
                 {% if search_context.availability.status == "available" %}
-                    <span class="pill metadata-tooltip">
+                    <span class="pill pill--status metadata-tooltip">
                         <span>Availability: Available</span>
 
                         <button

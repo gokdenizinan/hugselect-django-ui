@@ -16,7 +16,7 @@
                 <span class="logo-mark">HS</span>
                 <span>HugSelect</span>
             </a>
-            <div class="nav-subtitle">AI model discovery laboratory</div>
+            <div class="nav-subtitle">Research-led model discovery</div>
         </div>
     </header>
 
@@ -28,7 +28,7 @@
         </div>
 
         <header class="page-heading">
-            <span class="specimen-label">Analysis / Search results</span>
+            <span class="specimen-label">Model discovery</span>
             <h1>Search results</h1>
             <p>
                 Review ranked models and their stored match evidence, then select
@@ -85,7 +85,7 @@
             <section class="moscow-summary" aria-labelledby="explicit-priority-summary-title">
                 <div>
                     <span class="specimen-label">
-                        Requirements / User selected
+                        User-selected priorities
                     </span>
                     <h2 id="explicit-priority-summary-title">
                         Explicit priorities
@@ -129,7 +129,7 @@
         {% elif search_mode == "feature-based" and moscow_requirements %}
             <section class="moscow-summary" aria-labelledby="moscow-summary-title">
                 <div>
-                    <span class="specimen-label">Requirements / MoSCoW</span>
+                    <span class="specimen-label">Automatically extracted priorities</span>
                     <h2 id="moscow-summary-title">Extracted priorities</h2>
                 </div>
 
@@ -177,10 +177,10 @@
         {% if results %}
             <div class="section-heading">
                 <div>
-                    <span class="specimen-label">Output / Ranked observations</span>
+                    <span class="specimen-label">Ranked recommendations</span>
                     <h2 class="section-title">Recommended models</h2>
                 </div>
-                <span class="result-count">{{ results|length|stringformat:"02d" }} candidates</span>
+                <span class="result-count">{{ results|length }} candidates</span>
             </div>
 
             <p class="data-note">
@@ -197,8 +197,8 @@
             >
                 <div class="compare-toolbar">
                     <p>
-                        <span class="toolbar-index">COMPARE</span>
-                        Select two or three specimens for side-by-side analysis.
+                        <span class="toolbar-index">Compare</span>
+                        Select two or three models for side-by-side analysis.
                     </p>
 
                     <button
@@ -215,7 +215,7 @@
                         <section class="result-category">
                             <div class="result-category__heading">
                                 <span class="specimen-label">
-                                    Group / Model families
+                                    Model families
                                 </span>
 
                                 <h3>Single base model</h3>
@@ -250,7 +250,7 @@
                         <section class="result-category">
                             <div class="result-category__heading">
                                 <span class="specimen-label">
-                                    Group / Combined lineage
+                                    Combined model lineage
                                 </span>
 
                                 <h3>Multiple base models</h3>
@@ -268,7 +268,7 @@
                         <section class="result-category">
                             <div class="result-category__heading">
                                 <span class="specimen-label">
-                                    Group / Unspecified lineage
+                                    Unspecified model lineage
                                 </span>
 
                                 <h3>No base model</h3>
@@ -296,12 +296,12 @@
         <footer class="project-note">
             <div class="project-note__inner">
                 <span class="project-note__label">
-                    Future interface layer
+                    Research prototype
                 </span>
 
                 <p>
-                    Add a transition animation so that entering HugSelect from
-                    AI4SE.nl feels like naturally moving into an AI model laboratory.
+                    HugSelect supports evidence-led model discovery using indexed
+                    metadata, requirement matching, and transparent comparison tools.
                 </p>
             </div>
         </footer>
