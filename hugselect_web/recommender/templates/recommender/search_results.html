@@ -72,12 +72,19 @@
             {% endif %}
         </div>
 
-        {% if query or results %}
+        {% if results %}
             <a
                 class="model-link report-download"
                 href="{% url 'analysis_report' %}"
             >
                 Download report
+            </a>
+        {% elif query %}
+            <a
+                class="model-link report-download report-download--secondary"
+                href="{% url 'analysis_report' %}"
+            >
+                Download search summary
             </a>
         {% endif %}
 
@@ -97,17 +104,27 @@
                     same feature and value.
                 </p>
 
-                <div class="moscow-key" aria-label="MoSCoW priority definitions">
-                    <div><strong>MUST</strong><span>Required. Missing it excludes a model.</span></div>
-                    <div><strong>SHOULD</strong><span>Important soft preference.</span></div>
-                    <div><strong>COULD</strong><span>Lower-priority soft preference.</span></div>
-                    <div><strong>WON'T</strong><span>Forbidden. Matching it excludes a model.</span></div>
-                </div>
-
-                <div class="moscow-summary__groups">
+                <div
+                    class="moscow-summary__groups"
+                    aria-label="MoSCoW priorities and selected requirements"
+                >
                     {% for group in explicit_requirement_groups %}
                         <div class="moscow-summary__group">
                             <h3>{{ group.label }}</h3>
+
+                            <p class="moscow-summary__definition">
+                                {% if group.label == "MUST" %}
+                                    Required. Missing it excludes a model.
+                                {% elif group.label == "SHOULD" %}
+                                    Important soft preference.
+                                {% elif group.label == "COULD" %}
+                                    Lower-priority soft preference.
+                                {% elif group.label == "WON'T" %}
+                                    Forbidden. Matching it excludes a model.
+                                {% endif %}
+                            </p>
+
+                            <div class="moscow-summary__selection">
                             {% if group.requirements %}
                                 <ul>
                                     {% for requirement in group.requirements %}
@@ -122,6 +139,7 @@
                                     None selected
                                 </span>
                             {% endif %}
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
@@ -137,14 +155,10 @@
                     HugSelect inferred these priorities from the query.
                 </p>
 
-                <div class="moscow-key" aria-label="MoSCoW priority definitions">
-                    <div><strong>MUST</strong><span>Required. Missing it excludes a model.</span></div>
-                    <div><strong>SHOULD</strong><span>Important soft preference.</span></div>
-                    <div><strong>COULD</strong><span>Lower-priority soft preference.</span></div>
-                    <div><strong>WON'T</strong><span>Forbidden. Matching it excludes a model.</span></div>
-                </div>
-
-                <div class="moscow-summary__groups">
+                <div
+                    class="moscow-summary__groups"
+                    aria-label="MoSCoW priorities and extracted requirements"
+                >
                     {% for group in moscow_requirement_groups %}
                         <div class="moscow-summary__group">
                             <h3>
@@ -154,6 +168,20 @@
                                 {% elif group.label == "Won't Have" %}WON'T
                                 {% else %}{{ group.label }}{% endif %}
                             </h3>
+
+                            <p class="moscow-summary__definition">
+                                {% if group.label == "Must Have" %}
+                                    Required. Missing it excludes a model.
+                                {% elif group.label == "Should Have" %}
+                                    Important soft preference.
+                                {% elif group.label == "Could Have" %}
+                                    Lower-priority soft preference.
+                                {% elif group.label == "Won't Have" %}
+                                    Forbidden. Matching it excludes a model.
+                                {% endif %}
+                            </p>
+
+                            <div class="moscow-summary__selection">
                             {% if group.requirements %}
                                 <ul>
                                     {% for requirement in group.requirements %}
@@ -168,6 +196,7 @@
                             {% else %}
                                 <span class="moscow-summary__empty">None extracted</span>
                             {% endif %}
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
@@ -284,13 +313,49 @@
                 </div>
             </form>
         {% elif query and not error %}
-            <div class="empty-state">
+            <section class="empty-state" aria-labelledby="empty-results-title">
                 {% if availability_summary.candidate_count %}
-                    No matching models could be verified as currently available.
+                    <h2 id="empty-results-title">No available models to show</h2>
+                    <p>
+                        HugSelect found matching candidates, but none could be
+                        verified as currently available when this search ran.
+                    </p>
                 {% else %}
-                    No matching models were found for this query.
+                    <h2 id="empty-results-title">No models met every strict criterion</h2>
+                    <p>
+                        The query and any MUST or WON'T rules were applied before
+                        ranking, leaving no candidates to recommend.
+                    </p>
+
+                    {% if explicit_requirements %}
+                        <div class="empty-state__criteria">
+                            <strong>Strict criteria applied</strong>
+                            <ul>
+                                {% for group in explicit_requirement_groups %}
+                                    {% if group.label == "MUST" or group.label == "WON'T" %}
+                                        {% for requirement in group.requirements %}
+                                            <li>
+                                                <span>{{ group.label }}</span>
+                                                {{ requirement.feature_label }}:
+                                                {{ requirement.value }}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
                 {% endif %}
-            </div>
+
+                <p class="empty-state__guidance">
+                    Try changing a MUST requirement to SHOULD, removing a WON'T
+                    rule, or broadening the query.
+                </p>
+
+                <a class="model-link empty-state__action" href="{% url 'search' %}">
+                    Adjust search
+                </a>
+            </section>
         {% endif %}
 
         <footer class="project-note">

@@ -3048,6 +3048,91 @@ class SearchResultsViewTests(
             with self.subTest(text=text):
                 self.assertContains(response, text, html=False)
 
+        self.assertNotContains(
+            response,
+            'aria-label="MoSCoW priority definitions"',
+        )
+        self.assertContains(
+            response,
+            'aria-label="MoSCoW priorities and extracted requirements"',
+        )
+        for priority in ("MUST", "SHOULD", "COULD", "WON'T"):
+            with self.subTest(priority=priority):
+                self.assertContains(
+                    response,
+                    f"<h3>{priority}</h3>",
+                    count=1,
+                    html=True,
+                )
+
+    def test_explains_zero_results_with_strict_explicit_criteria(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "Apache licensed text-generation model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "all",
+            "base_model_family": None,
+            "availability_summary": {
+                "candidate_count": 0,
+            },
+            "explicit_requirements": [
+                {
+                    "feature_key": "license_name",
+                    "value": "apache-2.0",
+                    "priority": "must",
+                    "moscow_priority": "Must Have",
+                    "constraint_kind": "hard_positive",
+                },
+            ],
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertContains(
+            response,
+            "No models met every strict criterion",
+        )
+        self.assertContains(response, "Strict criteria applied")
+        self.assertRegex(
+            response.content.decode(),
+            r"License:\s+apache-2\.0",
+        )
+        self.assertContains(response, "Adjust search")
+        self.assertContains(response, "Download search summary")
+        self.assertNotContains(response, ">Download report<")
+
+    def test_distinguishes_unavailable_candidates_from_no_matches(self):
+        session = self.client.session
+        session["hugselect_search_results"] = {
+            "query": "English model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": "feature-based",
+            "search_scope": "all",
+            "base_model_family": None,
+            "availability_summary": {
+                "candidate_count": 3,
+            },
+        }
+        session.save()
+
+        response = self.client.get(reverse("search_results"))
+
+        self.assertContains(response, "No available models to show")
+        self.assertContains(
+            response,
+            "HugSelect found matching candidates, but none could be",
+        )
+        self.assertNotContains(
+            response,
+            "No models met every strict criterion",
+        )
+
     def test_basic_fallback_does_not_claim_moscow_reasoning(self):
         session = self.client.session
         session["hugselect_search_results"] = {
