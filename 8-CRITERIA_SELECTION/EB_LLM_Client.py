@@ -20,6 +20,8 @@ class LLMClient:
         model_name: str = "gemini-2.5-flash",
         max_retries: int = 5,
         retry_delay_seconds: float = 20.0,
+        temperature: Optional[float] = None,
+        seed: Optional[int] = None,
     ):
         """
         Thin wrapper around google.genai.Client for chat / completion-style usage.
@@ -28,6 +30,14 @@ class LLMClient:
         self.model_name = model_name
         self.max_retries = max_retries
         self.retry_delay_seconds = retry_delay_seconds
+        self.generation_config = {
+            key: value
+            for key, value in {
+                "temperature": temperature,
+                "seed": seed,
+            }.items()
+            if value is not None
+        }
 
     def generate(
         self,
@@ -47,6 +57,7 @@ class LLMClient:
                 response = self.client.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
+                    config=self.generation_config or None,
                 )
 
                 # Basic safety checks
@@ -271,6 +282,5 @@ if __name__ == "__main__":
     print("Input sentences processed:", len(sample_dict))
     print("Errors encountered:", len(hit_error))
     print("----------------------------------")
-
 
 

@@ -437,8 +437,6 @@ def _canonical_compare_variants(value: Any) -> List[str]:
     for prefix in ("license:", "dataset:"):
         if norm.startswith(prefix):
             variants.add(norm[len(prefix):].strip())
-        else:
-            variants.add(f"{prefix}{norm}")
     return list(variants)
 
 
@@ -1637,6 +1635,26 @@ class ESQueryBuilderAdaptive:
             feat_weight=1.0,
         )
         queries = value_queries.get(self._value_key(user_value), [])
+
+        tag_prefix = {
+            "license_name": "license:",
+            "datasets": "dataset:",
+        }.get(fg.feature_key)
+        tag_fields = [
+            field
+            for field in fg.fields
+            if field == "tags" or field.endswith(".tags")
+        ]
+        if tag_prefix and tag_fields:
+            prefixed_values = _text_variants(
+                f"{tag_prefix}{user_value}"
+            )
+            queries.append(
+                _wrap_constant_score(
+                    _terms_many(tag_fields, prefixed_values, k=1),
+                    float(self.MATCH_TYPE_BOOSTS["canonical"]),
+                )
+            )
         return _dis_max_once(queries) if queries else None
 
     def _hard_constraint_query_clauses(

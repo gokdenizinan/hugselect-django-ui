@@ -583,6 +583,8 @@ def _extract_feature_bundle(user_text):
         model_name="gemini-3.1-flash-lite",
         max_retries=2,
         retry_delay_seconds=3.0,
+        temperature=0.0,
+        seed=0,
     )
 
     Elogger = LoggingLLMClient(

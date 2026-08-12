@@ -1,3 +1,5 @@
+import json
+
 from django.test import SimpleTestCase
 from urllib.error import HTTPError, URLError
 from unittest.mock import Mock, patch
@@ -39,6 +41,7 @@ from EE_Query_Builder_Clean_modified_v3_dedupfix import (
     FeatureGroup,
     PRIORITY_TO_MOSCOW,
 )
+from EB_LLM_Client import LLMClient
 
 
 def _select_mock_results_as_available(
@@ -68,6 +71,36 @@ class MockAvailabilitySelectionMixin:
         )
         self.addCleanup(patcher.stop)
         self.mock_select_available_results = patcher.start()
+
+
+class LLMClientConfigurationTests(SimpleTestCase):
+    @patch("EB_LLM_Client.genai.Client")
+    def test_generation_uses_requested_deterministic_config(
+        self,
+        mock_genai_client,
+    ):
+        raw_response = Mock(
+            candidates=[Mock(finish_reason="STOP")],
+            text='{"task": null}',
+        )
+        mock_models = mock_genai_client.return_value.models
+        mock_models.generate_content.return_value = raw_response
+        client = LLMClient(
+            api_key="test-key",
+            model_name="test-model",
+            max_retries=1,
+            temperature=0.0,
+            seed=0,
+        )
+
+        response = client.generate("extract this")
+
+        self.assertEqual(response.text, '{"task": null}')
+        mock_models.generate_content.assert_called_once_with(
+            model="test-model",
+            contents="extract this",
+            config={"temperature": 0.0, "seed": 0},
+        )
 
 class BuildModelGraphTests(SimpleTestCase):
     def test_builds_expected_graph(self):
@@ -3630,6 +3663,27 @@ class MoscowPrioritySemanticsTests(SimpleTestCase):
             "Must Have",
         )
 
+    def test_explicit_apache_license_must_accepts_apache_model(self):
+        group = FeatureGroup(
+            feature_key="license_name",
+            priority="must",
+            include=["apache-2.0"],
+            fields=["Metadata.license", "Metadata.tags"],
+            base_weight=8.0,
+            explicit_priority="must",
+        )
+
+        explanation = self.builder.compare_bundle_to_sample(
+            None,
+            {"Metadata": {"license": "apache-2.0"}},
+            prebuilt_groups=[group],
+        )
+
+        self.assertTrue(explanation["hard_filters_passed"])
+        self.assertTrue(
+            explanation["hard_filters"][0]["matched"]
+        )
+
     def test_must_non_match_is_infeasible(self):
         explanation = self.builder.compare_bundle_to_sample(
             None,
@@ -3865,6 +3919,43 @@ class MoscowPrioritySemanticsTests(SimpleTestCase):
             explanation["hard_filters"][0]["exclusion_reason"],
             "prohibited_value_matched",
         )
+
+    def test_explicit_apache_wont_filters_license_tags_before_ranking(self):
+        group = FeatureGroup(
+            feature_key="license_name",
+            priority="avoid",
+            include=["apache-2.0"],
+            fields=["Metadata.license", "Metadata.tags"],
+            base_weight=8.0,
+            explicit_priority="wont",
+        )
+
+        query_text = json.dumps(self.builder.build_query([group]))
+        self.assertIn("license:apache-2.0", query_text)
+
+        apache_tagged = self.builder.compare_bundle_to_sample(
+            None,
+            {
+                "Metadata": {
+                    "license": None,
+                    "tags": ["license:apache-2.0"],
+                }
+            },
+            prebuilt_groups=[group],
+        )
+        mit_model = self.builder.compare_bundle_to_sample(
+            None,
+            {
+                "Metadata": {
+                    "license": "mit",
+                    "tags": ["license:mit"],
+                }
+            },
+            prebuilt_groups=[group],
+        )
+
+        self.assertFalse(apache_tagged["hard_filters_passed"])
+        self.assertTrue(mit_model["hard_filters_passed"])
 
     def test_explicit_should_and_could_non_matches_remain_feasible(self):
         for explicit_priority, legacy_priority in (
