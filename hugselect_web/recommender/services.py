@@ -71,10 +71,10 @@ EXPLICIT_REQUIREMENT_FEATURE_LABELS = {
     for feature_key, label in options
 }
 EXPLICIT_REQUIREMENT_PRIORITIES = (
-    ("must", "MUST"),
-    ("should", "SHOULD"),
-    ("could", "COULD"),
-    ("wont", "WON'T"),
+    ("must", "Must Have"),
+    ("should", "Should Have"),
+    ("could", "Could Have"),
+    ("wont", "Won't Have"),
 )
 EXPLICIT_REQUIREMENT_PRIORITY_LABELS = dict(
     EXPLICIT_REQUIREMENT_PRIORITIES

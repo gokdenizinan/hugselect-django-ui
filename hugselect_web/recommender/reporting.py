@@ -21,10 +21,10 @@ from reportlab.platypus import (
 
 REPORT_TITLE = "HugSelect Analysis Report"
 PRIORITY_LABELS = {
-    "must": "MUST",
-    "should": "SHOULD",
-    "could": "COULD",
-    "wont": "WON'T",
+    "must": "Must Have",
+    "should": "Should Have",
+    "could": "Could Have",
+    "wont": "Won't Have",
 }
 
 

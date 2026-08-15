@@ -113,13 +113,13 @@
                             <h3>{{ group.label }}</h3>
 
                             <p class="moscow-summary__definition">
-                                {% if group.label == "MUST" %}
+                                {% if group.label == "Must Have" %}
                                     Required. Missing it excludes a model.
-                                {% elif group.label == "SHOULD" %}
+                                {% elif group.label == "Should Have" %}
                                     Important soft preference.
-                                {% elif group.label == "COULD" %}
+                                {% elif group.label == "Could Have" %}
                                     Lower-priority soft preference.
-                                {% elif group.label == "WON'T" %}
+                                {% elif group.label == "Won't Have" %}
                                     Forbidden. Matching it excludes a model.
                                 {% endif %}
                             </p>
@@ -162,11 +162,7 @@
                     {% for group in moscow_requirement_groups %}
                         <div class="moscow-summary__group">
                             <h3>
-                                {% if group.label == "Must Have" %}MUST
-                                {% elif group.label == "Should Have" %}SHOULD
-                                {% elif group.label == "Could Have" %}COULD
-                                {% elif group.label == "Won't Have" %}WON'T
-                                {% else %}{{ group.label }}{% endif %}
+                                {{ group.label }}
                             </h3>
 
                             <p class="moscow-summary__definition">
@@ -323,7 +319,7 @@
                 {% else %}
                     <h2 id="empty-results-title">No models met every strict criterion</h2>
                     <p>
-                        The query and any MUST or WON'T rules were applied before
+                        The query and any Must Have or Won't Have rules were applied before
                         ranking, leaving no candidates to recommend.
                     </p>
 
@@ -332,7 +328,7 @@
                             <strong>Strict criteria applied</strong>
                             <ul>
                                 {% for group in explicit_requirement_groups %}
-                                    {% if group.label == "MUST" or group.label == "WON'T" %}
+                                    {% if group.label == "Must Have" or group.label == "Won't Have" %}
                                         {% for requirement in group.requirements %}
                                             <li>
                                                 <span>{{ group.label }}</span>
@@ -348,7 +344,7 @@
                 {% endif %}
 
                 <p class="empty-state__guidance">
-                    Try changing a MUST requirement to SHOULD, removing a WON'T
+                    Try changing a Must Have requirement to Should Have, removing a Won't Have
                     rule, or broadening the query.
                 </p>
 

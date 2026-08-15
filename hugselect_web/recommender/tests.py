@@ -3065,10 +3065,10 @@ class SearchResultsViewTests(
             requirements,
         )
         for text in (
-            "MUST",
-            "SHOULD",
-            "COULD",
-            "WON'T",
+            "Must Have",
+            "Should Have",
+            "Could Have",
+            "Won't Have",
             "Required. Missing it excludes a model.",
             "Important soft preference.",
             "Lower-priority soft preference.",
@@ -3089,7 +3089,12 @@ class SearchResultsViewTests(
             response,
             'aria-label="MoSCoW priorities and extracted requirements"',
         )
-        for priority in ("MUST", "SHOULD", "COULD", "WON'T"):
+        for priority in (
+            "Must Have",
+            "Should Have",
+            "Could Have",
+            "Won't Have",
+        ):
             with self.subTest(priority=priority):
                 self.assertContains(
                     response,
@@ -3591,7 +3596,7 @@ class ExplicitRequirementParsingTests(SimpleTestCase):
             ValueError,
             (
                 r"Contradictory requirements: Language = English "
-                r"cannot be both MUST and WON'T\."
+                r"cannot be both Must Have and Won't Have\."
             ),
         ):
             parse_explicit_requirements(
@@ -4531,7 +4536,7 @@ class ExplicitRequirementViewTests(TestCase):
             search_state["error"],
             (
                 "Contradictory requirements: Language = English "
-                "cannot be both MUST and WON'T."
+                "cannot be both Must Have and Won't Have."
             ),
         )
         self.assertEqual(search_state["explicit_requirements"], [])
@@ -4599,10 +4604,10 @@ class ExplicitRequirementViewTests(TestCase):
         )
         self.assertContains(response, "Explicit priorities")
         for text in (
-            "MUST",
-            "SHOULD",
-            "COULD",
-            "WON&#x27;T",
+            "Must Have",
+            "Should Have",
+            "Could Have",
+            "Won&#x27;t Have",
             "Task:",
             "text-generation",
             "Language:",

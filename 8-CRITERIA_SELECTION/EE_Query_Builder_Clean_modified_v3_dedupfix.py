@@ -164,22 +164,22 @@ PRIORITY_TO_MOSCOW = {
 
 EXPLICIT_MOSCOW_PRIORITIES = {
     "must": {
-        "label": "MUST",
+        "label": "Must Have",
         "kind": "hard_positive",
         "multiplier": None,
     },
     "should": {
-        "label": "SHOULD",
+        "label": "Should Have",
         "kind": "soft_positive",
         "multiplier": 1.0,
     },
     "could": {
-        "label": "COULD",
+        "label": "Could Have",
         "kind": "soft_positive",
         "multiplier": 0.5,
     },
     "wont": {
-        "label": "WON'T",
+        "label": "Won't Have",
         "kind": "hard_negative",
         "multiplier": None,
     },
