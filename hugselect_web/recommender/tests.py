@@ -1,6 +1,6 @@
 import json
 
-from django.test import SimpleTestCase
+from django.test import Client, SimpleTestCase
 from urllib.error import HTTPError, URLError
 from unittest.mock import Mock, patch
 from django.test import TestCase
@@ -10,7 +10,9 @@ from .services import (
     DISPLAY_RESULT_LIMIT,
     EXPLICIT_REQUIREMENT_FEATURE_GROUPS,
     EXPLICIT_REQUIREMENT_PRIORITIES,
+    GeminiQuotaExhaustedError,
     _base_model_family_filter,
+    _is_gemini_quota_error,
     _make_feature_search_builder,
     build_model_graph,
     check_model_availability,
@@ -18,6 +20,7 @@ from .services import (
     search_models_basic,
     search_models_feature_based,
     select_available_results,
+    _extract_feature_bundle,
 )
 from .decision_stress import (
     SCENARIOS,
@@ -41,7 +44,7 @@ from EE_Query_Builder_Clean_modified_v3_dedupfix import (
     FeatureGroup,
     PRIORITY_TO_MOSCOW,
 )
-from EB_LLM_Client import LLMClient
+from EB_LLM_Client import LLMClient, OpenAIResponsesClient
 
 
 def _select_mock_results_as_available(
@@ -101,6 +104,67 @@ class LLMClientConfigurationTests(SimpleTestCase):
             contents="extract this",
             config={"temperature": 0.0, "seed": 0},
         )
+
+    @patch("EB_LLM_Client.OpenAI")
+    def test_openai_adapter_does_not_store_response_data(
+        self,
+        mock_openai,
+    ):
+        mock_openai.return_value.responses.create.return_value = Mock(
+            output_text='{"task": null}',
+            status="completed",
+        )
+        client = OpenAIResponsesClient(
+            api_key="sk-test",
+            max_retries=1,
+        )
+
+        response = client.generate("extract this")
+
+        self.assertEqual(response.text, '{"task": null}')
+        mock_openai.assert_called_once_with(
+            api_key="sk-test",
+            max_retries=1,
+        )
+        mock_openai.return_value.responses.create.assert_called_once_with(
+            model="gpt-4.1-mini",
+            input="extract this",
+            store=False,
+        )
+
+
+class GeminiQuotaDetectionTests(SimpleTestCase):
+    def test_recognizes_gemini_quota_failures(self):
+        for error in (
+            RuntimeError("429 RESOURCE_EXHAUSTED"),
+            RuntimeError("Gemini quota exceeded"),
+            Mock(code=429),
+        ):
+            with self.subTest(error=error):
+                self.assertTrue(_is_gemini_quota_error(error))
+
+    def test_does_not_treat_other_failures_as_quota_exhaustion(self):
+        self.assertFalse(
+            _is_gemini_quota_error(
+                RuntimeError("Elasticsearch index is unavailable")
+            )
+        )
+
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "gemini-test-key"})
+    @patch(
+        "EC_EssentialFeatureExtractor.EssentialFeaturesExtractor.extract",
+        side_effect=RuntimeError("429 RESOURCE_EXHAUSTED"),
+    )
+    @patch("EB_LLM_Client.LLMClient")
+    def test_feature_extraction_translates_gemini_quota_error(
+        self,
+        mock_llm_client,
+        mock_extract,
+    ):
+        with self.assertRaises(GeminiQuotaExhaustedError):
+            _extract_feature_bundle("English model")
+
+        mock_extract.assert_called_once_with("English model")
 
 class BuildModelGraphTests(SimpleTestCase):
     def test_builds_expected_graph(self):
@@ -4331,6 +4395,41 @@ class FeatureSearchFamilyFilterTests(SimpleTestCase):
                 }
             ],
         )
+
+    @patch("recommender.services._make_feature_search_builder")
+    @patch("recommender.services._extract_feature_bundle")
+    @patch("recommender.services.Elasticsearch")
+    def test_passes_openai_credentials_only_to_feature_extraction(
+        self,
+        mock_elasticsearch,
+        mock_extract_feature_bundle,
+        mock_make_builder,
+    ):
+        mock_es = mock_elasticsearch.return_value
+        mock_es.indices.exists.return_value = True
+        mock_builder = mock_make_builder.return_value
+        mock_builder.precompute_feature_group_cache.return_value = []
+        mock_builder.search.return_value = (
+            {"hits": {"hits": []}},
+            {},
+            [],
+        )
+
+        search_models_feature_based(
+            "English text-generation model",
+            llm_provider="openai",
+            llm_api_key="sk-session-key",
+        )
+
+        mock_extract_feature_bundle.assert_called_once_with(
+            "English text-generation model",
+            llm_provider="openai",
+            llm_api_key="sk-session-key",
+        )
+        search_call = mock_builder.search.call_args.kwargs
+        self.assertNotIn("sk-session-key", repr(search_call))
+
+
 class SearchViewFamilyFilterTests(TestCase):
     @patch("recommender.views.search_models_feature_based")
     def test_passes_selected_family_to_feature_search(
@@ -4881,6 +4980,208 @@ class AvailableResultSelectionTests(SimpleTestCase):
         self.assertEqual(len(selected), 2)
         self.assertEqual(checker.call_count, 1)
         self.assertEqual(summary["http_check_count"], 1)
+
+
+class OpenAIQuotaFallbackViewTests(
+    MockAvailabilitySelectionMixin,
+    TestCase,
+):
+    def _quota_blocked_search_state(self):
+        return {
+            "query": "English code-generation model",
+            "results": [],
+            "warning": None,
+            "error": None,
+            "search_mode": None,
+            "search_scope": "family",
+            "base_model_family": "qwen",
+            "availability_summary": None,
+            "moscow_requirements": [],
+            "explicit_requirements": [
+                {
+                    "feature_key": "license_name",
+                    "value": "apache-2.0",
+                    "priority": "must",
+                }
+            ],
+            "openai_fallback_required": True,
+            "feature_extraction_provider": None,
+        }
+
+    @patch("recommender.views.search_models_basic")
+    @patch("recommender.views.search_models_feature_based")
+    def test_gemini_quota_prompts_for_openai_key_without_basic_fallback(
+        self,
+        mock_search_models_feature_based,
+        mock_search_models_basic,
+    ):
+        mock_search_models_feature_based.side_effect = (
+            GeminiQuotaExhaustedError("quota exhausted")
+        )
+
+        response = self.client.post(
+            reverse("search"),
+            {
+                "query": "English code-generation model",
+                "search_scope": "all",
+            },
+            follow=True,
+        )
+
+        self.assertContains(
+            response,
+            "Continue with your OpenAI API key",
+        )
+        self.assertContains(
+            response,
+            f'action="{reverse("continue_search_with_openai")}"',
+        )
+        self.assertContains(response, 'type="password"')
+        self.assertNotContains(
+            response,
+            "No matching models were found",
+        )
+        mock_search_models_basic.assert_not_called()
+        search_state = self.client.session["hugselect_search_results"]
+        self.assertTrue(search_state["openai_fallback_required"])
+        self.assertIsNone(search_state["error"])
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_openai_key_retries_same_search_and_is_not_stored(
+        self,
+        mock_search_models_feature_based,
+    ):
+        session = self.client.session
+        session["hugselect_search_results"] = (
+            self._quota_blocked_search_state()
+        )
+        session.save()
+        mock_search_models_feature_based.return_value = [
+            {
+                "model_id": "Qwen/Qwen2.5-7B-Instruct",
+                "score": 8.5,
+                "moscow_requirements": [],
+            }
+        ]
+
+        response = self.client.post(
+            reverse("continue_search_with_openai"),
+            {"openai_api_key": "sk-session-key"},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("search_results"),
+            fetch_redirect_response=False,
+        )
+        mock_search_models_feature_based.assert_called_once_with(
+            "English code-generation model",
+            limit=AVAILABILITY_CANDIDATE_LIMIT,
+            base_model_family="qwen",
+            llm_provider="openai",
+            llm_api_key="sk-session-key",
+            explicit_requirements=[
+                {
+                    "feature_key": "license_name",
+                    "value": "apache-2.0",
+                    "priority": "must",
+                }
+            ],
+        )
+        search_state = self.client.session["hugselect_search_results"]
+        self.assertFalse(search_state["openai_fallback_required"])
+        self.assertEqual(
+            search_state["feature_extraction_provider"],
+            "openai",
+        )
+        self.assertEqual(
+            search_state["results"][0]["model_id"],
+            "Qwen/Qwen2.5-7B-Instruct",
+        )
+        self.assertNotIn("sk-session-key", repr(dict(self.client.session)))
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_missing_key_keeps_prompt_and_returns_clear_error(
+        self,
+        mock_search_models_feature_based,
+    ):
+        session = self.client.session
+        session["hugselect_search_results"] = (
+            self._quota_blocked_search_state()
+        )
+        session.save()
+
+        response = self.client.post(
+            reverse("continue_search_with_openai"),
+            {"openai_api_key": "   "},
+            follow=True,
+        )
+
+        self.assertContains(
+            response,
+            "Enter an OpenAI API key to continue.",
+        )
+        self.assertContains(
+            response,
+            "Continue with your OpenAI API key",
+        )
+        mock_search_models_feature_based.assert_not_called()
+
+    @patch("recommender.views.search_models_feature_based")
+    def test_failed_openai_retry_does_not_disclose_or_store_key(
+        self,
+        mock_search_models_feature_based,
+    ):
+        session = self.client.session
+        session["hugselect_search_results"] = (
+            self._quota_blocked_search_state()
+        )
+        session.save()
+        mock_search_models_feature_based.side_effect = RuntimeError(
+            "invalid API key"
+        )
+
+        response = self.client.post(
+            reverse("continue_search_with_openai"),
+            {"openai_api_key": "sk-private-value"},
+            follow=True,
+        )
+
+        self.assertContains(response, "The OpenAI continuation failed.")
+        self.assertNotContains(response, "sk-private-value")
+        self.assertNotIn("sk-private-value", repr(dict(self.client.session)))
+        self.assertTrue(
+            self.client.session["hugselect_search_results"][
+                "openai_fallback_required"
+            ]
+        )
+
+    def test_continuation_requires_pending_search_and_post(self):
+        post_response = self.client.post(
+            reverse("continue_search_with_openai"),
+            {"openai_api_key": "sk-test"},
+        )
+        get_response = self.client.get(
+            reverse("continue_search_with_openai")
+        )
+
+        self.assertEqual(post_response.status_code, 400)
+        self.assertEqual(get_response.status_code, 405)
+
+    def test_continuation_enforces_csrf_protection(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        session = csrf_client.session
+        session["hugselect_search_results"] = (
+            self._quota_blocked_search_state()
+        )
+        session.save()
+
+        response = csrf_client.post(
+            reverse("continue_search_with_openai"),
+            {"openai_api_key": "sk-test"},
+        )
+
+        self.assertEqual(response.status_code, 403)
 
 
 class SearchAvailabilityIntegrationTests(TestCase):

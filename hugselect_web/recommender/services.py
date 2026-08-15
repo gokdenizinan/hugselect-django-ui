@@ -81,6 +81,43 @@ EXPLICIT_REQUIREMENT_PRIORITY_LABELS = dict(
 )
 
 
+class GeminiQuotaExhaustedError(RuntimeError):
+    """Raised when Gemini cannot continue because its quota is exhausted."""
+
+
+def _is_gemini_quota_error(error):
+    """Recognize quota/rate-limit failures raised by the Gemini SDK."""
+
+    current = error
+    visited = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
+        for attribute in ("code", "status_code"):
+            value = getattr(current, attribute, None)
+            if value == 429 or str(value).casefold() == "resource_exhausted":
+                return True
+
+        message = str(current).casefold()
+        if any(
+            marker in message
+            for marker in (
+                "resource_exhausted",
+                "quota exceeded",
+                "quota has been exceeded",
+                "rate limit exceeded",
+            )
+        ):
+            return True
+
+        current = getattr(current, "__cause__", None) or getattr(
+            current,
+            "__context__",
+            None,
+        )
+
+    return False
+
+
 def parse_explicit_requirements(
     feature_keys,
     values,
@@ -563,55 +600,90 @@ def build_model_graph(model):
         "edges": edges,
     }
 
-def _extract_feature_bundle(user_text):
+def _extract_feature_bundle(
+    user_text,
+    llm_provider="gemini",
+    llm_api_key=None,
+):
     from EA_Features import FeatureBundle, FunctionalFeatures, QualityFeatures
-    from EB_LLM_Client import LLMClient, LoggingLLMClient
+    from EB_LLM_Client import (
+        DEFAULT_OPENAI_MODEL,
+        LLMClient,
+        LoggingLLMClient,
+        OpenAIResponsesClient,
+    )
     from EC_EssentialFeatureExtractor import EssentialFeaturesExtractor
     from EC_PreferenceFeatureExtractor import PreferenceFeaturesExtractor
     from EC_QualityFeatureExtractor import QualityFeaturesExtractor
     from EC_FunctionalFeatureExtractor import NounPhraseExtractor
 
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set.")
+    if llm_provider == "gemini":
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY is not set.")
+        llm_client = LLMClient(
+            api_key=api_key,
+            model_name="gemini-3.1-flash-lite",
+            max_retries=2,
+            retry_delay_seconds=3.0,
+            temperature=0.0,
+            seed=0,
+        )
+        log_prefix = ""
+    elif llm_provider == "openai":
+        if not llm_api_key:
+            raise ValueError("An OpenAI API key is required.")
+        llm_client = OpenAIResponsesClient(
+            api_key=llm_api_key,
+            model_name=os.getenv(
+                "OPENAI_FALLBACK_MODEL",
+                DEFAULT_OPENAI_MODEL,
+            ),
+            max_retries=2,
+        )
+        log_prefix = "openai_"
+    else:
+        raise ValueError("Unsupported feature-extraction provider.")
 
     log_dir = CRITERIA_DIR / "logs" / "django_feature_search"
     log_dir.mkdir(parents=True, exist_ok=True)
-
-    llm_client = LLMClient(
-        api_key=api_key,
-        model_name="gemini-3.1-flash-lite",
-        max_retries=2,
-        retry_delay_seconds=3.0,
-        temperature=0.0,
-        seed=0,
-    )
 
     Elogger = LoggingLLMClient(
         llm_client=llm_client,
         save_dir=str(log_dir),
         print_output=False,
-        save_file="essential.json",
+        save_file=f"{log_prefix}essential.json",
     )
     Plogger = LoggingLLMClient(
         llm_client=llm_client,
         save_dir=str(log_dir),
         print_output=False,
-        save_file="preference.json",
+        save_file=f"{log_prefix}preference.json",
     )
     Qlogger = LoggingLLMClient(
         llm_client=llm_client,
         save_dir=str(log_dir),
         print_output=False,
-        save_file="quality.json",
+        save_file=f"{log_prefix}quality.json",
     )
 
-    Efeatures = EssentialFeaturesExtractor(Elogger).extract(user_text)
-    Pfeatures = PreferenceFeaturesExtractor(Plogger).extract(user_text)
+    try:
+        Efeatures = EssentialFeaturesExtractor(Elogger).extract(user_text)
+        Pfeatures = PreferenceFeaturesExtractor(Plogger).extract(user_text)
+    except Exception as exc:
+        if llm_provider == "gemini" and _is_gemini_quota_error(exc):
+            raise GeminiQuotaExhaustedError(
+                "Gemini API quota is exhausted."
+            ) from exc
+        raise
 
     try:
         Qfeatures = QualityFeaturesExtractor(Qlogger).extract(user_text)
-    except Exception:
+    except Exception as exc:
+        if llm_provider == "gemini" and _is_gemini_quota_error(exc):
+            raise GeminiQuotaExhaustedError(
+                "Gemini API quota is exhausted."
+            ) from exc
         Qfeatures = QualityFeatures()
 
     Ffeatures = FunctionalFeatures()
@@ -710,6 +782,8 @@ def search_models_feature_based(
     limit=10,
     base_model_family=None,
     explicit_requirements=None,
+    llm_provider="gemini",
+    llm_api_key=None,
 ):
     if not user_text:
         return []
@@ -724,7 +798,11 @@ def search_models_feature_based(
     index_check_seconds = time.perf_counter() - index_check_start
 
     feature_extraction_start = time.perf_counter()
-    bundle = _extract_feature_bundle(user_text)
+    bundle = _extract_feature_bundle(
+        user_text,
+        llm_provider=llm_provider,
+        llm_api_key=llm_api_key,
+    )
     feature_extraction_seconds = (
         time.perf_counter() - feature_extraction_start
     )

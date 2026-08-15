@@ -11,6 +11,9 @@ class LLMResponse:
 import time
 from typing import Optional
 from google import genai
+from openai import OpenAI
+
+DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
 
 
 class LLMClient:
@@ -98,6 +101,44 @@ class LLMClient:
 
         # If we exit the loop without returning or raising, raise last error
         raise RuntimeError(f"LLMClient failed after retries: {last_error}")
+
+
+class OpenAIResponsesClient:
+    """Small adapter that gives the extractors the same interface as Gemini."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = DEFAULT_OPENAI_MODEL,
+        max_retries: int = 2,
+    ):
+        self.client = OpenAI(
+            api_key=api_key,
+            max_retries=max_retries,
+        )
+        self.model_name = model_name
+
+    def generate(
+        self,
+        prompt: str,
+        require_stop: bool = True,
+    ) -> LLMResponse:
+        """Generate extractor JSON through the OpenAI Responses API."""
+
+        response = self.client.responses.create(
+            model=self.model_name,
+            input=prompt,
+            store=False,
+        )
+        text = getattr(response, "output_text", None)
+        if not text:
+            raise RuntimeError("No text returned from OpenAI.")
+
+        return LLMResponse(
+            text=str(text),
+            finish_reason=str(getattr(response, "status", "completed")),
+            raw=response,
+        )
 
 
 import os
@@ -282,5 +323,3 @@ if __name__ == "__main__":
     print("Input sentences processed:", len(sample_dict))
     print("Errors encountered:", len(hit_error))
     print("----------------------------------")
-
-

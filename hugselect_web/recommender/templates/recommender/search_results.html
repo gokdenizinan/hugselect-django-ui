@@ -42,6 +42,57 @@
             </div>
         {% endif %}
 
+        {% if openai_fallback_required %}
+            <section
+                class="api-key-fallback"
+                aria-labelledby="openai-fallback-title"
+            >
+                <div>
+                    <span class="specimen-label">Gemini quota reached</span>
+                    <h2 id="openai-fallback-title">
+                        Continue with your OpenAI API key
+                    </h2>
+                    <p>
+                        HugSelect can finish the same feature-based search with
+                        an OpenAI model. Your key is used only for this retry and is
+                        not stored in your HugSelect session.
+                    </p>
+                </div>
+
+                {% if openai_fallback_error %}
+                    <div class="error" role="alert">
+                        <strong>Could not continue:</strong>
+                        {{ openai_fallback_error }}
+                    </div>
+                {% endif %}
+
+                <form
+                    method="post"
+                    action="{% url 'continue_search_with_openai' %}"
+                    class="api-key-fallback__form"
+                >
+                    {% csrf_token %}
+                    <label for="openai-api-key">OpenAI API key</label>
+                    <input
+                        id="openai-api-key"
+                        name="openai_api_key"
+                        type="password"
+                        required
+                        autocomplete="new-password"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        placeholder="sk-…"
+                    >
+                    <button type="submit">Continue search</button>
+                </form>
+
+                <p class="api-key-fallback__privacy">
+                    The request is sent to OpenAI. Standard OpenAI API usage
+                    charges and data policies apply.
+                </p>
+            </section>
+        {% endif %}
+
         {% if warning %}
             <div class="warning">
                 <strong>Notice:</strong> {{ warning }}
@@ -58,6 +109,9 @@
             <div class="search-mode">
                 {% if search_mode == "feature-based" %}
                     Feature-based recommendation
+                    {% if feature_extraction_provider == "openai" %}
+                        · OpenAI fallback
+                    {% endif %}
                 {% elif search_mode == "basic-fallback" %}
                     Basic fallback search
                 {% endif %}
@@ -79,7 +133,7 @@
             >
                 Download report
             </a>
-        {% elif query %}
+        {% elif query and not openai_fallback_required %}
             <a
                 class="model-link report-download report-download--secondary"
                 href="{% url 'analysis_report' %}"
@@ -308,7 +362,7 @@
                     {% endif %}
                 </div>
             </form>
-        {% elif query and not error %}
+        {% elif query and not error and not openai_fallback_required %}
             <section class="empty-state" aria-labelledby="empty-results-title">
                 {% if availability_summary.candidate_count %}
                     <h2 id="empty-results-title">No available models to show</h2>

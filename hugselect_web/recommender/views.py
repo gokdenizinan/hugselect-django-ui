@@ -8,6 +8,7 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from .services import (
     AVAILABILITY_CANDIDATE_LIMIT,
@@ -15,6 +16,7 @@ from .services import (
     EXPLICIT_REQUIREMENT_FEATURE_GROUPS,
     EXPLICIT_REQUIREMENT_FEATURE_LABELS,
     EXPLICIT_REQUIREMENT_PRIORITIES,
+    GeminiQuotaExhaustedError,
     build_model_graph,
     get_model_by_id,
     normalize_base_model_family,
@@ -209,6 +211,8 @@ def search_view(request):
     candidate_results = []
     moscow_requirements = []
     explicit_requirements = []
+    openai_fallback_required = False
+    feature_extraction_provider = None
 
     if request.method == "POST":
         request.session.pop("hugselect_comparison", None)
@@ -254,6 +258,7 @@ def search_view(request):
                     **search_kwargs,
                 )
                 search_mode = "feature-based"
+                feature_extraction_provider = "gemini"
                 if candidate_results:
                     moscow_requirements = (
                         candidate_results[0].get(
@@ -261,6 +266,12 @@ def search_view(request):
                         )
                         or []
                     )
+
+            except GeminiQuotaExhaustedError:
+                logger.warning(
+                    "Gemini quota is exhausted; offering OpenAI continuation."
+                )
+                openai_fallback_required = True
 
             except Exception:
                 logger.exception(
@@ -353,6 +364,8 @@ def search_view(request):
             "availability_summary": availability_summary,
             "moscow_requirements": moscow_requirements,
             "explicit_requirements": explicit_requirements,
+            "openai_fallback_required": openai_fallback_required,
+            "feature_extraction_provider": feature_extraction_provider,
         }
 
         return redirect("search_results")
@@ -443,8 +456,142 @@ def search_results_view(request):
             "saved_comparison_count": len(
                 _saved_comparisons(request)
             ),
+            "openai_fallback_required": search_state.get(
+                "openai_fallback_required",
+                False,
+            ),
+            "openai_fallback_error": search_state.get(
+                "openai_fallback_error"
+            ),
+            "feature_extraction_provider": search_state.get(
+                "feature_extraction_provider"
+            ),
         },
     )
+
+
+@sensitive_post_parameters("openai_api_key")
+@require_POST
+def continue_search_with_openai_view(request):
+    """Retry a quota-blocked feature search with a user-supplied API key."""
+
+    search_state = request.session.get(
+        "hugselect_search_results",
+        {},
+    )
+    if (
+        not isinstance(search_state, dict)
+        or not search_state.get("openai_fallback_required")
+        or not search_state.get("query")
+    ):
+        return HttpResponseBadRequest(
+            "There is no Gemini-quota-blocked search to continue."
+        )
+
+    api_key = request.POST.get("openai_api_key", "").strip()
+    if not api_key:
+        search_state["openai_fallback_error"] = (
+            "Enter an OpenAI API key to continue."
+        )
+        request.session["hugselect_search_results"] = search_state
+        return redirect("search_results")
+
+    query = search_state["query"]
+    base_model_family = normalize_base_model_family(
+        search_state.get("base_model_family")
+    )
+    if search_state.get("search_scope") != "family":
+        base_model_family = None
+    explicit_requirements = search_state.get(
+        "explicit_requirements",
+        [],
+    )
+
+    try:
+        search_kwargs = {
+            "limit": AVAILABILITY_CANDIDATE_LIMIT,
+            "base_model_family": base_model_family,
+            "llm_provider": "openai",
+            "llm_api_key": api_key,
+        }
+        if explicit_requirements:
+            search_kwargs["explicit_requirements"] = explicit_requirements
+
+        candidate_results = search_models_feature_based(
+            query,
+            **search_kwargs,
+        )
+        moscow_requirements = (
+            candidate_results[0].get("moscow_requirements") or []
+            if candidate_results
+            else []
+        )
+        results = []
+        availability_summary = None
+        warning = None
+        if candidate_results:
+            results, availability_summary = select_available_results(
+                candidate_results,
+                display_limit=DISPLAY_RESULT_LIMIT,
+            )
+            if len(results) < DISPLAY_RESULT_LIMIT:
+                model_label = "model" if len(results) == 1 else "models"
+                warning = (
+                    f"Only {len(results)} {model_label} could be verified "
+                    "as currently available."
+                )
+    except Exception as exc:
+        logger.warning(
+            "OpenAI continuation search failed (%s).",
+            type(exc).__name__,
+        )
+        search_state["openai_fallback_error"] = (
+            "The OpenAI continuation failed. Check that the API key is "
+            "valid, has available credit, and can access the configured "
+            "model, then try again."
+        )
+        request.session["hugselect_search_results"] = search_state
+        return redirect("search_results")
+
+    search_state.update({
+        "results": results,
+        "warning": warning,
+        "error": None,
+        "search_mode": "feature-based",
+        "availability_summary": availability_summary,
+        "moscow_requirements": moscow_requirements,
+        "openai_fallback_required": False,
+        "openai_fallback_error": None,
+        "feature_extraction_provider": "openai",
+    })
+    request.session["hugselect_search_results"] = search_state
+
+    if results:
+        request.session["hugselect_last_search"] = {
+            "query": query,
+            "search_mode": "feature-based",
+            "scores": {
+                result["model_id"]: result.get("score")
+                for result in results
+                if result.get("model_id")
+            },
+            "explanations": {
+                result["model_id"]: result.get("match_explanation")
+                for result in results
+                if result.get("model_id")
+                and result.get("match_explanation")
+            },
+            "availability": {
+                result["model_id"]: result.get("availability")
+                for result in results
+                if result.get("model_id")
+                and result.get("availability")
+            },
+            "moscow_requirements": moscow_requirements,
+            "explicit_requirements": explicit_requirements,
+        }
+
+    return redirect("search_results")
 
 def model_detail_view(request, model_id):
     model = get_model_by_id(model_id)

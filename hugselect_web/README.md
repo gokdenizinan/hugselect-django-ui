@@ -14,6 +14,7 @@ Browser search form
 ```
 
 If feature-based recommendation is unavailable, HugSelect automatically attempts a basic Elasticsearch search.
+If Gemini specifically reports exhausted quota, the results page instead lets the user retry the same feature-based search with their own OpenAI API key.
 
 ## Requirements
 
@@ -116,6 +117,18 @@ When fallback succeeds:
 - technical exception details are logged only in the Django terminal.
 
 If both search methods fail, the browser displays a friendly error message.
+
+### OpenAI continuation after Gemini quota exhaustion
+
+When Gemini reports that its quota is exhausted, HugSelect keeps the query and structured requirements in the current session and asks for an OpenAI API key on the results page. The key is sent directly to the server for that single retry, is not saved in Django session data, and is not written to application logs. HugSelect uses the OpenAI Responses API with `store=False` and defaults to `gpt-4.1-mini`.
+
+An optional deployment-level override can select another compatible model:
+
+```bash
+export OPENAI_FALLBACK_MODEL="gpt-4.1-mini"
+```
+
+The user needs OpenAI API access and available API credit; a ChatGPT subscription by itself does not supply API credit.
 
 ## Useful test queries
 

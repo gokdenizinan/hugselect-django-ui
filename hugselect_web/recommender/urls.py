@@ -14,6 +14,11 @@ urlpatterns = [
         name="analysis_report",
     ),
     path(
+        "results/continue-with-openai/",
+        views.continue_search_with_openai_view,
+        name="continue_search_with_openai",
+    ),
+    path(
         "models/<path:model_id>/",
         views.model_detail_view,
         name="model_detail",

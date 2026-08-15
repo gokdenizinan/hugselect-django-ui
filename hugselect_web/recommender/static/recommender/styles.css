@@ -353,6 +353,38 @@ button:disabled { opacity: .48; box-shadow: none; cursor: not-allowed; }
 .empty-state__criteria { max-width: 760px; margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-subtle); }
 .empty-state__criteria > strong { display: block; margin-bottom: 8px; color: var(--ink); }
 .empty-state__criteria ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.api-key-fallback {
+    margin-bottom: 22px;
+    padding: 22px;
+    border: 1px solid #cfdbfb;
+    border-left: 3px solid var(--blue);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+.api-key-fallback h2 { margin: 7px 0 8px; font-size: var(--type-section-title); }
+.api-key-fallback p { max-width: 760px; margin: 0; color: var(--muted); font-size: var(--type-helper); line-height: 1.6; }
+.api-key-fallback .error { margin: 16px 0 0; }
+.api-key-fallback__form {
+    display: grid;
+    grid-template-columns: auto minmax(220px, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+.api-key-fallback__form label { color: var(--ink); font-size: .82rem; font-weight: 680; }
+.api-key-fallback__form input {
+    min-height: var(--control-height);
+    padding: 10px 12px;
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font: .9rem var(--sans);
+}
+.api-key-fallback__form input:focus { border-color: var(--blue); outline: 3px solid rgba(23, 71, 209, .11); }
+.api-key-fallback .api-key-fallback__privacy { margin-top: 12px; font-size: .76rem; }
 .empty-state__criteria li { padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); font-size: var(--type-helper); }
 .empty-state__criteria li span { margin-right: 5px; color: var(--blue); font-weight: 720; }
 .empty-state .empty-state__guidance { margin-top: 18px; }
@@ -709,6 +741,7 @@ button:disabled { opacity: .48; box-shadow: none; cursor: not-allowed; }
     .saved-comparison-card__heading { align-items: stretch; flex-direction: column; }
     .page-actions--end { align-items: flex-end; }
     .saved-comparison-save { grid-template-columns: 1fr; }
+    .api-key-fallback__form { grid-template-columns: 1fr; }
 
     .moscow-summary__groups,
     .moscow-key { grid-template-columns: 1fr 1fr; }
