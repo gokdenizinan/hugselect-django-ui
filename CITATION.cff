@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use HugSelect, please cite this software and the accompanying SoftwareX article."
-title: "HugSelect: Evidence-Driven Multi-Criteria Decision Support for Hugging Face Model Selection"
+title: "HugSelect: An Evidence-Driven Multi-Criteria Decision-Support Tool for Hugging Face Model Selection"
 type: software
 version: 1.0.0
 date-released: 2026-08-17
@@ -14,19 +14,19 @@ authors:
   - family-names: Adalı
     given-names: Arda Canser
     affiliation: Utrecht University
-    orcid: "https://orcid.org/0009-0000-9001-9140"
   - family-names: Bennin
     given-names: Kwabena Ebo
     affiliation: Wageningen University & Research
-    orcid: "https://orcid.org/0000-0002-8538-7261"
+    orcid: "https://orcid.org/0000-0001-9140-9271"
   - family-names: Tekinerdogan
     given-names: Bedir
     affiliation: Wageningen University & Research
-    orcid: "https://orcid.org/0000-0001-6139-921X"
+    orcid: "https://orcid.org/0000-0002-8538-7261"
   - family-names: Farshidi
     given-names: Siamak
-    affiliation: Utrecht University
+    affiliation: Wageningen University & Research
     email: siamak.farshidi@wur.nl
+    orcid: "https://orcid.org/0000-0001-6139-921X"
 keywords:
   - foundation models
   - model selection

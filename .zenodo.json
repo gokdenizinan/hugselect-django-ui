@@ -1,0 +1,42 @@
+{
+  "title": "HugSelect: An Evidence-Driven Multi-Criteria Decision-Support Tool for Hugging Face Model Selection",
+  "description": "HugSelect v1.0.0 is a Django decision-support application for explainable, multi-criteria selection of Hugging Face models. This release includes the web application, 20-scenario SoftwareX evaluation package, reproducible Elasticsearch snapshot tooling, Docker configuration, and complete ranking documentation.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "version": "1.0.0",
+  "publication_date": "2026-08-17",
+  "creators": [
+    {
+      "name": "İnan, Gökdeniz",
+      "affiliation": "Wageningen University & Research"
+    },
+    {
+      "name": "Adalı, Arda Canser",
+      "affiliation": "Utrecht University"
+    },
+    {
+      "name": "Bennin, Kwabena Ebo",
+      "affiliation": "Wageningen University & Research",
+      "orcid": "0000-0001-9140-9271"
+    },
+    {
+      "name": "Tekinerdogan, Bedir",
+      "affiliation": "Wageningen University & Research",
+      "orcid": "0000-0002-8538-7261"
+    },
+    {
+      "name": "Farshidi, Siamak",
+      "affiliation": "Wageningen University & Research",
+      "orcid": "0000-0001-6139-921X"
+    }
+  ],
+  "keywords": [
+    "foundation models",
+    "model selection",
+    "recommender systems",
+    "multi-criteria decision making",
+    "explainable AI",
+    "Hugging Face"
+  ]
+}
