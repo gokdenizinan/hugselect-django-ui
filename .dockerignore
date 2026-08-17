@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+*.pyc
+*.log
+*.key
+.env
+db.sqlite3
+hugselect_web/db.sqlite3
+output
+tmp
+HF-Models-T7
+HF-Models-T7-U
+elasticsearch-*

@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use HugSelect, please cite this software and the accompanying SoftwareX article."
+title: "HugSelect: Evidence-Driven Multi-Criteria Decision Support for Hugging Face Model Selection"
+type: software
+version: 1.0.0
+date-released: 2026-08-17
+license: MIT
+repository-code: "https://github.com/gokdenizinan/hugselect-django-ui"
+url: "https://github.com/gokdenizinan/hugselect-django-ui/releases/tag/v1.0.0"
+authors:
+  - family-names: İnan
+    given-names: Gökdeniz
+    affiliation: Wageningen University & Research
+  - family-names: Adalı
+    given-names: Arda Canser
+    affiliation: Utrecht University
+    orcid: "https://orcid.org/0009-0000-9001-9140"
+  - family-names: Bennin
+    given-names: Kwabena Ebo
+    affiliation: Wageningen University & Research
+    orcid: "https://orcid.org/0000-0002-8538-7261"
+  - family-names: Tekinerdogan
+    given-names: Bedir
+    affiliation: Wageningen University & Research
+    orcid: "https://orcid.org/0000-0001-6139-921X"
+  - family-names: Farshidi
+    given-names: Siamak
+    affiliation: Utrecht University
+    email: siamak.farshidi@wur.nl
+keywords:
+  - foundation models
+  - model selection
+  - recommender systems
+  - multi-criteria decision making
+  - explainable AI
+  - Hugging Face

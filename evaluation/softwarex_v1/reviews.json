@@ -1,0 +1,7 @@
+{
+  "review_protocol": "Binary relevance to the stated scenario, assessed independently before reconciliation.",
+  "reviewers": [],
+  "judgments": [],
+  "status": "not_performed",
+  "note": "No independent human reviewers were available during the automated release run. Inter-reviewer agreement must not be reported until at least two reviewers assess the same items."
+}

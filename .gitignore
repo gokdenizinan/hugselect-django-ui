@@ -64,6 +64,7 @@ HF-Models-T7
 HF-Models-T7-U
 db.sqlite3
 hugselect_web/db.sqlite3
+hugselect_web/staticfiles/
 
 # Local LLM/test logs
 8-CRITERIA_SELECTION/logs/
@@ -71,3 +72,9 @@ hugselect_web/db.sqlite3
 # Local LLM/test logs and caches
 8-CRITERIA_SELECTION/logs/
 8-CRITERIA_SELECTION/synonym_cache.json
+
+# Keep the compact SoftwareX reproducibility package under version control.
+!evaluation/
+!evaluation/softwarex_v1/
+!evaluation/softwarex_v1/*.json
+!evaluation/softwarex_v1/**/*.json

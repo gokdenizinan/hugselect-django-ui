@@ -1,0 +1,127 @@
+{
+  "protocol_version": "1.0",
+  "created_at": "2026-08-17",
+  "instructions": "Submit each query unchanged in a fresh conversation. Do not use follow-up prompts.",
+  "scenarios": [
+    {
+      "id": "S01",
+      "domain": "natural-language processing",
+      "query": "Recommend up to ten Hugging Face model IDs for an instruction-following English text-generation model for a reproducible research assistant. It must support text generation, should use an Apache-2.0 license, should not be gated, and should have strong community adoption. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-generation", "language": "en", "license": "apache-2.0", "gated": "false", "functional": "instruction following"}
+    },
+    {
+      "id": "S02",
+      "domain": "natural-language processing",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying Turkish user feedback as positive, negative, or neutral. It must perform text classification and support Turkish. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-classification", "language": "tr", "functional": "three-class sentiment analysis"}
+    },
+    {
+      "id": "S03",
+      "domain": "natural-language processing",
+      "query": "Recommend up to ten Hugging Face model IDs for multilingual sentence embeddings used to compare scientific abstracts across English, German, and French. It must produce feature embeddings and should support all three languages. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "feature-extraction", "language": ["en", "de", "fr"], "functional": "sentence embeddings"}
+    },
+    {
+      "id": "S04",
+      "domain": "natural-language processing",
+      "query": "Recommend up to ten Hugging Face model IDs for summarizing long English research reports. It must support summarization and should handle long input contexts. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "summarization", "language": "en", "functional": "long-context summarization"}
+    },
+    {
+      "id": "S05",
+      "domain": "biomedicine",
+      "query": "Recommend up to ten Hugging Face model IDs for extractive question answering over English biomedical articles. It must support question answering and should be trained or adapted for biomedical text. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "question-answering", "language": "en", "domain": "biomedical"}
+    },
+    {
+      "id": "S06",
+      "domain": "software engineering",
+      "query": "Recommend up to ten Hugging Face model IDs for generating and explaining Python code in a research software project. It must perform text generation, should be instruction tuned, and should have a permissive recorded license. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-generation", "domain": "code", "functional": "Python code generation", "license_bucket": "permissive"}
+    },
+    {
+      "id": "S07",
+      "domain": "natural-language processing",
+      "query": "Recommend up to ten Hugging Face model IDs for translating technical documents from English to German. It must support translation from English to German and should use the Transformers library. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "translation", "language": ["en", "de"], "library": "transformers"}
+    },
+    {
+      "id": "S08",
+      "domain": "legal informatics",
+      "query": "Recommend up to ten Hugging Face model IDs for named-entity recognition in English legal documents. It must perform token classification and should be adapted to legal text. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "token-classification", "language": "en", "domain": "legal", "functional": "named-entity recognition"}
+    },
+    {
+      "id": "S09",
+      "domain": "audio",
+      "query": "Recommend up to ten Hugging Face model IDs for multilingual automatic speech recognition of English, French, and German interviews. It must perform speech recognition and should support all three languages. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "automatic-speech-recognition", "language": ["en", "fr", "de"]}
+    },
+    {
+      "id": "S10",
+      "domain": "audio",
+      "query": "Recommend up to ten Hugging Face model IDs for generating natural English speech from text for an accessibility prototype. It must perform text-to-speech and should be usable without gated access. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-to-speech", "language": "en", "gated": "false"}
+    },
+    {
+      "id": "S11",
+      "domain": "medical imaging",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying chest X-ray images in a research prototype. It must perform image classification and should be trained or adapted for radiology data. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "image-classification", "domain": "radiology", "functional": "chest X-ray classification"}
+    },
+    {
+      "id": "S12",
+      "domain": "computer vision",
+      "query": "Recommend up to ten Hugging Face model IDs for real-time object detection on resource-constrained edge hardware. It must perform object detection and should prioritize compact or efficient architectures. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "object-detection", "quality": "performance efficiency", "functional": "edge deployment"}
+    },
+    {
+      "id": "S13",
+      "domain": "computer vision",
+      "query": "Recommend up to ten Hugging Face model IDs for text-to-image generation using a diffusion pipeline. It must perform text-to-image generation and should use the Diffusers library. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-to-image", "library": "diffusers", "functional": "diffusion"}
+    },
+    {
+      "id": "S14",
+      "domain": "earth observation",
+      "query": "Recommend up to ten Hugging Face model IDs for semantic segmentation of satellite imagery. It must perform image segmentation and should be trained or adapted for remote-sensing data. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "image-segmentation", "domain": "remote sensing", "functional": "satellite imagery"}
+    },
+    {
+      "id": "S15",
+      "domain": "multimodal",
+      "query": "Recommend up to ten Hugging Face model IDs for answering questions about scientific charts and figures. It must support visual question answering and should handle English text. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "visual-question-answering", "language": "en", "functional": "charts and figures"}
+    },
+    {
+      "id": "S16",
+      "domain": "video",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying human actions in short research videos. It must perform video classification and should provide a Transformers-compatible implementation. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "video-classification", "library": "transformers", "functional": "action recognition"}
+    },
+    {
+      "id": "S17",
+      "domain": "time series",
+      "query": "Recommend up to ten Hugging Face model IDs for probabilistic forecasting of multivariate energy-consumption time series. It must perform time-series forecasting and should support multivariate inputs. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "time-series-forecasting", "domain": "energy", "functional": "multivariate probabilistic forecasting"}
+    },
+    {
+      "id": "S18",
+      "domain": "tabular data",
+      "query": "Recommend up to ten Hugging Face model IDs for binary classification on mixed numerical and categorical tabular research data. It must support tabular classification and should handle mixed feature types. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "tabular-classification", "functional": "mixed numerical and categorical features"}
+    },
+    {
+      "id": "S19",
+      "domain": "audio",
+      "query": "Recommend up to ten Hugging Face model IDs for generating short instrumental music clips from text prompts. It must support text-to-audio or music generation and should be available without gated access. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "text-to-audio", "domain": "music", "gated": "false"}
+    },
+    {
+      "id": "S20",
+      "domain": "bioinformatics",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying protein sequences by biological function. It must support sequence classification and should be pretrained on protein data. Return ranked owner/model identifiers with one brief reason each.",
+      "criteria": {"task": "sequence-classification", "domain": "protein", "functional": "biological function classification"}
+    }
+  ]
+}

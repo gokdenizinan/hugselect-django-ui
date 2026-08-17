@@ -10,8 +10,8 @@ from urllib.request import Request, urlopen
 from elasticsearch import Elasticsearch
 
 
-ES_URL = "http://localhost:9200"
-INDEX_NAME = "models_t7"
+ES_URL = os.getenv("HUGSELECT_ES_URL", "http://localhost:9200")
+INDEX_NAME = os.getenv("HUGSELECT_ES_INDEX", "models_t7")
 DISPLAY_RESULT_LIMIT = 10
 AVAILABILITY_CANDIDATE_LIMIT = 30
 AVAILABILITY_HTTP_TIMEOUT_SECONDS = 3.0
