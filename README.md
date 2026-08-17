@@ -183,6 +183,7 @@ Support contact: `siamak.farshidi@wur.nl`
 
 ## Citation
 
-The immutable SoftwareX release DOI will be added here after the GitHub release
-has been archived. Until then, cite the exact `v1.0.0` GitHub release rather
-than a moving branch.
+A repository DOI was not assigned for this version. Cite the exact immutable
+[`v1.0.0` GitHub release](https://github.com/gokdenizinan/hugselect-django-ui/releases/tag/v1.0.0)
+rather than a moving branch. The earlier framework data and evaluation archive
+remains available from Mendeley Data at DOI `10.17632/9xbhyxr7tf.1`.
