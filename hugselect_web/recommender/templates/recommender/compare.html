@@ -1,0 +1,525 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compare Models — HugSelect</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'recommender/styles.css' %}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+
+            <div class="nav-subtitle">
+                Comparative analysis
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-actions">
+            <a class="back-link" href="{% url 'search_results' %}">
+                ← Back to search results
+            </a>
+
+            <a class="model-link" href="{% url 'saved_comparisons' %}">
+                Saved comparisons ({{ saved_comparison_count|default:0 }})
+            </a>
+        </div>
+
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% else %}
+            <section class="search-card">
+                <span class="specimen-label">
+                    Model comparison
+                </span>
+
+                <h1>Explainable model comparison</h1>
+
+                {% if saved_comparison %}
+                    <div class="query-box">
+                        <strong>Reopened:</strong>
+                        {{ saved_comparison.label }}
+
+                        {% if saved_context_unavailable %}
+                            <br>
+                            Search-specific scores and explanations are no longer
+                            available, but the saved models are still shown.
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if search_context.query %}
+                    <div class="comparison-query">
+                        <span class="comparison-query__label">
+                            Your query
+                        </span>
+
+                        <span class="comparison-query__text">
+                            {{ search_context.query }}
+                        </span>
+                    </div>
+                {% endif %}
+
+                <form
+                    class="saved-comparison-save"
+                    method="post"
+                    action="{% url 'save_comparison' %}"
+                >
+                    {% csrf_token %}
+
+                    {% for model in models %}
+                        <input
+                            type="hidden"
+                            name="model_ids"
+                            value="{{ model.model_id }}"
+                        >
+                    {% endfor %}
+
+                    <label for="comparison-label">
+                        Optional label
+                    </label>
+                    <input
+                        id="comparison-label"
+                        name="label"
+                        type="text"
+                        maxlength="100"
+                        placeholder="e.g. Multilingual shortlist"
+                    >
+                    <button type="submit">Save comparison</button>
+                </form>
+
+                <div class="comparison-grid">
+                    {% for model in models %}
+                        <article class="comparison-column">
+                            {% if model.is_strongest_match %}
+                                <div class="hero-badge">
+                                    {{ model.strongest_label }}
+                                </div>
+                            {% endif %}
+
+                            <h2 class="comparison-model-name">
+                                {{ model.model_id }}
+                            </h2>
+
+                            <dl class="comparison-metadata">
+                                <dt>Author</dt>
+                                <dd>
+                                    {{ model.author|default:"Unknown" }}
+                                </dd>
+
+                                <dt class="metadata-tooltip">
+                                    <span>Task</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain task metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-task-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-task-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The task describes the model's primary capability
+                                        on Hugging Face, such as text generation,
+                                        summarization, translation, or question answering.
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {{ model.pipeline_tag|default:"Unknown" }}
+                                </dd>
+
+                                <dt class="metadata-tooltip">
+                                    <span>License</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain license metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-license-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-license-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The license describes the rules for using,
+                                        modifying, and redistributing the model.
+                                        Exact permissions and obligations depend on
+                                        the specific license shown.
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {{ model.license|default:"Unknown" }}
+                                </dd>
+
+                                <dt class="metadata-tooltip">
+                                    <span>Library</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain library metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-library-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-library-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The software library used to load, run,
+                                        or fine-tune the model.
+
+                                        {% if model.library_name == "transformers" %}
+                                            “transformers” refers to Hugging Face’s
+                                            library for working with pretrained models.
+                                        {% endif %}
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {{ model.library_name|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Language</dt>
+                                <dd>
+                                    {{ model.language|default:"Unknown" }}
+                                </dd>
+
+                                <dt class="metadata-tooltip">
+                                    <span>Base model</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain base model metadata for {{ model.model_id }}"
+                                        aria-describedby="comparison-base-model-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-base-model-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The base model is the model used as the starting point
+                                        before additional training or fine-tuning.
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {{ model.basemodels|default:"Unknown" }}
+                                </dd>
+
+                                <dt class="metadata-tooltip">
+                                    <span>Model type</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain model type for {{ model.model_id }}"
+                                        aria-describedby="comparison-model-type-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-model-type-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        The model type identifies the model's architecture
+                                        or configuration family, such as BERT, Llama, or Qwen.
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {{ model.model_type|default:"Unknown" }}
+                                </dd>
+
+                                <dt>Downloads 30d</dt>
+                                <dd>
+                                    {{ model.downloads_last_30_days|default:"N/A" }}
+                                </dd>
+
+                                <dt>Likes</dt>
+                                <dd>
+                                    {{ model.likes|default:"N/A" }}
+                                </dd>
+
+                                {% if search_context.search_mode == "feature-based" %}
+                                <dt class="metadata-tooltip">
+                                    <span>Feature match</span>
+
+                                    <button
+                                        type="button"
+                                        class="metadata-tooltip__trigger"
+                                        aria-label="Explain feature match for {{ model.model_id }}"
+                                        aria-describedby="comparison-feature-match-tooltip-{{ forloop.counter }}"
+                                    >
+                                        i
+                                    </button>
+
+                                    <span
+                                        id="comparison-feature-match-tooltip-{{ forloop.counter }}"
+                                        class="metadata-tooltip__content"
+                                        role="tooltip"
+                                    >
+                                        Feature match shows how much of your weighted
+                                        requirements this model satisfies.
+                                        It does not measure general model quality
+                                        or benchmark performance.
+                                    </span>
+                                </dt>
+
+                                <dd>
+                                    {% if model.comparison_score != None %}
+                                        {{ model.comparison_score|floatformat:1 }}%
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </dd>
+
+                                {% elif search_context.search_mode == "basic-fallback" %}
+                                    <dt>Relevance score</dt>
+                                    <dd>
+                                        {% if model.comparison_score != None %}
+                                            {{ model.comparison_score|floatformat:3 }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </dd>
+                                {% endif %}
+                            </dl>
+
+                            <a
+                                class="model-link"
+                                href="{% url 'model_detail' model.model_id %}"
+                            >
+                                View model details
+                            </a>
+                        </article>
+                    {% endfor %}
+                </div>
+
+                {% if search_context.search_mode == "feature-based" %}
+                    {% if decision_summary %}
+                        <section class="decision-summary">
+                            <div class="decision-summary__top">
+                                <div>
+                                    <span class="decision-summary__eyebrow">
+                                        Decision summary
+                                    </span>
+
+                                    {% if decision_summary.is_tie %}
+                                        <span class="decision-summary__status">
+                                            Feature match tie
+                                        </span>
+                                    {% else %}
+                                        <span class="decision-summary__status">
+                                            Clear leader
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="decision-summary__score">
+                                    {{ decision_summary.best_score|floatformat:1 }}%
+
+                                    <small>
+                                        Feature match
+                                    </small>
+                                </div>
+                            </div>
+
+                            {% if decision_summary.tie_breaker_model %}
+                                <div class="decision-summary__winner">
+                                    <span>
+                                        Recommended model
+                                    </span>
+
+                                    <strong>
+                                        {{ decision_summary.tie_breaker_model }}
+                                    </strong>
+                                </div>
+
+                                <div class="decision-summary__tie-breakers">
+                                    <div class="decision-summary__tie-breaker-heading">
+                                        <strong>
+                                            Tie-breaker priority
+                                        </strong>
+
+                                        <small>
+                                            Used only when feature match
+                                            scores are equal
+                                        </small>
+                                    </div>
+
+                                    <div
+                                        class="decision-summary__chips"
+                                        aria-label="Tie-breaker priority"
+                                    >
+                                        <span>
+                                            <strong>1st</strong>
+                                            Downloads
+                                        </span>
+
+                                        <span>
+                                            <strong>2nd</strong>
+                                            Likes
+                                        </span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="decision-summary__winner">
+                                    <span>
+                                        Recommended model
+                                    </span>
+
+                                    <strong>
+                                        {% for model_id in decision_summary.leaders %}
+                                            {{ model_id }}
+                                        {% endfor %}
+                                    </strong>
+                                </div>
+                            {% endif %}
+                        </section>
+
+                        <form
+                            class="stress-test-action"
+                            method="get"
+                            action="{% url 'decision_stress' %}"
+                        >
+                            {% for model in models %}
+                                <input
+                                    type="hidden"
+                                    name="model_ids"
+                                    value="{{ model.model_id }}"
+                                >
+                            {% endfor %}
+
+                            <div>
+                                <span class="specimen-label">
+                                    Decision analysis
+                                </span>
+
+                                <p>
+                                    Decision Stress reuses stored match evidence
+                                    to test whether the leading model changes when
+                                    requirement priorities change.
+                                </p>
+                            </div>
+
+                            <button type="submit">
+                                Run Decision Stress
+                                <span>→</span>
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <section class="requirement-comparison">
+                        <h2>Requirement coverage</h2>
+
+                        <p class="data-note">
+                            Requirement coverage shows whether stored match evidence
+                            says each model satisfies each query requirement. It is
+                            not independent benchmark evidence.
+                        </p>
+
+                        {% if coverage_rows %}
+                            <div class="comparison-table-wrapper">
+                                <table class="comparison-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Requirement</th>
+                                            <th>Requested value</th>
+
+                                            {% for model in models %}
+                                                <th>
+                                                    {{ model.model_id }}
+                                                </th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for row in coverage_rows %}
+                                            <tr>
+                                                <td>
+                                                    {{ row.feature_key }}
+                                                </td>
+
+                                                <td>
+                                                    {{ row.user_value }}
+                                                </td>
+
+                                                {% for status in row.model_statuses %}
+                                                    <td>
+                                                        {% if status.matched %}
+                                                            <span class="match-status match-status--matched">
+                                                                Matched
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="match-status match-status--not-matched">
+                                                                Not matched
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>
+                                No structured requirement comparison
+                                is available.
+                            </p>
+                        {% endif %}
+                    </section>
+
+                {% elif search_context.search_mode == "basic-fallback" %}
+                    <section class="requirement-comparison">
+                        <h2>Requirement coverage</h2>
+
+                        <p>
+                            Structured feature comparisons are unavailable
+                            in basic fallback mode. These models were ranked
+                            using Elasticsearch text relevance, and the
+                            relevance score is not a percentage.
+                        </p>
+                    </section>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,285 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Evidence-led Hugging Face model discovery.">
+    <title>HugSelect — Evidence-led Model Discovery</title>
+    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}" aria-label="HugSelect home">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+            <div class="nav-subtitle">Research-led model discovery</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div class="hero-badge">Evidence-led model discovery</div>
+
+            <h1>Find the right model.<br><em>Select with evidence.</em></h1>
+
+            <p>
+                A research interface for finding Hugging Face models from natural-language
+                requirements, structured metadata, extracted features, and measurable quality signals.
+            </p>
+
+            <div class="hero-method" aria-label="Recommendation pipeline">
+                <span><b>01</b> Specify</span><i></i>
+                <span><b>02</b> Extract</span><i></i>
+                <span><b>03</b> Rank</span><i></i>
+                <span><b>04</b> Compare</span>
+            </div>
+        </section>
+
+        <section class="search-card">
+            <form method="post" id="search-form">
+                {% csrf_token %}
+
+                <div class="form-heading">
+                    <div>
+                        <span class="specimen-label">Model requirements</span>
+                        <label for="query">Define your model requirements</label>
+                    </div>
+                </div>
+
+                <textarea
+                    id="query"
+                    name="query"
+                    required
+                    placeholder="e.g. A recent, non-gated text-generation model with Apache-2.0 licensing and strong community adoption…"
+                >{{ query }}</textarea>
+
+                <fieldset class="requirement-builder">
+                    <legend>
+                        <span class="specimen-label">
+                            Optional structured requirements
+                        </span>
+                        Add requirements whose priority you want to control.
+                    </legend>
+
+                    <p class="requirement-builder__help">
+                        Explicit choices override an automatically extracted
+                        priority for the same feature and value.
+                    </p>
+
+                    <div class="moscow-key" aria-label="MoSCoW priority definitions">
+                        <div>
+                            <strong>Must Have</strong>
+                            <span>Required. Missing it excludes a model.</span>
+                        </div>
+                        <div>
+                            <strong>Should Have</strong>
+                            <span>Important soft preference.</span>
+                        </div>
+                        <div>
+                            <strong>Could Have</strong>
+                            <span>Lower-priority soft preference.</span>
+                        </div>
+                        <div>
+                            <strong>Won't Have</strong>
+                            <span>Forbidden. Matching it excludes a model.</span>
+                        </div>
+                    </div>
+
+                    <div
+                        id="requirement-rows"
+                        class="requirement-rows"
+                        aria-live="polite"
+                    ></div>
+
+                    <button
+                        type="button"
+                        id="add-requirement"
+                        class="secondary-button"
+                    >+ Add requirement</button>
+
+                    <template id="requirement-row-template">
+                        <div class="requirement-row">
+                            <label>
+                                <span>Feature</span>
+                                <select name="requirement_feature">
+                                    <option value="">Select feature</option>
+                                    {% for group_label, feature_options in explicit_requirement_feature_groups %}
+                                        <optgroup label="{{ group_label }}">
+                                            {% for feature_key, feature_label in feature_options %}
+                                                <option value="{{ feature_key }}">
+                                                    {{ feature_label }}
+                                                </option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <label>
+                                <span>Value</span>
+                                <input
+                                    type="text"
+                                    name="requirement_value"
+                                    placeholder="e.g. English"
+                                >
+                            </label>
+
+                            <label>
+                                <span>Priority</span>
+                                <select name="requirement_priority">
+                                    {% for priority, priority_label in explicit_requirement_priorities %}
+                                        <option value="{{ priority }}">
+                                            {{ priority_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+
+                            <button
+                                type="button"
+                                class="remove-requirement"
+                                aria-label="Remove requirement"
+                            >Remove</button>
+                        </div>
+                    </template>
+                </fieldset>
+
+                <div
+                    class="search-scope"
+                    role="group"
+                    aria-labelledby="search-scope-label"
+                    aria-describedby="search-scope-help"
+                >
+                    <span class="specimen-label" id="search-scope-label">
+                        Search scope
+                    </span>
+
+                    <p class="form-help" id="search-scope-help">
+                        Base-model family limits results to models whose Hugging Face
+                        base-model metadata matches the selected family.
+                    </p>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="search_scope"
+                            value="all"
+                            checked
+                        >
+                        All models
+                    </label>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="search_scope"
+                            value="family"
+                        >
+                        Base-model family
+                    </label>
+
+                    <label for="base-model-family">
+                        Base-model family
+                    </label>
+
+                    <select
+                        id="base-model-family"
+                        name="base_model_family"
+                        disabled
+                    >
+                        <option value="llama">Llama</option>
+                        <option value="mistral">Mistral</option>
+                        <option value="qwen">Qwen</option>
+                        <option value="gemma">Gemma</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <p>Describe task, domain, language, license, library, and quality preferences.</p>
+                    <button type="submit" id="search-button">Run analysis <span>→</span></button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const searchForm = document.getElementById("search-form");
+        const searchButton = document.getElementById("search-button");
+        const searchScopeInputs = document.querySelectorAll(
+            'input[name="search_scope"]'
+        );
+        const familySelect = document.getElementById(
+            "base-model-family"
+        );
+        const requirementRows = document.getElementById(
+            "requirement-rows"
+        );
+        const requirementTemplate = document.getElementById(
+            "requirement-row-template"
+        );
+        const addRequirementButton = document.getElementById(
+            "add-requirement"
+        );
+
+        if (
+            requirementRows &&
+            requirementTemplate &&
+            addRequirementButton
+        ) {
+            function addRequirementRow() {
+                requirementRows.appendChild(
+                    requirementTemplate.content.cloneNode(true)
+                );
+            }
+
+            addRequirementButton.addEventListener(
+                "click",
+                addRequirementRow
+            );
+
+            requirementRows.addEventListener("click", (event) => {
+                const removeButton = event.target.closest(
+                    ".remove-requirement"
+                );
+
+                if (removeButton) {
+                    removeButton.closest(".requirement-row").remove();
+                }
+            });
+
+            addRequirementRow();
+        }
+
+        if (familySelect && searchScopeInputs.length) {
+            function updateFamilySelect() {
+                const selectedScope = document.querySelector(
+                    'input[name="search_scope"]:checked'
+                );
+
+                familySelect.disabled =
+                    !selectedScope || selectedScope.value !== "family";
+            }
+
+            searchScopeInputs.forEach((scopeInput) => {
+                scopeInput.addEventListener(
+                    "change",
+                    updateFamilySelect
+                );
+            });
+
+            updateFamilySelect();
+        }
+
+        if (searchForm && searchButton) {
+            searchForm.addEventListener("submit", () => {
+                searchButton.disabled = true;
+                searchButton.textContent = "Searching...";
+            });
+        }
+    </script>
+</body>
+</html>

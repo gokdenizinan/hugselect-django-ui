@@ -38,6 +38,11 @@ class EssentialFeaturesExtractor:
     INTERPRETATION RULES:
     - Only encode preferences that are explicitly stated or very strongly implied.
     - Do NOT guess or invent preferences that are not supported by the user message.
+    - "objective" is only a concrete capability that is not already represented by
+      "task". Do NOT put recency, gating, licensing, popularity, community adoption,
+      or other metadata/preferences in "objective".
+    - Do NOT copy several unrelated parts of the message into one feature. Each
+      requirement belongs only in its corresponding field; otherwise use null.
     - If there is no information for a top-level field, set that field to null (not an empty object).
     - For each CategoricalFeature, "include" and "exclude" MUST always be present as lists (possibly empty).
     - Use "priority" to indicate how important the preference seems for the user:
@@ -46,6 +51,8 @@ class EssentialFeaturesExtractor:
     - "prefer": mild preference
     - "avoid": user explicitly dislikes or rejects something
     - null: when importance is unclear
+    - Use "must" only for requirements stated as required/mandatory/only, or for
+      the model's unambiguous core task. Descriptive wording alone is not "must".
 
     OUTPUT REQUIREMENTS:
     - Return ONLY valid, minifiable JSON.
@@ -159,4 +166,3 @@ if __name__ == "__main__":
         print(features)
         print("=")
         print(features["task"])
-

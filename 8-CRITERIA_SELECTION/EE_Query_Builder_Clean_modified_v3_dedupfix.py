@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Optional, Tuple, Literal, Union, MutableMapping
 
 from datetime import datetime
@@ -139,8 +139,93 @@ query_mapping = {
 # ----------------------------
 
 PreferencePriority = Literal["must", "strong_prefer", "prefer", "avoid"]
+ExplicitMoscowPriority = Literal["must", "should", "could", "wont"]
 MappingValue = Union[str, List[str]]
 MappingType = Dict[str, MappingValue]
+
+PRIORITY_TO_MOSCOW = {
+    "must": {
+        "label": "Must Have",
+        "kind": "hard_positive",
+    },
+    "strong_prefer": {
+        "label": "Should Have",
+        "kind": "soft_positive",
+    },
+    "prefer": {
+        "label": "Could Have",
+        "kind": "soft_positive",
+    },
+    "avoid": {
+        "label": "Won't Have",
+        "kind": "hard_negative",
+    },
+}
+
+EXPLICIT_MOSCOW_PRIORITIES = {
+    "must": {
+        "label": "Must Have",
+        "kind": "hard_positive",
+        "multiplier": None,
+    },
+    "should": {
+        "label": "Should Have",
+        "kind": "soft_positive",
+        "multiplier": 1.0,
+    },
+    "could": {
+        "label": "Could Have",
+        "kind": "soft_positive",
+        "multiplier": 0.5,
+    },
+    "wont": {
+        "label": "Won't Have",
+        "kind": "hard_negative",
+        "multiplier": None,
+    },
+}
+
+QUALITY_FEATURE_KEYS = {
+    "Functional_Suitability",
+    "Compatibility",
+    "Performance_Efficiency",
+    "Reliability",
+    "Interaction_Capability",
+    "Security",
+    "Maintainability",
+    "Flexibility",
+}
+
+EXPLICIT_FEATURE_KEY_ALIASES = {
+    "task_alias": "task",
+    "domain_alias": "domain",
+    "functional_item": "functional",
+}
+
+EXPLICIT_FEATURE_SPECS = {
+    "task": ("task_field", "essential", "task"),
+    "domain": ("domain_field", "essential", "domain"),
+    "author": ("author_field", "essential", "author"),
+    "objective": ("objective_field", "essential", "objective"),
+    "model_name": ("model_name_field", "essential", "model_name"),
+    "license_name": ("license_field", "preference", "license_name"),
+    "library_name": ("library_name_field", "preference", "library_name"),
+    "basemodels": ("basemodels_field", "preference", "basemodels"),
+    "datasets": ("datasets_field", "preference", "datasets"),
+    "language": ("language_field", "preference", "language"),
+    "metrics": ("metrics_field", "preference", "metrics"),
+    "gated": ("gated_field", "preference", "gated"),
+    "last_modified_year": ("last_modified_field", "preference", "last_modified_year"),
+    "functional": ("functional_search_fields", "functional", "functional_item"),
+    "Functional_Suitability": ("functional_suitability_field", "quality", "Functional_Suitability"),
+    "Compatibility": ("compatibility_field", "quality", "Compatibility"),
+    "Performance_Efficiency": ("performance_efficiency_field", "quality", "Performance_Efficiency"),
+    "Reliability": ("reliability_field", "quality", "Reliability"),
+    "Interaction_Capability": ("interaction_capability_field", "quality", "Interaction_Capability"),
+    "Security": ("security_field", "quality", "Security"),
+    "Maintainability": ("maintainability_field", "quality", "Maintainability"),
+    "Flexibility": ("flexibility_field", "quality", "Flexibility"),
+}
 
 # External contracts (yours)
 # from EE_Alias_Creation import AliasResolver, make_embedding_provider_factory
@@ -169,6 +254,7 @@ class FeatureGroup:
     # scoring
     base_weight: float = 1.0                 # feature-level base weight
     per_value_weight: Optional[float] = None # if you want per-value weights
+    explicit_priority: Optional[ExplicitMoscowPriority] = None
 
 
 # ----------------------------
@@ -351,8 +437,6 @@ def _canonical_compare_variants(value: Any) -> List[str]:
     for prefix in ("license:", "dataset:"):
         if norm.startswith(prefix):
             variants.add(norm[len(prefix):].strip())
-        else:
-            variants.add(f"{prefix}{norm}")
     return list(variants)
 
 
@@ -621,6 +705,25 @@ class ESQueryBuilderAdaptive:
     def _priority_weight(self, priority: PreferencePriority, base: float) -> float:
         return float(base) * float(self.priority_multipliers.get(priority, 1.0))
 
+    def _moscow_semantics(self, priority: PreferencePriority) -> Dict[str, str]:
+        return PRIORITY_TO_MOSCOW[priority]
+
+    def _group_moscow_semantics(self, fg: FeatureGroup) -> Dict[str, Any]:
+        if fg.explicit_priority is not None:
+            return EXPLICIT_MOSCOW_PRIORITIES[fg.explicit_priority]
+        return self._moscow_semantics(fg.priority)
+
+    def _is_hard_group(self, fg: FeatureGroup) -> bool:
+        return self._group_moscow_semantics(fg)["kind"].startswith("hard_")
+
+    def _feature_weight(self, fg: FeatureGroup) -> float:
+        semantics = self._group_moscow_semantics(fg)
+        if semantics["kind"].startswith("hard_"):
+            return 0.0
+        if fg.explicit_priority is not None:
+            return float(fg.base_weight) * float(semantics["multiplier"])
+        return self._priority_weight(fg.priority, fg.base_weight)
+
     def _value_key(self, value: Any) -> str:
         return _normalize_value_key(value)
 
@@ -671,7 +774,7 @@ class ESQueryBuilderAdaptive:
         return set(self.quality_feature_key_set)
 
     def _is_quality_feature(self, feature_key: str) -> bool:
-        return feature_key in self.quality_feature_key_set
+        return feature_key in QUALITY_FEATURE_KEYS
 
     def _quality_threshold_filter(self, fg: FeatureGroup) -> Optional[Dict[str, Any]]:
         if not self._is_quality_feature(fg.feature_key) or not fg.fields:
@@ -861,11 +964,19 @@ class ESQueryBuilderAdaptive:
         value_queries: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
         for fg in groups:
-            if not fg.include or fg.priority == "avoid" or fg.feature_key == "last_modified_year":
+            if not fg.include or self._is_hard_group(fg):
                 continue
 
-            feat_weight = self._priority_weight(fg.priority, fg.base_weight)
+            feat_weight = self._feature_weight(fg)
             if feat_weight <= 0:
+                continue
+
+            if fg.feature_key == "last_modified_year":
+                clause = self._last_modified_filter_clause(fg)
+                if clause is not None:
+                    value_queries[self._value_key(fg.include[0])].append(
+                        _wrap_constant_score(clause, feat_weight)
+                    )
                 continue
 
             for val in fg.include:
@@ -894,11 +1005,11 @@ class ESQueryBuilderAdaptive:
         if fg.feature_key == "last_modified_year":
             if self._doc_satisfies_last_modified(source, fg):
                 doc_value = _get_by_dotted_path(source, fg.fields[0]) if fg.fields else None
-                return 0.0, {
-                    "match_type": "filter_pass",
+                return float(feat_weight), {
+                    "match_type": "range_match",
                     "matched_term": doc_value,
-                    "boost_factor": 0.0,
-                    "score": 0.0,
+                    "boost_factor": 1.0,
+                    "score": float(feat_weight),
                 }
             doc_value = _get_by_dotted_path(source, fg.fields[0]) if fg.fields else None
             return 0.0, {
@@ -967,14 +1078,10 @@ class ESQueryBuilderAdaptive:
         best_by_value: Dict[str, float] = defaultdict(float)
 
         for fg in groups:
-            if not fg.include or fg.priority == "avoid":
-                continue
-            if fg.feature_key == "last_modified_year":
-                if not self._doc_satisfies_last_modified(source, fg):
-                    return 0.0
+            if not fg.include or self._is_hard_group(fg):
                 continue
 
-            feat_weight = self._priority_weight(fg.priority, fg.base_weight)
+            feat_weight = self._feature_weight(fg)
             if feat_weight <= 0:
                 continue
 
@@ -1080,6 +1187,7 @@ class ESQueryBuilderAdaptive:
             ("domain", "domain_field"),
             ("author", "author_field"),
             ("objective", "objective_field"),
+            ("model_name", "model_name_field"),
         ]:
             pref = getattr(essential, key, None)
             if pref and getattr(pref, "include", None):
@@ -1178,6 +1286,147 @@ class ESQueryBuilderAdaptive:
                 ))
 
         return groups
+
+    def _canonical_explicit_feature_key(self, feature_key: str) -> str:
+        return EXPLICIT_FEATURE_KEY_ALIASES.get(feature_key, feature_key)
+
+    def _explicit_group_value(self, feature_key: str, value: Any) -> Any:
+        if feature_key == "gated" and isinstance(value, str):
+            normalized = value.strip().casefold()
+            if normalized == "true":
+                return True
+            if normalized == "false":
+                return False
+        if feature_key in QUALITY_FEATURE_KEYS:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return value
+        return value
+
+    def _make_explicit_requirement_group(
+        self,
+        requirement: Dict[str, Any],
+    ) -> FeatureGroup:
+        feature_key = self._canonical_explicit_feature_key(
+            str(requirement["feature_key"])
+        )
+        mapping_key, weight_section, weight_key = (
+            EXPLICIT_FEATURE_SPECS[feature_key]
+        )
+        fields = self._fields(mapping_key)
+        value = self._explicit_group_value(
+            feature_key,
+            requirement["value"],
+        )
+        base_weight = self.feature_weight_groups.get(
+            weight_section,
+            {},
+        ).get(weight_key, 0.0 if feature_key == "last_modified_year" else 1.0)
+        explicit_priority: ExplicitMoscowPriority = requirement["priority"]
+        legacy_priority: PreferencePriority = {
+            "must": "must",
+            "should": "strong_prefer",
+            "could": "prefer",
+            "wont": "avoid",
+        }[explicit_priority]
+
+        grams_by_value: Dict[str, List[str]] = {}
+        syn_by_value: Dict[str, List[Tuple[str, float]]] = {}
+        if feature_key not in QUALITY_FEATURE_KEYS and feature_key != "last_modified_year":
+            candidates_sources = [
+                source.partition(".")[2] or source
+                for source in fields
+            ]
+            grams_by_value, syn_by_value = self._prepare_group_expansions(
+                include=[value],
+                candidates_sources=candidates_sources,
+                feature_key=feature_key,
+                apply_synonym_confidence_threshold=True,
+            )
+
+        return FeatureGroup(
+            feature_key=feature_key,
+            priority=legacy_priority,
+            include=[value],
+            exclude=[],
+            fields=fields,
+            grams_by_value=grams_by_value,
+            syn_by_value=syn_by_value,
+            base_weight=float(base_weight),
+            explicit_priority=explicit_priority,
+        )
+
+    def apply_explicit_requirements(
+        self,
+        groups: List[FeatureGroup],
+        explicit_requirements: Optional[List[Dict[str, Any]]],
+    ) -> List[FeatureGroup]:
+        """
+        Override extracted feature/value priorities with explicit user choices.
+
+        Matching extracted values are removed before the explicit group is
+        added, so an equivalent requirement contributes only once.
+        """
+        if not explicit_requirements:
+            return groups
+
+        explicit_keys = {
+            (
+                self._canonical_explicit_feature_key(
+                    str(requirement["feature_key"])
+                ),
+                self._value_key(requirement["value"]),
+            )
+            for requirement in explicit_requirements
+        }
+        merged_groups: List[FeatureGroup] = []
+
+        for fg in groups:
+            canonical_feature_key = self._canonical_explicit_feature_key(
+                fg.feature_key
+            )
+            remaining_include = [
+                value
+                for value in fg.include
+                if (
+                    canonical_feature_key,
+                    self._value_key(value),
+                ) not in explicit_keys
+            ]
+            remaining_exclude = [
+                value
+                for value in fg.exclude
+                if (
+                    canonical_feature_key,
+                    self._value_key(value),
+                ) not in explicit_keys
+            ]
+
+            if not remaining_include and not remaining_exclude:
+                continue
+
+            merged_groups.append(replace(
+                fg,
+                include=remaining_include,
+                exclude=remaining_exclude,
+                grams_by_value={
+                    value: variants
+                    for value, variants in fg.grams_by_value.items()
+                    if value in remaining_include
+                },
+                syn_by_value={
+                    value: variants
+                    for value, variants in fg.syn_by_value.items()
+                    if value in remaining_include
+                },
+            ))
+
+        merged_groups.extend(
+            self._make_explicit_requirement_group(requirement)
+            for requirement in explicit_requirements
+        )
+        return merged_groups
 
     def _prepare_group_expansions(
         self,
@@ -1300,7 +1549,19 @@ class ESQueryBuilderAdaptive:
 
 
     def _collect_needed_source_paths(self, groups: List[FeatureGroup]) -> List[str]:
-        paths: List[str] = []
+        # These fields are always needed by the Django result cards,
+        # even when they were not part of the user's search requirements.
+        paths: List[str] = [
+            "modelID",
+            "model_id",
+            "author",
+            "Metadata.pipeline_tag",
+            "Metadata.license",
+            "Metadata.library_name",
+            "Metadata.downloads_last_30_days",
+            "Metadata.likes",
+        ]
+
         for fg in groups:
             paths.extend(fg.fields)
 
@@ -1339,29 +1600,175 @@ class ESQueryBuilderAdaptive:
                     return True
         return False
 
+    def _group_has_indexed_evidence(
+        self,
+        source: Dict[str, Any],
+        fg: FeatureGroup,
+    ) -> bool:
+        for field_path in fg.fields:
+            value = _get_by_dotted_path(source, field_path)
+            if value is None:
+                continue
+            if isinstance(value, str) and not value.strip():
+                continue
+            if isinstance(value, (list, tuple, set, dict)) and not value:
+                continue
+            return True
+        return False
 
-    def build_query(self, groups: List[FeatureGroup], *, include_explain: bool = False) -> Dict[str, Any]:
+    def _hard_value_clause(
+        self,
+        fg: FeatureGroup,
+        user_value: Any,
+    ) -> Optional[Dict[str, Any]]:
+        if fg.feature_key == "last_modified_year":
+            return self._last_modified_filter_clause(fg)
+        if self._is_quality_feature(fg.feature_key):
+            return self._quality_threshold_filter(fg)
+
+        value_queries: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        self._add_value_candidates(
+            value_key=self._value_key(user_value),
+            value_queries=value_queries,
+            fg=fg,
+            val=user_value,
+            feat_weight=1.0,
+        )
+        queries = value_queries.get(self._value_key(user_value), [])
+
+        tag_prefix = {
+            "license_name": "license:",
+            "datasets": "dataset:",
+        }.get(fg.feature_key)
+        tag_fields = [
+            field
+            for field in fg.fields
+            if field == "tags" or field.endswith(".tags")
+        ]
+        if tag_prefix and tag_fields:
+            prefixed_values = _text_variants(
+                f"{tag_prefix}{user_value}"
+            )
+            queries.append(
+                _wrap_constant_score(
+                    _terms_many(tag_fields, prefixed_values, k=1),
+                    float(self.MATCH_TYPE_BOOSTS["canonical"]),
+                )
+            )
+        return _dis_max_once(queries) if queries else None
+
+    def _hard_constraint_query_clauses(
+        self,
+        groups: List[FeatureGroup],
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        filter_clauses: List[Dict[str, Any]] = []
+        must_not_clauses: List[Dict[str, Any]] = []
+
+        for fg in groups:
+            if not self._is_hard_group(fg):
+                continue
+            if fg.feature_key == "last_modified_year":
+                clause = self._last_modified_filter_clause(fg)
+                if clause is None:
+                    continue
+                if self._group_moscow_semantics(fg)["kind"] == "hard_positive":
+                    filter_clauses.append(clause)
+                else:
+                    must_not_clauses.append(clause)
+                continue
+
+            values = list(fg.include)
+            semantics = self._group_moscow_semantics(fg)
+            if semantics["kind"] == "hard_negative":
+                values.extend(fg.exclude)
+
+            seen_values = set()
+            for user_value in values:
+                value_key = self._value_key(user_value)
+                if not value_key or value_key in seen_values:
+                    continue
+                seen_values.add(value_key)
+                clause = self._hard_value_clause(fg, user_value)
+                if clause is None:
+                    continue
+                if semantics["kind"] == "hard_positive":
+                    filter_clauses.append(clause)
+                else:
+                    must_not_clauses.append(clause)
+
+        return filter_clauses, must_not_clauses
+
+    def summarize_moscow_requirements(
+        self,
+        groups: List[FeatureGroup],
+    ) -> List[Dict[str, Any]]:
+        requirements: List[Dict[str, Any]] = []
+        seen = set()
+
+        for fg in groups:
+            values = list(fg.include)
+            if self._group_moscow_semantics(fg)["kind"] == "hard_negative":
+                values.extend(fg.exclude)
+            semantics = self._group_moscow_semantics(fg)
+            effective_priority = fg.explicit_priority or fg.priority
+
+            for user_value in values:
+                value_key = self._value_key(user_value)
+                dedupe_key = (fg.feature_key, value_key, effective_priority)
+                if not value_key or dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                requirements.append({
+                    "feature_key": fg.feature_key,
+                    "value": user_value,
+                    "priority": effective_priority,
+                    "priority_source": (
+                        "explicit" if fg.explicit_priority else "extracted"
+                    ),
+                    "moscow_priority": semantics["label"],
+                    "constraint_kind": semantics["kind"],
+                })
+
+        return requirements
+
+
+    def build_query(
+        self,
+        groups: List[FeatureGroup],
+        *,
+        include_explain: bool = False,
+        extra_filter_clauses: Optional[
+            List[Dict[str, Any]]
+        ] = None,
+    ) -> Dict[str, Any]:
         """
-        Returns an ES query dict using should-only positive matching.
+        Returns an ES query with MoSCoW feasibility applied before ranking.
         """
         should = self._global_value_shoulds(groups)
-        filter_clauses: List[Dict[str, Any]] = []
-        for fg in groups:
-            clause = self._last_modified_filter_clause(fg)
-            if clause is not None:
-                filter_clauses.append(clause)
+        filter_clauses, must_not_clauses = (
+            self._hard_constraint_query_clauses(groups)
+        )
+
+        if extra_filter_clauses:
+            filter_clauses.extend(extra_filter_clauses)
 
         if should:
             bool_query: Dict[str, Any] = {
                 "bool": {
                     "should": should,
-                    "minimum_should_match": int(max(0, self.minimum_should_match)),
+                    "minimum_should_match": 0,
                 }
             }
             if filter_clauses:
                 bool_query["bool"]["filter"] = filter_clauses
-        elif filter_clauses:
-            bool_query = {"bool": {"filter": filter_clauses}}
+            if must_not_clauses:
+                bool_query["bool"]["must_not"] = must_not_clauses
+        elif filter_clauses or must_not_clauses:
+            bool_query = {"bool": {}}
+            if filter_clauses:
+                bool_query["bool"]["filter"] = filter_clauses
+            if must_not_clauses:
+                bool_query["bool"]["must_not"] = must_not_clauses
         else:
             bool_query = {"match_all": {}}
 
@@ -1398,9 +1805,9 @@ class ESQueryBuilderAdaptive:
     def compute_max_score(self, groups: List[FeatureGroup]) -> float:
         best_by_value: Dict[str, float] = {}
         for fg in groups:
-            if not fg.include or fg.priority == "avoid" or fg.feature_key == "last_modified_year":
+            if not fg.include or self._is_hard_group(fg):
                 continue
-            base = self._priority_weight(fg.priority, fg.base_weight)
+            base = self._feature_weight(fg)
             if self._is_quality_feature(fg.feature_key):
                 for val in fg.include:
                     key = self._value_key(val)
@@ -1449,24 +1856,90 @@ class ESQueryBuilderAdaptive:
         hard_filters_passed = True
 
         for fg in groups:
-            if not fg.include or fg.priority == "avoid":
+            semantics = self._group_moscow_semantics(fg)
+            if not fg.include and not (
+                semantics["kind"] == "hard_negative" and fg.exclude
+            ):
                 continue
-            if fg.feature_key == "last_modified_year":
-                cutoff_year = self._last_modified_cutoff_year(fg)
-                doc_value = _get_by_dotted_path(sample_doc, fg.fields[0]) if fg.fields else None
-                doc_year = _extract_year_from_datetime_like(doc_value)
-                passed = self._doc_satisfies_last_modified(sample_doc, fg)
-                hard_filter_results.append({
+            if self._is_hard_group(fg):
+                evidence_present = self._group_has_indexed_evidence(
+                    sample_doc,
+                    fg,
+                )
+                values = list(fg.include)
+                if semantics["kind"] == "hard_negative":
+                    values.extend(fg.exclude)
+
+                feature_matches: List[Dict[str, Any]] = []
+                for user_value in values:
+                    score, detail = self._best_match_for_value_detail(
+                        fg,
+                        sample_doc,
+                        user_value,
+                        max(1.0, float(fg.base_weight)),
+                    )
+                    matched = score > 0.0
+                    if matched:
+                        evidence_status = "matched"
+                    elif evidence_present:
+                        evidence_status = "non_match"
+                    else:
+                        evidence_status = "missing_evidence"
+
+                    passed = (
+                        matched
+                        if semantics["kind"] == "hard_positive"
+                        else not matched
+                    )
+                    exclusion_reason = None
+                    if not passed:
+                        if not evidence_present:
+                            exclusion_reason = "missing_evidence"
+                        elif semantics["kind"] == "hard_positive":
+                            exclusion_reason = "must_not_satisfied"
+                        else:
+                            exclusion_reason = "prohibited_value_matched"
+
+                    item = {
+                        "feature_key": fg.feature_key,
+                        "user_value": user_value,
+                        "priority": fg.explicit_priority or fg.priority,
+                        "priority_source": (
+                            "explicit" if fg.explicit_priority else "extracted"
+                        ),
+                        "moscow_priority": semantics["label"],
+                        "constraint_kind": semantics["kind"],
+                        "base_weight": float(fg.base_weight),
+                        "effective_weight": 0.0,
+                        "matched": matched,
+                        "match_type": detail.get("match_type"),
+                        "matched_term": detail.get("matched_term"),
+                        "boost_factor": detail.get("boost_factor", 0.0),
+                        "score": 0.0,
+                        "fields": list(fg.fields),
+                        "evidence_status": evidence_status,
+                        "evidence_present": evidence_present,
+                        "passed": passed,
+                        "exclusion_reason": exclusion_reason,
+                    }
+                    feature_matches.append(item)
+                    hard_filter_results.append(item)
+                    hard_filters_passed = hard_filters_passed and passed
+
+                per_feature.append({
                     "feature_key": fg.feature_key,
-                    "cutoff_year": cutoff_year,
-                    "doc_value": doc_value,
-                    "doc_year": doc_year,
-                    "passed": passed,
+                    "priority": fg.explicit_priority or fg.priority,
+                    "priority_source": (
+                        "explicit" if fg.explicit_priority else "extracted"
+                    ),
+                    "moscow_priority": semantics["label"],
+                    "constraint_kind": semantics["kind"],
+                    "effective_weight": 0.0,
+                    "matches": feature_matches,
                 })
-                hard_filters_passed = hard_filters_passed and passed
                 continue
 
-            feat_weight = self._priority_weight(fg.priority, fg.base_weight)
+            feat_weight = self._feature_weight(fg)
             feature_matches: List[Dict[str, Any]] = []
 
             for user_value in fg.include:
@@ -1476,7 +1949,12 @@ class ESQueryBuilderAdaptive:
                 item = {
                     "feature_key": fg.feature_key,
                     "user_value": user_value,
-                    "priority": fg.priority,
+                    "priority": fg.explicit_priority or fg.priority,
+                    "priority_source": (
+                        "explicit" if fg.explicit_priority else "extracted"
+                    ),
+                    "moscow_priority": semantics["label"],
+                    "constraint_kind": semantics["kind"],
                     "base_weight": float(fg.base_weight),
                     "effective_weight": float(feat_weight),
                     "matched": score > 0.0,
@@ -1495,7 +1973,12 @@ class ESQueryBuilderAdaptive:
 
             per_feature.append({
                 "feature_key": fg.feature_key,
-                "priority": fg.priority,
+                "priority": fg.explicit_priority or fg.priority,
+                "priority_source": (
+                    "explicit" if fg.explicit_priority else "extracted"
+                ),
+                "moscow_priority": semantics["label"],
+                "constraint_kind": semantics["kind"],
                 "effective_weight": float(feat_weight),
                 "matches": feature_matches,
             })
@@ -1516,7 +1999,10 @@ class ESQueryBuilderAdaptive:
             "total_match_score": total_score if hard_filters_passed else 0.0,
             "normalized_match_score": min(100.0, (total_score / max_score) * 100.0) if hard_filters_passed else 0.0,
             "match_type_boosts": dict(self.MATCH_TYPE_BOOSTS),
-            "minimum_should_match": int(self.minimum_should_match),
+            "minimum_should_match": 0,
+            "configured_minimum_should_match": int(self.minimum_should_match),
+            "moscow_priority_mapping": dict(PRIORITY_TO_MOSCOW),
+            "explicit_moscow_priorities": dict(EXPLICIT_MOSCOW_PRIORITIES),
         }
     
     def precompute_feature_group_cache(self, features: Any) -> List[FeatureGroup]:
@@ -1532,11 +2018,11 @@ class ESQueryBuilderAdaptive:
             return resp.body
         return resp
     
-    def search(self, es_client: Any, index: str, features: Any, *, include_explain: bool = False, prebuilt_groups: Optional[List[FeatureGroup]] = None, ):
+    def search(self, es_client: Any, index: str, features: Any, *, include_explain: bool = False, prebuilt_groups: Optional[List[FeatureGroup]] = None, extra_filter_clauses: Optional[List[Dict[str, Any]]] = None,):
         groups = prebuilt_groups if prebuilt_groups is not None else self.build_feature_groups(features)
         fixed_max_score = max(1e-6, float(self.compute_max_score(groups)))
 
-        q = self.build_query(groups, include_explain=include_explain)
+        q = self.build_query(groups, include_explain=include_explain, extra_filter_clauses=extra_filter_clauses)
         resp = es_client.search(index=index, body=q)
         resp_dict = self._ensure_dict(resp)
 

@@ -1,0 +1,142 @@
+{
+  "analysis_notes": [
+    "Identifier existence was checked against the public Hugging Face model API.",
+    "Exact-ID and recorded-base-model overlap measure agreement, not correctness.",
+    "Unavailable systems are retained as unavailable rather than imputed.",
+    "Confidence intervals resample scenario-level validity rates with a fixed seed."
+  ],
+  "systems": {
+    "ChatGPT": {
+      "system_label": "ChatGPT",
+      "scenario_records": 20,
+      "completed_runs": 20,
+      "unavailable_or_failed_runs": 0,
+      "candidate_ids": 149,
+      "valid_ids": 149,
+      "invalid_or_inaccessible_ids": 0,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 0,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": 1.0,
+      "nonexistent_id_rate": 0.0,
+      "not_publicly_resolvable_rate": 0.0,
+      "valid_id_rate_95pct_bootstrap_ci": [
+        1.0,
+        1.0
+      ],
+      "mean_exact_overlap_at_10_with_hugselect": 0.55,
+      "mean_exact_jaccard_with_hugselect": 0.0343,
+      "mean_recorded_base_model_overlap_with_hugselect": 0.059
+    },
+    "DeepSeek": {
+      "system_label": "DeepSeek web chat",
+      "scenario_records": 20,
+      "completed_runs": 0,
+      "unavailable_or_failed_runs": 20,
+      "candidate_ids": 0,
+      "valid_ids": 0,
+      "invalid_or_inaccessible_ids": 0,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 0,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": null,
+      "nonexistent_id_rate": null,
+      "not_publicly_resolvable_rate": null,
+      "valid_id_rate_95pct_bootstrap_ci": null,
+      "mean_exact_overlap_at_10_with_hugselect": null,
+      "mean_exact_jaccard_with_hugselect": null,
+      "mean_recorded_base_model_overlap_with_hugselect": null
+    },
+    "Gemini": {
+      "system_label": "Gemini Flash-Lite",
+      "scenario_records": 20,
+      "completed_runs": 19,
+      "unavailable_or_failed_runs": 1,
+      "candidate_ids": 189,
+      "valid_ids": 140,
+      "invalid_or_inaccessible_ids": 49,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 49,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": 0.7407,
+      "nonexistent_id_rate": 0.0,
+      "not_publicly_resolvable_rate": 0.2593,
+      "valid_id_rate_95pct_bootstrap_ci": [
+        0.6421,
+        0.8304
+      ],
+      "mean_exact_overlap_at_10_with_hugselect": 0.526,
+      "mean_exact_jaccard_with_hugselect": 0.0293,
+      "mean_recorded_base_model_overlap_with_hugselect": 0.062
+    },
+    "HugSelect": {
+      "system_label": "HugSelect v1.0.0 basic fallback",
+      "scenario_records": 20,
+      "completed_runs": 20,
+      "unavailable_or_failed_runs": 0,
+      "candidate_ids": 200,
+      "valid_ids": 198,
+      "invalid_or_inaccessible_ids": 2,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 2,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": 0.99,
+      "nonexistent_id_rate": 0.0,
+      "not_publicly_resolvable_rate": 0.01,
+      "valid_id_rate_95pct_bootstrap_ci": [
+        0.975,
+        1.0
+      ],
+      "mean_exact_overlap_at_10_with_hugselect": null,
+      "mean_exact_jaccard_with_hugselect": null,
+      "mean_recorded_base_model_overlap_with_hugselect": null
+    },
+    "Microsoft Copilot": {
+      "system_label": "Microsoft Copilot Smart",
+      "scenario_records": 20,
+      "completed_runs": 0,
+      "unavailable_or_failed_runs": 20,
+      "candidate_ids": 0,
+      "valid_ids": 0,
+      "invalid_or_inaccessible_ids": 0,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 0,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": null,
+      "nonexistent_id_rate": null,
+      "not_publicly_resolvable_rate": null,
+      "valid_id_rate_95pct_bootstrap_ci": null,
+      "mean_exact_overlap_at_10_with_hugselect": null,
+      "mean_exact_jaccard_with_hugselect": null,
+      "mean_recorded_base_model_overlap_with_hugselect": null
+    },
+    "Perplexity": {
+      "system_label": "Perplexity Search (default model)",
+      "scenario_records": 20,
+      "completed_runs": 20,
+      "unavailable_or_failed_runs": 0,
+      "candidate_ids": 198,
+      "valid_ids": 172,
+      "invalid_or_inaccessible_ids": 26,
+      "nonexistent_ids": 0,
+      "not_publicly_resolvable_ids": 26,
+      "unknown_validation_ids": 0,
+      "valid_id_rate": 0.8687,
+      "nonexistent_id_rate": 0.0,
+      "not_publicly_resolvable_rate": 0.1313,
+      "valid_id_rate_95pct_bootstrap_ci": [
+        0.8,
+        0.9283
+      ],
+      "mean_exact_overlap_at_10_with_hugselect": 0.6,
+      "mean_exact_jaccard_with_hugselect": 0.0337,
+      "mean_recorded_base_model_overlap_with_hugselect": 0.056
+    }
+  },
+  "inter_reviewer_agreement": null,
+  "run_status_counts": {
+    "completed": 79,
+    "no_response": 1,
+    "unavailable": 40
+  }
+}

@@ -11,9 +11,9 @@ logging.set_verbosity_error()
 
 import re
 import json
+from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
-
 
 @dataclass(frozen=True)
 class SynonymAlias:
@@ -242,7 +242,12 @@ class EmbeddingSynonymProvider:
     def _get_candidates(self, features: List[str]) -> List[str]:
         candidates: List[str] = []
         for fe in features:
-            with open(f"8-CRITERIA_SELECTION/alias_candidates/{fe}.json", "r", encoding="utf-8") as f:
+            candidate_path = (
+                Path(__file__).resolve().parent
+                / "alias_candidates"
+                / f"{fe}.json"
+            )
+            with open(candidate_path, "r", encoding="utf-8") as f:
                 candidates.extend(json.load(f))
         return candidates
 

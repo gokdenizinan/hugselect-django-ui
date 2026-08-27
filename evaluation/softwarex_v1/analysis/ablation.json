@@ -1,0 +1,2536 @@
+{
+  "run_at": "2026-08-17T14:53:23.758658+00:00",
+  "scope": "HugSelect basic-fallback multi_match field ablation",
+  "variants": {
+    "baseline": [
+      "modelID^2",
+      "author",
+      "Metadata.pipeline_tag^3",
+      "Features^2",
+      "description"
+    ],
+    "without_functional_features": [
+      "modelID^2",
+      "author",
+      "Metadata.pipeline_tag^3",
+      "description"
+    ],
+    "without_metadata_boost": [
+      "modelID^2",
+      "author",
+      "Metadata.pipeline_tag",
+      "Features^2",
+      "description"
+    ],
+    "without_model_id": [
+      "author",
+      "Metadata.pipeline_tag^3",
+      "Features^2",
+      "description"
+    ],
+    "uniform_fields": [
+      "modelID",
+      "author",
+      "Metadata.pipeline_tag",
+      "Features",
+      "description"
+    ],
+    "without_description": [
+      "modelID^2",
+      "author",
+      "Metadata.pipeline_tag^3",
+      "Features^2"
+    ],
+    "task_and_features_only": [
+      "Metadata.pipeline_tag^3",
+      "Features^2"
+    ],
+    "description_only": [
+      "description"
+    ]
+  },
+  "summary": {
+    "baseline": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    },
+    "without_functional_features": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    },
+    "without_metadata_boost": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    },
+    "without_model_id": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    },
+    "uniform_fields": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    },
+    "without_description": {
+      "top_1_change_rate": 1.0,
+      "mean_overlap_at_10": 0.0,
+      "mean_jaccard_at_10": 0.0
+    },
+    "task_and_features_only": {
+      "top_1_change_rate": 1.0,
+      "mean_overlap_at_10": 0.0,
+      "mean_jaccard_at_10": 0.0
+    },
+    "description_only": {
+      "top_1_change_rate": 0.0,
+      "mean_overlap_at_10": 10.0,
+      "mean_jaccard_at_10": 1.0
+    }
+  },
+  "runs": [
+    {
+      "scenario_id": "S01",
+      "query": "Recommend up to ten Hugging Face model IDs for an instruction-following English text-generation model for a reproducible research assistant. It must support text generation, should use an Apache-2.0 license, should not be gated, and should have strong community adoption. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ],
+        "without_functional_features": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ],
+        "without_metadata_boost": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ],
+        "without_model_id": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ],
+        "uniform_fields": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "iFaz/llama32_3B_en_emo_v2",
+          "Trelis/SUS-Chat-34B-function-calling-v3",
+          "keras/llama3_instruct_8b_en_int8",
+          "keras/mistral_instruct_7b_en",
+          "CYFRAGOVPL/Llama-PLLuM-70B-chat",
+          "CYFRAGOVPL/PLLuM-12B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-chat",
+          "CYFRAGOVPL/PLLuM-12B-nc-chat",
+          "CYFRAGOVPL/Llama-PLLuM-8B-chat",
+          "CYFRAGOVPL/PLLuM-8x7B-nc-chat"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S02",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying Turkish user feedback as positive, negative, or neutral. It must perform text classification and support Turkish. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ],
+        "without_functional_features": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ],
+        "without_metadata_boost": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ],
+        "without_model_id": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ],
+        "uniform_fields": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "yeniguno/absa-turkish-bert-dbmdz",
+          "likith123/SSAF-FinBert",
+          "Sengil/ABSA-Turkish-bert-based-small",
+          "matheusrdgsf/phi-sentiment-analysis-model",
+          "kaixkhazaki/turkish-sentiment",
+          "ytu-ce-cosmos/turkish-colbert",
+          "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+          "MarieAngeA13/Sentiment-Analysis-BERT",
+          "MidhunKanadan/SentimentBERT-AIWriting",
+          "SandboxBhh/sentiment-thai-text-model"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S03",
+      "query": "Recommend up to ten Hugging Face model IDs for multilingual sentence embeddings used to compare scientific abstracts across English, German, and French. It must produce feature embeddings and should support all three languages. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ],
+        "without_functional_features": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ],
+        "without_metadata_boost": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ],
+        "without_model_id": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ],
+        "uniform_fields": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+          "arkohut/jina-embeddings-v3",
+          "ilhamdprastyo/jina-embeddings-v3-tei",
+          "DuoGuard/DuoGuard-0.5B",
+          "koble-ai/jina-embeddings-v3",
+          "jinaai/jina-embeddings-v3",
+          "Daxtra/jina-embeddings-v3",
+          "ibm-granite/granite-embedding-107m-multilingual",
+          "ibm-granite/granite-embedding-278m-multilingual",
+          "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S04",
+      "query": "Recommend up to ten Hugging Face model IDs for summarizing long English research reports. It must support summarization and should handle long input contexts. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ],
+        "without_functional_features": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ],
+        "without_metadata_boost": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ],
+        "without_model_id": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ],
+        "uniform_fields": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "yashrane2904/LED_Finetuned",
+          "amazon/FalconLite",
+          "houck2040/tex_leg",
+          "google/long-t5-local-base",
+          "google/long-t5-local-large",
+          "kmfoda/long-t5-tglobal-xxl",
+          "google/long-t5-tglobal-large",
+          "google/bigbird-pegasus-large-bigpatent",
+          "google/bigbird-pegasus-large-arxiv",
+          "google/bigbird-pegasus-large-pubmed"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S05",
+      "query": "Recommend up to ten Hugging Face model IDs for extractive question answering over English biomedical articles. It must support question answering and should be trained or adapted for biomedical text. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ],
+        "without_functional_features": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ],
+        "without_metadata_boost": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ],
+        "without_model_id": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ],
+        "uniform_fields": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+          "microsoft/llava-med-v1.5-mistral-7b",
+          "microsoft/llava-med-7b-delta",
+          "katielink/llava-med-7b-pathvqa-delta",
+          "katielink/llava-med-7b-vqarad-delta",
+          "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+          "AIAT/EXP-mindblow",
+          "DUTIR-BioNLP/Taiyi-LLM",
+          "Writer/palmyra-med-20b",
+          "IVN-RIN/bioBIT"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S06",
+      "query": "Recommend up to ten Hugging Face model IDs for generating and explaining Python code in a research software project. It must perform text generation, should be instruction tuned, and should have a permissive recorded license. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ],
+        "without_functional_features": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ],
+        "without_metadata_boost": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ],
+        "without_model_id": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ],
+        "uniform_fields": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "Xennon-BD/Doctor-Chad",
+          "AIAT/EXP-mindblow",
+          "parler-tts/parler-tts-mini-expresso",
+          "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+          "Yukang/LongAlpaca-70B",
+          "Yukang/LongAlpaca-13B",
+          "Yukang/LongAlpaca-7B",
+          "syzymon/long_llama_3b_instruct",
+          "syzymon/long_llama_3b_v1_1",
+          "microsoft/phi-1_5"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S07",
+      "query": "Recommend up to ten Hugging Face model IDs for translating technical documents from English to German. It must support translation from English to German and should use the Transformers library. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ],
+        "without_functional_features": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ],
+        "without_metadata_boost": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ],
+        "without_model_id": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ],
+        "uniform_fields": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+          "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+          "suriya7/t5-base-text-to-sql",
+          "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+          "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+          "dbmdz/german-gpt2",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "Quantamhash/Quantum_STT",
+          "openai/whisper-large-v3-turbo",
+          "Daemontatox/whisper-large-v3-turbo"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S08",
+      "query": "Recommend up to ten Hugging Face model IDs for named-entity recognition in English legal documents. It must perform token classification and should be adapted to legal text. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ],
+        "without_functional_features": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ],
+        "without_metadata_boost": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ],
+        "without_model_id": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ],
+        "uniform_fields": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "kalusev/NER4Legal_SRB",
+          "NAMAA-Space/gliner_arabic-v2.1",
+          "law-ai/CustomInLawBERT",
+          "isaacus/emubert",
+          "law-ai/InLegalBERT",
+          "law-ai/InCaseLawBERT",
+          "dlicari/Italian-Legal-BERT",
+          "mrm8488/bert-base-german-finetuned-ler",
+          "rufimelo/Legal-BERTimbau-large",
+          "rufimelo/Legal-BERTimbau-base"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S09",
+      "query": "Recommend up to ten Hugging Face model IDs for multilingual automatic speech recognition of English, French, and German interviews. It must perform speech recognition and should support all three languages. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ],
+        "without_functional_features": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ],
+        "without_metadata_boost": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ],
+        "without_model_id": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ],
+        "uniform_fields": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "openai/whisper-large",
+          "Quantamhash/Quantum_STT",
+          "nvidia/canary-1b"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S10",
+      "query": "Recommend up to ten Hugging Face model IDs for generating natural English speech from text for an accessibility prototype. It must perform text-to-speech and should be usable without gated access. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ],
+        "without_functional_features": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ],
+        "without_metadata_boost": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ],
+        "without_model_id": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ],
+        "uniform_fields": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "openai/whisper-large-v2",
+          "openai/whisper-tiny",
+          "openai/whisper-base",
+          "NeuralNovel/whisper-small-hi",
+          "openai/whisper-small",
+          "aditii09/whisper_eng_asr",
+          "openai/whisper-medium",
+          "Quantamhash/Quantum_STT",
+          "xkeyC/whisper-large-v3-turbo-gguf",
+          "openai/whisper-large-v3-turbo"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S11",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying chest X-ray images in a research prototype. It must perform image classification and should be trained or adapted for radiology data. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ],
+        "without_functional_features": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ],
+        "without_metadata_boost": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ],
+        "without_model_id": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ],
+        "uniform_fields": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "google/cxr-foundation",
+          "microsoft/BiomedVLP-CXR-BERT-specialized",
+          "microsoft/BiomedVLP-CXR-BERT-general",
+          "microsoft/maira-2",
+          "microsoft/BiomedVLP-BioViL-T",
+          "X-iZhang/libra-v1.0-7b",
+          "microsoft/radedit",
+          "adibvafa/BLIP-MIMIC-CXR",
+          "X-iZhang/libra-Llama-3.2-3B-Instruct",
+          "aehrc/cxrmate-ed"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S12",
+      "query": "Recommend up to ten Hugging Face model IDs for real-time object detection on resource-constrained edge hardware. It must perform object detection and should prioritize compact or efficient architectures. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ],
+        "without_functional_features": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ],
+        "without_metadata_boost": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ],
+        "without_model_id": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ],
+        "uniform_fields": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "boltuix/bert-lite",
+          "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+          "SenseTime/deformable-detr",
+          "boltuix/bitBERT",
+          "SenseTime/deformable-detr-with-box-refine-two-stage",
+          "SenseTime/deformable-detr-with-box-refine",
+          "facebook/detr-resnet-101",
+          "facebook/detr-resnet-50",
+          "apple/coreml-detr-semantic-segmentation",
+          "foduucom/thermal-image-object-detection"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S13",
+      "query": "Recommend up to ten Hugging Face model IDs for text-to-image generation using a diffusion pipeline. It must perform text-to-image generation and should use the Diffusers library. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ],
+        "without_functional_features": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ],
+        "without_metadata_boost": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ],
+        "without_model_id": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ],
+        "uniform_fields": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "latent-consistency/lcm-lora-sdv1-5",
+          "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+          "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+          "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+          "thu-ml/unidiffuser-v0",
+          "thu-ml/unidiffuser-v1",
+          "budecosystem/Chhavi",
+          "Nihirc/Prompt2MedImage",
+          "DeepFloyd/IF-I-L-v1.0",
+          "PixArt-alpha/PixArt-XL-2-1024-MS"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S14",
+      "query": "Recommend up to ten Hugging Face model IDs for semantic segmentation of satellite imagery. It must perform image segmentation and should be trained or adapted for remote-sensing data. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ],
+        "without_functional_features": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ],
+        "without_metadata_boost": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ],
+        "without_model_id": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ],
+        "uniform_fields": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+          "Narsil/pet-segmentation",
+          "keras-io/semantic-segmentation",
+          "prithivMLmods/Multilabel-GeoSceneNet",
+          "isp-uv-es/superIX",
+          "apple/coreml-detr-semantic-segmentation",
+          "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+          "Anzhc/Anzhcs_YOLOs",
+          "facebook/detr-resnet-50-panoptic",
+          "nvidia/RADIO"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S15",
+      "query": "Recommend up to ten Hugging Face model IDs for answering questions about scientific charts and figures. It must support visual question answering and should handle English text. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ],
+        "without_functional_features": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ],
+        "without_metadata_boost": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ],
+        "without_model_id": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ],
+        "uniform_fields": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "THUDM/cogagent-vqa-hf",
+          "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+          "THUDM/cogagent-chat-hf",
+          "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+          "HuggingFaceTB/SmolVLM-Instruct-DPO",
+          "ahmed-masry/unichart-base-960",
+          "AIAT/EXP-mindblow",
+          "prithivMLmods/ChemQwen-vL",
+          "prithivMLmods/ChemQwen2-vL"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S16",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying human actions in short research videos. It must perform video classification and should provide a Transformers-compatible implementation. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ],
+        "without_functional_features": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ],
+        "without_metadata_boost": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ],
+        "without_model_id": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ],
+        "uniform_fields": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "SVECTOR-CORPORATION/FAL",
+          "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+          "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+          "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+          "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+          "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+          "Qwen/Qwen2.5-VL-32B-Instruct",
+          "Alhdrawi/Space_model",
+          "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+          "Benasd/Qwen2.5-VL-72B-Instruct-AWQ"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S17",
+      "query": "Recommend up to ten Hugging Face model IDs for probabilistic forecasting of multivariate energy-consumption time series. It must perform time-series forecasting and should support multivariate inputs. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ],
+        "without_functional_features": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ],
+        "without_metadata_boost": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ],
+        "without_model_id": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ],
+        "uniform_fields": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "ibm-granite/granite-timeseries-patchtsmixer",
+          "ibm-granite/granite-timeseries-ttm-r1",
+          "google/timesfm-1.0-200m",
+          "google/timesfm-1.0-200m-pytorch",
+          "jcomputer/timefs",
+          "ibm-granite/granite-timeseries-ttm-r2",
+          "ibm-research/ttm-research-r2",
+          "google/timesfm-2.0-500m-pytorch",
+          "google/timesfm-2.0-500m-jax",
+          "autogluon/chronos-bolt-mini"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S18",
+      "query": "Recommend up to ten Hugging Face model IDs for binary classification on mixed numerical and categorical tabular research data. It must support tabular classification and should handle mixed feature types. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ],
+        "without_functional_features": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ],
+        "without_metadata_boost": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ],
+        "without_model_id": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ],
+        "uniform_fields": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "keras-io/tab_transformer",
+          "keras-io/TF_Decision_Trees",
+          "templates/tabular-classification",
+          "OldBirdAZ/itab-llm",
+          "tablegpt/TableGPT2-7B",
+          "Novadotgg/Crop-recommendation",
+          "keras-io/structured-data-classification-grn-vsn",
+          "zenml/finetuned-snowflake-arctic-embed-m",
+          "mlfoundations/tabula-8b",
+          "microsoft/LLaMA-2-13b-GTL-Delta"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S19",
+      "query": "Recommend up to ten Hugging Face model IDs for generating short instrumental music clips from text prompts. It must support text-to-audio or music generation and should be available without gated access. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ],
+        "without_functional_features": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ],
+        "without_metadata_boost": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ],
+        "without_model_id": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ],
+        "uniform_fields": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "sweetcocoa/pop2piano",
+          "RuaYiii/musicgen",
+          "riffusion/riffusion-model-v1",
+          "facebook/musicgen-large",
+          "karlwennerstrom/text-to-music",
+          "facebook/musicgen-small",
+          "facebook/musicgen-medium",
+          "nikhilkoneru/musicgen",
+          "facebook/musicgen-stereo-small",
+          "facebook/musicgen-stereo-large"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    },
+    {
+      "scenario_id": "S20",
+      "query": "Recommend up to ten Hugging Face model IDs for classifying protein sequences by biological function. It must support sequence classification and should be pretrained on protein data. Return ranked owner/model identifiers with one brief reason each.",
+      "variants": {
+        "baseline": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ],
+        "without_functional_features": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ],
+        "without_metadata_boost": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ],
+        "without_model_id": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ],
+        "uniform_fields": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ],
+        "without_description": [],
+        "task_and_features_only": [],
+        "description_only": [
+          "facebook/esm1b_t33_650M_UR50S",
+          "alimotahharynia/DrugGen",
+          "GrimSqueaker/proteinBERT",
+          "Rostlab/prot_bert_bfd",
+          "Rostlab/prot_bert",
+          "ElnaggarLab/ankh2-large",
+          "ElnaggarLab/ankh2-ext1",
+          "ElnaggarLab/ankh2-ext2",
+          "Rostlab/prot_t5_xl_uniref50",
+          "Rostlab/prot_t5_xl_bfd"
+        ]
+      },
+      "metrics_against_baseline": {
+        "baseline": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_functional_features": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_metadata_boost": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_model_id": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "uniform_fields": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        },
+        "without_description": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "task_and_features_only": {
+          "top_1_changed": true,
+          "overlap_at_10": 0,
+          "jaccard_at_10": 0.0
+        },
+        "description_only": {
+          "top_1_changed": false,
+          "overlap_at_10": 10,
+          "jaccard_at_10": 1.0
+        }
+      }
+    }
+  ]
+}

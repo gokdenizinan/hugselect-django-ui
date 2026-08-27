@@ -1,0 +1,564 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Decision Stress — HugSelect</title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'recommender/styles.css' %}"
+    >
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+
+            <div class="nav-subtitle">
+                Decision robustness analysis
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <a
+            class="back-link"
+            href="javascript:history.back()"
+        >
+            ← Back to comparison
+        </a>
+
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong>
+                {{ error }}
+            </div>
+        {% else %}
+            <section class="search-card">
+                <span class="specimen-label">
+                    Decision analysis
+                </span>
+
+                <h1>Decision Stress</h1>
+
+                <p class="page-intro">
+                    Decision Stress reuses stored match evidence under several
+                    priority settings to show whether the leading model changes.
+                    It does not rerun search or benchmark the models.
+                </p>
+
+                {% if search_context.query %}
+                    <div class="comparison-query">
+                        <span class="comparison-query__label">
+                            Your query
+                        </span>
+
+                        <span class="comparison-query__text">
+                            {{ search_context.query }}
+                        </span>
+                    </div>
+                {% endif %}
+                <section class="stress-essentials">
+                    <span class="specimen-label">
+                        Enforced essentials
+                    </span>
+
+                    <h2>Essential requirements</h2>
+
+                    <p class="stress-essentials__intro">
+                        These requirements were classified as essential from your query.
+                        Missing one only causes exclusion in the Strict essentials scenario.
+                    </p>
+
+                    {% if essential_requirements %}
+                        <div class="stress-essentials__list">
+                            {% for requirement in essential_requirements %}
+                                <div class="stress-essential">
+                                    <span class="stress-essential__type">
+                                        {{ requirement.feature_key }}
+                                    </span>
+
+                                    <strong>
+                                        {{ requirement.user_value }}
+                                    </strong>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="warning">
+                            No essential requirements were identified in the stored
+                            explanation data.
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="requirement-comparison">
+                    <span class="specimen-label">
+                        Selected candidates
+                    </span>
+
+                    <h2>Selected models</h2>
+
+                    <div class="comparison-grid">
+                        {% for model_id in model_ids %}
+                            <article class="comparison-column">
+                                <div class="stress-model-heading">
+                                    <span
+                                        class="model-symbol"
+                                        aria-hidden="true"
+                                    >
+                                        AI
+                                    </span>
+
+                                    <h3 class="comparison-model-name">
+                                        {{ model_id }}
+                                    </h3>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="decision-summary">
+                    <div class="decision-summary__top">
+                        <div>
+                            <span class="decision-summary__eyebrow">
+                                Decision stability
+                            </span>
+
+                            <span class="decision-summary__status">
+                                {{ stress_summary.stability_label }}
+                            </span>
+                        </div>
+
+                        <div class="decision-summary__score">
+                            {% if stress_summary.all_scenarios_tied %}
+                                {{ stress_summary.tied_scenario_count }} / {{ stress_summary.scenario_count }}
+
+                                <small>
+                                    Tied scenarios
+                                </small>
+                            {% else %}
+                                {{ stress_summary.stability_percentage|floatformat:1 }}%
+
+                                <small>
+                                    <span class="metadata-tooltip">
+                                        <span>
+                                            Outright-win consistency
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            class="metadata-tooltip__trigger"
+                                            aria-label="Explain outright-win consistency"
+                                            aria-describedby="outright-win-consistency-tooltip"
+                                        >
+                                            i
+                                        </button>
+
+                                        <span
+                                            id="outright-win-consistency-tooltip"
+                                            class="metadata-tooltip__content"
+                                            role="tooltip"
+                                        >
+                                            This metric shows how often the leading model wins alone
+                                            across all tested priority scenarios. Ties and scenarios
+                                            with no eligible model do not count as outright wins.
+                                        </span>
+                                    </span>
+                                </small>
+                            {% endif %}
+                            </div>
+                        </div>
+
+                    <div class="decision-summary__winner">
+                        {% if stress_summary.is_tied %}
+                            <span>Most frequent joint winners</span>
+                        {% else %}
+                            <span>Most consistent winner</span>
+                        {% endif %}
+
+                        <strong>
+                            {% for model_id in stress_summary.leaders %}
+                                {{ model_id }}{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </strong>
+                    </div>
+
+                    <div class="decision-summary__tie-breakers">
+                        <div class="decision-summary__tie-breaker-heading">
+                            <strong>
+                                Scenario performance
+                            </strong>
+
+                            <small>
+                                Wins across {{ stress_summary.scenario_count }}
+                                tested priority configurations
+                            </small>
+                        </div>
+
+                        <div class="decision-summary__chips">
+                            {% for model_id, wins in stress_summary.win_counts.items %}
+                                <span>
+                                    <strong>{{ wins }}</strong>
+                                    {{ model_id }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </section>
+                {% if stress_summary.all_scenarios_tied %}
+                    <section class="evidence-equivalent-panel">
+                        <span class="specimen-label">
+                            Evidence limits
+                        </span>
+
+                        <h2>Why these models remain tied</h2>
+
+                        <p>The indexed requirement evidence cannot distinguish these models.</p>
+
+                        <p>
+                            Compare additional evidence such as benchmark performance,
+                            deployment compatibility, latency, memory use, or a separately
+                            labelled adoption signal.
+                        </p>
+                    </section>
+                {% endif %}
+
+                <section class="requirement-comparison">
+                    <span class="specimen-label">
+                        Scenario analysis
+                    </span>
+
+                    <h2>Scenario results</h2>
+
+                    <div class="stress-scenario-list">
+                        {% for scenario in stress_result.scenarios %}
+                            <article class="stress-scenario">
+                                <div class="stress-scenario__header">
+                                    <div>
+                                        <span class="field-code">
+                                            Scenario {{ forloop.counter|stringformat:"02d" }}
+                                        </span>
+
+                                        <h3>
+                                            {% if scenario.key == "strict_essentials" %}
+                                                <span class="metadata-tooltip">
+                                                    <span>{{ scenario.label }}</span>
+
+                                                    <button
+                                                        type="button"
+                                                        class="metadata-tooltip__trigger"
+                                                        aria-label="Explain strict essentials"
+                                                        aria-describedby="strict-essentials-tooltip"
+                                                    >
+                                                        i
+                                                    </button>
+
+                                                    <span
+                                                        id="strict-essentials-tooltip"
+                                                        class="metadata-tooltip__content"
+                                                        role="tooltip"
+                                                    >
+                                                        This rule applies only in the Strict essentials
+                                                        scenario. A model becomes ineligible if it misses
+                                                        even one essential requirement.
+                                                    </span>
+                                                </span>
+                                            {% else %}
+                                                {{ scenario.label }}
+                                            {% endif %}
+                                        </h3>
+
+                                        <p>{{ scenario.description }}</p>
+                                    </div>
+
+                                    <div class="stress-scenario__winner">
+                                        <span>
+                                            {% if scenario.all_models_excluded %}
+                                                Outcome
+                                            {% else %}
+                                                Winner
+                                            {% endif %}
+                                        </span>
+
+                                        <strong>
+                                            {% if scenario.all_models_excluded %}
+                                                No eligible model
+                                            {% else %}
+                                                {% for model_id in scenario.winners %}
+                                                    {{ model_id }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                {% if scenario.outcome_explanation %}
+                                <div class="stress-outcome-explanation">
+                                    <strong>
+                                        {{ scenario.outcome_explanation.title }}
+                                    </strong>
+
+                                    <p>
+                                        {{ scenario.outcome_explanation.summary }}
+                                    </p>
+                                </div>
+                            {% endif %}
+
+                                <div class="comparison-table-wrapper">
+                                    <table class="comparison-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Rank</th>
+                                                <th>Model</th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Overall</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain overall score"
+                                                            aria-describedby="stress-overall-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-overall-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Overall is the model's normalized weighted requirement-match
+                                                            score under this priority scenario, calculated from stored
+                                                            match evidence. It is not a benchmark or general model-quality score.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Essential</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain essential requirement score"
+                                                            aria-describedby="stress-essential-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-essential-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Essential covers core identifying requirements such as task,
+                                                            domain, author, objective, or model name. The percentage shows how much of the essential requirements
+                                                            included in this comparison the model satisfies, based on stored match evidence.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Preference</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain preference requirement score"
+                                                            aria-describedby="stress-preference-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-preference-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Preference covers requested metadata such as license, language,
+                                                            library, datasets, gating, base models, metrics, or recency.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Functional</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain functional requirement score"
+                                                            aria-describedby="stress-functional-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-functional-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Functional covers capabilities or behavior the user requested
+                                                            the model to provide.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>
+                                                    <span class="metadata-tooltip">
+                                                        <span>Quality</span>
+
+                                                        <button
+                                                            type="button"
+                                                            class="metadata-tooltip__trigger"
+                                                            aria-label="Explain quality requirement score"
+                                                            aria-describedby="stress-quality-tooltip-{{ forloop.counter }}"
+                                                        >
+                                                            i
+                                                        </button>
+
+                                                        <span
+                                                            id="stress-quality-tooltip-{{ forloop.counter }}"
+                                                            class="metadata-tooltip__content"
+                                                            role="tooltip"
+                                                        >
+                                                            Quality covers requested software-quality characteristics such as
+                                                            reliability, security, compatibility, maintainability, flexibility,
+                                                            or performance efficiency. A dash in any category means no stored
+                                                            requirement from that category was available for scoring.
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th>Strict essentials rule</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {% for result in scenario.model_results %}
+                                                <tr>
+                                                    <td>{{ result.rank }}</td>
+
+                                                    <td>
+                                                        <div class="stress-model-heading">
+                                                            <span
+                                                                class="model-symbol"
+                                                                aria-hidden="true"
+                                                            >
+                                                                AI
+                                                            </span>
+
+                                                            <strong>
+                                                                {{ result.model_id }}
+                                                            </strong>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        {{ result.score|floatformat:1 }}%
+
+                                                        {% if scenario.key != "strict_essentials" %}
+                                                            {% if result.missing_requirements %}
+                                                                <div class="stress-exclusion__reason">
+                                                                    <strong>
+                                                                        Missing stored evidence
+                                                                    </strong>
+                                                                    <p class="stress-exclusion__note">
+                                                                        No stored match record was found for one or more listed requirements.
+                                                                        This does not confirm that the model lacks them, but HugSelect cannot
+                                                                        count them as satisfied in this analysis.
+                                                                    </p>
+
+                                                                    <ul>
+                                                                        {% for requirement in result.missing_requirements %}
+                                                                            <li>
+                                                                                {{ requirement.feature_key|title }}:
+                                                                                {{ requirement.user_value }}
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if result.category_maximums.essential > 0 %}
+                                                            {{ result.category_scores.essential|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.category_maximums.preference > 0 %}
+                                                            {{ result.category_scores.preference|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.category_maximums.functional > 0 %}
+                                                            {{ result.category_scores.functional|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+
+                                                    <td>
+                                                        {% if result.category_maximums.quality > 0 %}
+                                                            {{ result.category_scores.quality|floatformat:1 }}%
+                                                        {% else %}
+                                                            —
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if scenario.key == "strict_essentials" %}
+                                                            {% if result.strict_exclusion %}
+                                                                <div class="stress-exclusion">
+                                                                    <span class="match-status match-status--not-matched">
+                                                                        Missed — excluded
+                                                                    </span>
+
+                                                                    <div class="stress-exclusion__reason">
+                                                                        <strong>Why excluded</strong>
+
+                                                                        <ul>
+                                                                            {% for requirement in result.missed_essentials %}
+                                                                                <li>{{ requirement.feature_key|title }}: {{ requirement.user_value }}</li>
+                                                                            {% endfor %}
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            {% else %}
+                                                                <span class="match-status match-status--matched">
+                                                                    All essentials matched
+                                                                </span>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <span class="match-status">
+                                                                Affects score only
+                                                            </span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            </section>
+        {% endif %}
+    </main>
+</body>
+</html>

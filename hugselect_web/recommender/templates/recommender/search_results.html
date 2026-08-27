@@ -1,0 +1,468 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Evidence-led Hugging Face model discovery.">
+    <title>Search Results — HugSelect</title>
+    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}" aria-label="HugSelect home">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+            <div class="nav-subtitle">Research-led model discovery</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-actions page-actions--end">
+            <a class="model-link" href="{% url 'saved_comparisons' %}">
+                Saved comparisons ({{ saved_comparison_count|default:0 }})
+            </a>
+        </div>
+
+        <header class="page-heading">
+            <span class="specimen-label">Model discovery</span>
+            <h1>Search results</h1>
+            <p>
+                Review ranked models and their stored match evidence, then select
+                two or three models for side-by-side comparison.
+            </p>
+        </header>
+
+        {% if query %}
+            <div class="query-box">
+                <strong>Your query:</strong> {{ query }}
+            </div>
+        {% endif %}
+
+        {% if openai_fallback_required %}
+            <section
+                class="api-key-fallback"
+                aria-labelledby="openai-fallback-title"
+            >
+                <div>
+                    <span class="specimen-label">Gemini quota reached</span>
+                    <h2 id="openai-fallback-title">
+                        Continue with your OpenAI API key
+                    </h2>
+                    <p>
+                        HugSelect can finish the same feature-based search with
+                        an OpenAI model. Your key is used only for this retry and is
+                        not stored in your HugSelect session.
+                    </p>
+                </div>
+
+                {% if openai_fallback_error %}
+                    <div class="error" role="alert">
+                        <strong>Could not continue:</strong>
+                        {{ openai_fallback_error }}
+                    </div>
+                {% endif %}
+
+                <form
+                    method="post"
+                    action="{% url 'continue_search_with_openai' %}"
+                    class="api-key-fallback__form"
+                >
+                    {% csrf_token %}
+                    <label for="openai-api-key">OpenAI API key</label>
+                    <input
+                        id="openai-api-key"
+                        name="openai_api_key"
+                        type="password"
+                        required
+                        autocomplete="new-password"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        placeholder="sk-…"
+                    >
+                    <button type="submit">Continue search</button>
+                </form>
+
+                <p class="api-key-fallback__privacy">
+                    The request is sent to OpenAI. Standard OpenAI API usage
+                    charges and data policies apply.
+                </p>
+            </section>
+        {% endif %}
+
+        {% if warning %}
+            <div class="warning">
+                <strong>Notice:</strong> {{ warning }}
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error">
+                <strong>Error:</strong> {{ error }}
+            </div>
+        {% endif %}
+
+        {% if search_mode %}
+            <div class="search-mode">
+                {% if search_mode == "feature-based" %}
+                    Feature-based recommendation
+                    {% if feature_extraction_provider == "openai" %}
+                        · OpenAI fallback
+                    {% endif %}
+                {% elif search_mode == "basic-fallback" %}
+                    Basic fallback search
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="search-mode">
+            {% if search_scope == "family" and base_model_family %}
+                Base-model family: {{ base_model_family|title }}
+            {% else %}
+                All models
+            {% endif %}
+        </div>
+
+        {% if results %}
+            <a
+                class="model-link report-download"
+                href="{% url 'analysis_report' %}"
+            >
+                Download report
+            </a>
+        {% elif query and not openai_fallback_required %}
+            <a
+                class="model-link report-download report-download--secondary"
+                href="{% url 'analysis_report' %}"
+            >
+                Download search summary
+            </a>
+        {% endif %}
+
+        {% if search_mode == "feature-based" and explicit_requirements %}
+            <section class="moscow-summary" aria-labelledby="explicit-priority-summary-title">
+                <div>
+                    <span class="specimen-label">
+                        User-selected priorities
+                    </span>
+                    <h2 id="explicit-priority-summary-title">
+                        Explicit priorities
+                    </h2>
+                </div>
+
+                <p class="data-note">
+                    These priorities override automatic extraction for the
+                    same feature and value.
+                </p>
+
+                <div
+                    class="moscow-summary__groups"
+                    aria-label="MoSCoW priorities and selected requirements"
+                >
+                    {% for group in explicit_requirement_groups %}
+                        <div class="moscow-summary__group">
+                            <h3>{{ group.label }}</h3>
+
+                            <p class="moscow-summary__definition">
+                                {% if group.label == "Must Have" %}
+                                    Required. Missing it excludes a model.
+                                {% elif group.label == "Should Have" %}
+                                    Important soft preference.
+                                {% elif group.label == "Could Have" %}
+                                    Lower-priority soft preference.
+                                {% elif group.label == "Won't Have" %}
+                                    Forbidden. Matching it excludes a model.
+                                {% endif %}
+                            </p>
+
+                            <div class="moscow-summary__selection">
+                            {% if group.requirements %}
+                                <ul>
+                                    {% for requirement in group.requirements %}
+                                        <li>
+                                            <strong>{{ requirement.feature_label }}:</strong>
+                                            {{ requirement.value }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="moscow-summary__empty">
+                                    None selected
+                                </span>
+                            {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% elif search_mode == "feature-based" and moscow_requirements %}
+            <section class="moscow-summary" aria-labelledby="moscow-summary-title">
+                <div>
+                    <span class="specimen-label">Automatically extracted priorities</span>
+                    <h2 id="moscow-summary-title">Extracted priorities</h2>
+                </div>
+
+                <p class="data-note">
+                    HugSelect inferred these priorities from the query.
+                </p>
+
+                <div
+                    class="moscow-summary__groups"
+                    aria-label="MoSCoW priorities and extracted requirements"
+                >
+                    {% for group in moscow_requirement_groups %}
+                        <div class="moscow-summary__group">
+                            <h3>
+                                {{ group.label }}
+                            </h3>
+
+                            <p class="moscow-summary__definition">
+                                {% if group.label == "Must Have" %}
+                                    Required. Missing it excludes a model.
+                                {% elif group.label == "Should Have" %}
+                                    Important soft preference.
+                                {% elif group.label == "Could Have" %}
+                                    Lower-priority soft preference.
+                                {% elif group.label == "Won't Have" %}
+                                    Forbidden. Matching it excludes a model.
+                                {% endif %}
+                            </p>
+
+                            <div class="moscow-summary__selection">
+                            {% if group.requirements %}
+                                <ul>
+                                    {% for requirement in group.requirements %}
+                                        <li>
+                                            <span class="field-code">
+                                                {{ requirement.feature_key }}
+                                            </span>
+                                            {{ requirement.value }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="moscow-summary__empty">None extracted</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        {% if results %}
+            <div class="section-heading">
+                <div>
+                    <span class="specimen-label">Ranked recommendations</span>
+                    <h2 class="section-title">Recommended models</h2>
+                </div>
+                <span class="result-count">{{ results|length }} candidates</span>
+            </div>
+
+            <p class="data-note">
+                Availability indicates that HugSelect could reach the model on
+                Hugging Face when this search ran; it does not guarantee future access.
+                A base model is the starting model used before additional training or
+                fine-tuning, and family groups use that stored metadata.
+            </p>
+
+            <form
+                method="get"
+                action="{% url 'compare_models' %}"
+                id="compare-form"
+            >
+                <div class="compare-toolbar">
+                    <p>
+                        <span class="toolbar-index">Compare</span>
+                        Select two or three models for side-by-side analysis.
+                    </p>
+
+                    <button
+                        type="submit"
+                        id="compare-button"
+                        disabled
+                    >
+                        Compare selected
+                    </button>
+                </div>
+
+                <div class="result-groups">
+                    {% if grouped_results.single_base_model_groups %}
+                        <section class="result-category">
+                            <div class="result-category__heading">
+                                <span class="specimen-label">
+                                    Model families
+                                </span>
+
+                                <h3>Single base model</h3>
+                            </div>
+
+                            {% for group in grouped_results.single_base_model_groups %}
+                                <section class="base-model-family">
+                                    <div class="base-model-family__heading">
+                                        <span class="field-code">
+                                            Base model
+                                        </span>
+
+                                        <h4>{{ group.base_model }}</h4>
+
+                                        <span class="result-count">
+                                            {{ group.results|length }}
+                                            model{{ group.results|length|pluralize }}
+                                        </span>
+                                    </div>
+
+                                    <div class="results-grid">
+                                        {% for result in group.results %}
+                                            {% include "recommender/_search_result_card.html" %}
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            {% endfor %}
+                        </section>
+                    {% endif %}
+
+                    {% if grouped_results.multiple_base_model_results %}
+                        <section class="result-category">
+                            <div class="result-category__heading">
+                                <span class="specimen-label">
+                                    Combined model lineage
+                                </span>
+
+                                <h3>Multiple base models</h3>
+                            </div>
+
+                            <div class="results-grid">
+                                {% for result in grouped_results.multiple_base_model_results %}
+                                    {% include "recommender/_search_result_card.html" %}
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endif %}
+
+                    {% if grouped_results.no_base_model_results %}
+                        <section class="result-category">
+                            <div class="result-category__heading">
+                                <span class="specimen-label">
+                                    Unspecified model lineage
+                                </span>
+
+                                <h3>No base model</h3>
+                            </div>
+
+                            <div class="results-grid">
+                                {% for result in grouped_results.no_base_model_results %}
+                                    {% include "recommender/_search_result_card.html" %}
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endif %}
+                </div>
+            </form>
+        {% elif query and not error and not openai_fallback_required %}
+            <section class="empty-state" aria-labelledby="empty-results-title">
+                {% if availability_summary.candidate_count %}
+                    <h2 id="empty-results-title">No available models to show</h2>
+                    <p>
+                        HugSelect found matching candidates, but none could be
+                        verified as currently available when this search ran.
+                    </p>
+                {% else %}
+                    <h2 id="empty-results-title">No models met every strict criterion</h2>
+                    <p>
+                        The query and any Must Have or Won't Have rules were applied before
+                        ranking, leaving no candidates to recommend.
+                    </p>
+
+                    {% if explicit_requirements %}
+                        <div class="empty-state__criteria">
+                            <strong>Strict criteria applied</strong>
+                            <ul>
+                                {% for group in explicit_requirement_groups %}
+                                    {% if group.label == "Must Have" or group.label == "Won't Have" %}
+                                        {% for requirement in group.requirements %}
+                                            <li>
+                                                <span>{{ group.label }}</span>
+                                                {{ requirement.feature_label }}:
+                                                {{ requirement.value }}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
+                <p class="empty-state__guidance">
+                    Try changing a Must Have requirement to Should Have, removing a Won't Have
+                    rule, or broadening the query.
+                </p>
+
+                <a class="model-link empty-state__action" href="{% url 'search' %}">
+                    Adjust search
+                </a>
+            </section>
+        {% endif %}
+
+        <footer class="project-note">
+            <div class="project-note__inner">
+                <span class="project-note__label">
+                    Research prototype
+                </span>
+
+                <p>
+                    HugSelect supports evidence-led model discovery using indexed
+                    metadata, requirement matching, and transparent comparison tools.
+                </p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        const compareForm = document.getElementById("compare-form");
+        const compareButton = document.getElementById("compare-button");
+        const compareCheckboxes = document.querySelectorAll(
+            ".compare-checkbox"
+        );
+
+        if (compareForm && compareButton) {
+            function updateComparisonSelection() {
+                const selectedCheckboxes = document.querySelectorAll(
+                    ".compare-checkbox:checked"
+                );
+
+                compareButton.disabled = selectedCheckboxes.length < 2;
+
+                compareCheckboxes.forEach((checkbox) => {
+                    checkbox.disabled =
+                        selectedCheckboxes.length >= 3 &&
+                        !checkbox.checked;
+                });
+            }
+
+            compareCheckboxes.forEach((checkbox) => {
+                checkbox.addEventListener(
+                    "change",
+                    updateComparisonSelection
+                );
+            });
+
+            compareForm.addEventListener("submit", (event) => {
+                const selectedCount = document.querySelectorAll(
+                    ".compare-checkbox:checked"
+                ).length;
+
+                if (selectedCount < 2 || selectedCount > 3) {
+                    event.preventDefault();
+                }
+            });
+
+            updateComparisonSelection();
+        }
+    </script>
+</body>
+</html>

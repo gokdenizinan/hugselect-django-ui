@@ -1,0 +1,7 @@
+[
+  "transformers",
+  "sentence-transformers",
+  "diffusers",
+  "pytorch",
+  "tensorflow"
+]

@@ -1,0 +1,9 @@
+[
+  "bert",
+  "roberta",
+  "distilbert",
+  "xlm-roberta",
+  "gpt2",
+  "t5",
+  "diffusion"
+]

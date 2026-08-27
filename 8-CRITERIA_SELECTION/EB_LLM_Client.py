@@ -11,6 +11,9 @@ class LLMResponse:
 import time
 from typing import Optional
 from google import genai
+from openai import OpenAI
+
+DEFAULT_OPENAI_MODEL = "gpt-4.1-mini"
 
 
 class LLMClient:
@@ -20,6 +23,8 @@ class LLMClient:
         model_name: str = "gemini-2.5-flash",
         max_retries: int = 5,
         retry_delay_seconds: float = 20.0,
+        temperature: Optional[float] = None,
+        seed: Optional[int] = None,
     ):
         """
         Thin wrapper around google.genai.Client for chat / completion-style usage.
@@ -28,6 +33,14 @@ class LLMClient:
         self.model_name = model_name
         self.max_retries = max_retries
         self.retry_delay_seconds = retry_delay_seconds
+        self.generation_config = {
+            key: value
+            for key, value in {
+                "temperature": temperature,
+                "seed": seed,
+            }.items()
+            if value is not None
+        }
 
     def generate(
         self,
@@ -47,6 +60,7 @@ class LLMClient:
                 response = self.client.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
+                    config=self.generation_config or None,
                 )
 
                 # Basic safety checks
@@ -87,6 +101,44 @@ class LLMClient:
 
         # If we exit the loop without returning or raising, raise last error
         raise RuntimeError(f"LLMClient failed after retries: {last_error}")
+
+
+class OpenAIResponsesClient:
+    """Small adapter that gives the extractors the same interface as Gemini."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = DEFAULT_OPENAI_MODEL,
+        max_retries: int = 2,
+    ):
+        self.client = OpenAI(
+            api_key=api_key,
+            max_retries=max_retries,
+        )
+        self.model_name = model_name
+
+    def generate(
+        self,
+        prompt: str,
+        require_stop: bool = True,
+    ) -> LLMResponse:
+        """Generate extractor JSON through the OpenAI Responses API."""
+
+        response = self.client.responses.create(
+            model=self.model_name,
+            input=prompt,
+            store=False,
+        )
+        text = getattr(response, "output_text", None)
+        if not text:
+            raise RuntimeError("No text returned from OpenAI.")
+
+        return LLMResponse(
+            text=str(text),
+            finish_reason=str(getattr(response, "status", "completed")),
+            raw=response,
+        )
 
 
 import os
@@ -271,6 +323,3 @@ if __name__ == "__main__":
     print("Input sentences processed:", len(sample_dict))
     print("Errors encountered:", len(hit_error))
     print("----------------------------------")
-
-
-

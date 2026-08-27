@@ -1,0 +1,102 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Session-only saved HugSelect comparisons.">
+    <title>Saved Comparisons — HugSelect</title>
+    <link rel="stylesheet" href="{% static 'recommender/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="nav">
+            <a class="logo" href="{% url 'search' %}" aria-label="HugSelect home">
+                <span class="logo-mark">HS</span>
+                <span>HugSelect</span>
+            </a>
+            <div class="nav-subtitle">Session comparison library</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <a class="back-link" href="{% url 'search_results' %}">
+            ← Back to search results
+        </a>
+
+        <section class="search-card saved-comparisons-page">
+            <span class="specimen-label">Session / Temporary records</span>
+            <h1>Saved comparisons</h1>
+
+            <p class="data-note">
+                Stored only in this browser session. You can keep up to
+                {{ maximum_saved_comparisons }} comparisons; clearing or
+                expiring the session removes them.
+            </p>
+
+            {% for message in messages %}
+                <div class="saved-message saved-message--{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {% if saved_comparisons %}
+                <div class="saved-comparison-list">
+                    {% for comparison in saved_comparisons %}
+                        <article class="saved-comparison-card">
+                            <div class="saved-comparison-card__heading">
+                                <div>
+                                    <span class="specimen-label">
+                                        Comparison {{ forloop.counter|stringformat:"02d" }}
+                                    </span>
+                                    <h2>{{ comparison.label }}</h2>
+                                </div>
+                                <time datetime="{{ comparison.saved_at }}">
+                                    Saved {{ comparison.saved_at_display }}
+                                </time>
+                            </div>
+
+                            <ul class="saved-comparison-models">
+                                {% for model_id in comparison.model_ids %}
+                                    <li>{{ model_id }}</li>
+                                {% endfor %}
+                            </ul>
+
+                            {% if comparison.search_context.query %}
+                                <p class="saved-comparison-query">
+                                    <strong>Original query:</strong>
+                                    {{ comparison.search_context.query }}
+                                </p>
+                            {% endif %}
+
+                            <div class="saved-comparison-actions">
+                                <a
+                                    class="model-link"
+                                    href="{% url 'open_saved_comparison' comparison.id %}"
+                                >
+                                    Open
+                                </a>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'remove_saved_comparison' comparison.id %}"
+                                >
+                                    {% csrf_token %}
+                                    <button type="submit" class="secondary-action">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    No comparisons have been saved in this session yet.
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

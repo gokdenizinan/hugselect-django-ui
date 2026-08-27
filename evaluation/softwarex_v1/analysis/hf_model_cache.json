@@ -1,0 +1,4836 @@
+{
+  "ACE-Step/Ace-Step1.5": {
+    "base_models": [],
+    "canonical_id": "ACE-Step/Ace-Step1.5",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "AI4Protein/openfold-base": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "AIAT/EXP-mindblow": {
+    "base_models": [],
+    "canonical_id": "AIAT/EXP-mindblow",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2": {
+    "base_models": [],
+    "canonical_id": "AIDA-UPM/mstsb-paraphrase-multilingual-mpnet-base-v2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "Aanand/BioBERT-finetuned-squad": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Abhatta7/building-footprint-segmentation": {
+    "base_models": [],
+    "canonical_id": "Abhatta7/building-footprint-segmentation",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "Abhi830564/vit-finetuned-chest-xray-pneumonia": {
+    "base_models": [],
+    "canonical_id": "Abhi830564/vit-finetuned-chest-xray-pneumonia",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "Aditya8595/Qwen2.5-VL-7B-DocInfographic-QA": {
+    "base_models": [],
+    "canonical_id": "Aditya8595/Qwen2.5-VL-7B-DocInfographic-QA",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "Alhdrawi/Space_model": {
+    "base_models": [
+      "deepseek-ai/DeepSeek-V3-0324",
+      "sesame/csm-1b",
+      "Qwen/QwQ-32B",
+      "deepseek-ai/DeepSeek-R1",
+      "ds4sd/SmolDocling-256M-preview",
+      "mistralai/Mistral-Small-3.1-24B-Instruct-2503"
+    ],
+    "canonical_id": "Alhdrawi/Space_model",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "Alibaba-NLP/gte-multilingual-base": {
+    "base_models": [],
+    "canonical_id": "Alibaba-NLP/gte-multilingual-base",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "AmelieSchreiber/cafa_5_protein_function_prediction": {
+    "base_models": [],
+    "canonical_id": "AmelieSchreiber/cafa_5_protein_function_prediction",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "AmelieSchreiber/esm2_t6_8M_finetuned_cafa5": {
+    "base_models": [],
+    "canonical_id": "AmelieSchreiber/esm2_t6_8M_finetuned_cafa5",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "Anzhc/Anzhcs_YOLOs": {
+    "base_models": [
+      "Ultralytics/YOLO11",
+      "Ultralytics/YOLOv8"
+    ],
+    "canonical_id": "Anzhc/Anzhcs_YOLOs",
+    "gated": false,
+    "library_name": "ultralytics",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "AutonLab/MOMENT-1-large": {
+    "base_models": [],
+    "canonical_id": "AutonLab/MOMENT-1-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "AventIQ-AI/Ai-Translate-Model-Eng-German": {
+    "base_models": [],
+    "canonical_id": "AventIQ-AI/Ai-Translate-Model-Eng-German",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "BAAI/bge-large-en-v1.5": {
+    "base_models": [],
+    "canonical_id": "BAAI/bge-large-en-v1.5",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "BAAI/bge-m3": {
+    "base_models": [],
+    "canonical_id": "BAAI/bge-m3",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "BAAI/bge-multilingual-gemma2": {
+    "base_models": [],
+    "canonical_id": "BAAI/bge-multilingual-gemma2",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "Benasd/Qwen2.5-VL-72B-Instruct-AWQ": {
+    "base_models": [
+      "Qwen/Qwen2.5-VL-72B-Instruct"
+    ],
+    "canonical_id": "Benasd/Qwen2.5-VL-72B-Instruct-AWQ",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "BricksDisplay/vits-eng": {
+    "base_models": [
+      "kakao-enterprise/vits-ljs"
+    ],
+    "canonical_id": "BricksDisplay/vits-eng",
+    "gated": false,
+    "library_name": "transformers.js",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "Burdenthrive/cloud-detection-segformer-mit_b4-RGB": {
+    "base_models": [],
+    "canonical_id": "Burdenthrive/cloud-detection-segformer-mit_b4-RGB",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "CRASAR/BDA_Satellite-Resnet-UperNet": {
+    "base_models": [],
+    "canonical_id": "CRASAR/BDA_Satellite-Resnet-UperNet",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "CRASAR/BDA_Satellite-ScaleMAE_Pretrained_UperNet": {
+    "base_models": [],
+    "canonical_id": "CRASAR/BDA_Satellite-ScaleMAE_Pretrained_UperNet",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "CYFRAGOVPL/Llama-PLLuM-70B-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/Llama-PLLuM-70B-chat-2412",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "CYFRAGOVPL/Llama-PLLuM-8B-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/Llama-PLLuM-8B-chat-2412",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "CYFRAGOVPL/PLLuM-12B-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/PLLuM-12B-chat-2412",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "CYFRAGOVPL/PLLuM-12B-nc-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/PLLuM-12B-nc-chat-2412",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "CYFRAGOVPL/PLLuM-8x7B-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/PLLuM-8x7B-chat-2412",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "CYFRAGOVPL/PLLuM-8x7B-nc-chat": {
+    "base_models": [],
+    "canonical_id": "CYFRAGOVPL/PLLuM-8x7B-nc-chat-2412",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "DUTIR-BioNLP/Taiyi-LLM": {
+    "base_models": [],
+    "canonical_id": "DUTIR-BioNLP/Taiyi-LLM",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Daemontatox/whisper-large-v3-turbo": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Datadog/Toto-2.0-1B": {
+    "base_models": [],
+    "canonical_id": "Datadog/Toto-2.0-1B",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Datadog/Toto-2.0-2.5B": {
+    "base_models": [],
+    "canonical_id": "Datadog/Toto-2.0-2.5B",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Datadog/Toto-2.0-22m": {
+    "base_models": [],
+    "canonical_id": "Datadog/Toto-2.0-22m",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Datadog/Toto-2.0-313m": {
+    "base_models": [],
+    "canonical_id": "Datadog/Toto-2.0-313m",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Datadog/Toto-2.0-4m": {
+    "base_models": [],
+    "canonical_id": "Datadog/Toto-2.0-4m",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Daxtra/jina-embeddings-v3": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "DeepFloyd/IF-I-L-v1.0": {
+    "base_models": [],
+    "canonical_id": "DeepFloyd/IF-I-L-v1.0",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "Dimaodessa/pneumonia-cxr": {
+    "base_models": [
+      "timm/tf_efficientnetv2_s.in21k_ft_in1k"
+    ],
+    "canonical_id": "Dimaodessa/pneumonia-cxr",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "DuoGuard/DuoGuard-0.5B": {
+    "base_models": [
+      "Qwen/Qwen2.5-0.5B"
+    ],
+    "canonical_id": "DuoGuard/DuoGuard-0.5B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "ElnaggarLab/ankh-base": {
+    "base_models": [],
+    "canonical_id": "ElnaggarLab/ankh-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ElnaggarLab/ankh2-ext1": {
+    "base_models": [],
+    "canonical_id": "ElnaggarLab/ankh2-ext1",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ElnaggarLab/ankh2-ext2": {
+    "base_models": [],
+    "canonical_id": "ElnaggarLab/ankh2-ext2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ElnaggarLab/ankh2-large": {
+    "base_models": [],
+    "canonical_id": "ElnaggarLab/ankh2-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "FacebookAI/xlm-roberta-large-finetuned-conll03-english": {
+    "base_models": [],
+    "canonical_id": "FacebookAI/xlm-roberta-large-finetuned-conll03-english",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "French-Legal-NER/camembert-legal-ner": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "FunAudioLLM/Fun-CosyVoice3-0.5B-2512": {
+    "base_models": [],
+    "canonical_id": "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "GrimSqueaker/proteinBERT": {
+    "base_models": [],
+    "canonical_id": "GrimSqueaker/proteinBERT",
+    "gated": false,
+    "library_name": "keras",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "HackerMonica/nllb-200-distilled-600M-en-zh_CN": {
+    "base_models": [],
+    "canonical_id": "HackerMonica/nllb-200-distilled-600M-en-zh_CN",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "HeartMuLa/HeartMuLa-oss-3B": {
+    "base_models": [],
+    "canonical_id": "HeartMuLa/HeartMuLa-oss-3B",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "Helsinki-NLP/opus-mt-en-de": {
+    "base_models": [],
+    "canonical_id": "Helsinki-NLP/opus-mt-en-de",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "Helsinki-NLP/opus-mt_tiny_deu-eng": {
+    "base_models": [],
+    "canonical_id": "Helsinki-NLP/opus-mt_tiny_deu-eng",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "HuggingFaceM4/idefics2-8b": {
+    "base_models": [],
+    "canonical_id": "HuggingFaceM4/idefics2-8b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+    "base_models": [
+      "HuggingFaceTB/SmolLM2-1.7B"
+    ],
+    "canonical_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "HuggingFaceTB/SmolVLM-Instruct-DPO": {
+    "base_models": [
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "google/siglip-so400m-patch14-384"
+    ],
+    "canonical_id": "HuggingFaceTB/SmolVLM-Instruct-DPO",
+    "gated": false,
+    "library_name": "peft",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "HuggingFaceTB/SmolVLM2-2.2B-Instruct": {
+    "base_models": [
+      "HuggingFaceTB/SmolVLM-Instruct"
+    ],
+    "canonical_id": "HuggingFaceTB/SmolVLM2-2.2B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "HuggingFaceTB/SmolVLM2-256M-Video-Instruct": {
+    "base_models": [
+      "HuggingFaceTB/SmolVLM-256M-Instruct"
+    ],
+    "canonical_id": "HuggingFaceTB/SmolVLM2-256M-Video-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "HuggingFaceTB/SmolVLM2-500M-Video-Instruct": {
+    "base_models": [
+      "HuggingFaceTB/SmolVLM-500M-Instruct"
+    ],
+    "canonical_id": "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "IGNF/flair-segformer-b2": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "IVN-RIN/bioBIT": {
+    "base_models": [],
+    "canonical_id": "IVN-RIN/bioBIT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "IgorNer/segformer-b5-loveda": {
+    "base_models": [],
+    "canonical_id": "IgorNer/segformer-b5-loveda",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "IndexTeam/IndexTTS-2": {
+    "base_models": [],
+    "canonical_id": "IndexTeam/IndexTTS-2",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "IoannisKat1/legal-bert-base-uncased-new": {
+    "base_models": [
+      "nlpaueb/legal-bert-base-uncased"
+    ],
+    "canonical_id": "IoannisKat1/legal-bert-base-uncased-new",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "JDONE-Research/AIOne-GeoSeg-330M": {
+    "base_models": [],
+    "canonical_id": "JDONE-Research/AIOne-GeoSeg-330M",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "Kalray/ssd-mobilenet-v1-mlperf": {
+    "base_models": [],
+    "canonical_id": "Kalray/ssd-mobilenet-v1-mlperf",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "KingTechnician/videomae-small-finetuned-kinetics-xd-violence-binary": {
+    "base_models": [
+      "MCG-NJU/videomae-small-finetuned-kinetics"
+    ],
+    "canonical_id": "KingTechnician/videomae-small-finetuned-kinetics-xd-violence-binary",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "Kwai-Kolors/Kolors-diffusers": {
+    "base_models": [],
+    "canonical_id": "Kwai-Kolors/Kolors-diffusers",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "Lexemo/roberta_large_legal_act_extraction": {
+    "base_models": [],
+    "canonical_id": "Lexemo/roberta_large_legal_act_extraction",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "MCG-NJU/ST-Adapter-videomae-base": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "MCG-NJU/videomae-base": {
+    "base_models": [],
+    "canonical_id": "MCG-NJU/videomae-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "MCG-NJU/videomae-base-finetuned-kinetics": {
+    "base_models": [],
+    "canonical_id": "MCG-NJU/videomae-base-finetuned-kinetics",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "MCG-NJU/videomae-base-finetuned-ssv2": {
+    "base_models": [],
+    "canonical_id": "MCG-NJU/videomae-base-finetuned-ssv2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "MCG-NJU/videomae-large": {
+    "base_models": [],
+    "canonical_id": "MCG-NJU/videomae-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "MCG-NJU/videomae-small-finetuned-kinetics": {
+    "base_models": [],
+    "canonical_id": "MCG-NJU/videomae-small-finetuned-kinetics",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "MarieAngeA13/Sentiment-Analysis-BERT": {
+    "base_models": [],
+    "canonical_id": "MarieAngeA13/Sentiment-Analysis-BERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "MidhunKanadan/SentimentBERT-AIWriting": {
+    "base_models": [],
+    "canonical_id": "MidhunKanadan/SentimentBERT-AIWriting",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "MiniMaxAI/MiniMax-Music3": {
+    "base_models": [],
+    "canonical_id": "MiniMaxAI/MiniMax-Music3",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "Mukesh97/Bert-NER": {
+    "base_models": [
+      "dslim/bert-base-NER"
+    ],
+    "canonical_id": "Mukesh97/Bert-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "NAMAA-Space/gliner_arabic-v2.1": {
+    "base_models": [
+      "urchade/gliner_multi-v2.1"
+    ],
+    "canonical_id": "NAMAA-Space/gliner_arabic-v2.1",
+    "gated": false,
+    "library_name": "gliner",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "NVIDIA/Canary-1B": {
+    "base_models": [],
+    "canonical_id": "nvidia/canary-1b",
+    "gated": false,
+    "library_name": "nemo",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "NX-AI/TiRex-2": {
+    "base_models": [],
+    "canonical_id": "NX-AI/TiRex-2",
+    "gated": false,
+    "library_name": "tirex-2",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "Narsil/pet-segmentation": {
+    "base_models": [],
+    "canonical_id": "Narsil/pet-segmentation",
+    "gated": false,
+    "library_name": "generic",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "NeoQuasar/Kronos-base": {
+    "base_models": [],
+    "canonical_id": "NeoQuasar/Kronos-base",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "NeuralNovel/whisper-small-hi": {
+    "base_models": [],
+    "canonical_id": "NeuralNovel/whisper-small-hi",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "Nihirc/Prompt2MedImage": {
+    "base_models": [],
+    "canonical_id": "Nihirc/Prompt2MedImage",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "Nixtla/TabPFN": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Nixtla/TimeGPT-1": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Novadotgg/Crop-recommendation": {
+    "base_models": [],
+    "canonical_id": "Novadotgg/Crop-recommendation",
+    "gated": false,
+    "library_name": "sklearn",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "OldBirdAZ/itab-llm": {
+    "base_models": [],
+    "canonical_id": "OldBirdAZ/itab-llm",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Omar1010/bert-turkish-sentiment": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "Omar1010/bert-turkish-sentiment",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "OpenGVLab/ChartAst": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "OpenGVLab/InternVL2_5-2B": {
+    "base_models": [
+      "OpenGVLab/InternViT-300M-448px-V2_5",
+      "internlm/internlm2_5-1_8b-chat"
+    ],
+    "canonical_id": "OpenGVLab/InternVL2_5-2B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "OpenGVLab/InternVL2_5-8B": {
+    "base_models": [
+      "OpenGVLab/InternViT-300M-448px-V2_5",
+      "internlm/internlm2_5-7b-chat"
+    ],
+    "canonical_id": "OpenGVLab/InternVL2_5-8B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "OpenGVLab/InternVL3-8B": {
+    "base_models": [
+      "OpenGVLab/InternVL3-8B-Instruct"
+    ],
+    "canonical_id": "OpenGVLab/InternVL3-8B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "OpenGVLab/InternVL3_5-8B-Instruct": {
+    "base_models": [
+      "OpenGVLab/InternVL3_5-8B-Pretrained"
+    ],
+    "canonical_id": "OpenGVLab/InternVL3_5-8B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "OpenGVLab/InternVideo2-Stage2_1B-224": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "OpenGVLab/VideoMAE-v2": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "OpenVINO/ssd_mobilenet_v2-int8-ov": {
+    "base_models": [],
+    "canonical_id": "OpenVINO/ssd_mobilenet_v2-int8-ov",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "OpenVINO/yolox_tiny-int8-ov": {
+    "base_models": [],
+    "canonical_id": "OpenVINO/yolox_tiny-int8-ov",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "OpenVoiceV2/OpenVoiceV2": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE": {
+    "base_models": [
+      "nomic-ai/modernbert-embed-base"
+    ],
+    "canonical_id": "Parallia/Fairly-Multilingual-ModernBERT-Embed-BE",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2": {
+    "base_models": [],
+    "canonical_id": "PathOr/PathOr_Llama-2-70b-chat-hf-function-calling-adapters-v2",
+    "gated": "manual",
+    "library_name": null,
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "PekingU/rtdetr_r18vd": {
+    "base_models": [],
+    "canonical_id": "PekingU/rtdetr_r18vd",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "PekingU/rtdetr_r50vd": {
+    "base_models": [],
+    "canonical_id": "PekingU/rtdetr_r50vd",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "PekingU/rtdetr_v2_r18vd": {
+    "base_models": [],
+    "canonical_id": "PekingU/rtdetr_v2_r18vd",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "PekingU/rtdetr_v2_r34vd": {
+    "base_models": [],
+    "canonical_id": "PekingU/rtdetr_v2_r34vd",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "Piper/piper-voice-en-us-amy-low": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "PixArt-alpha/PixArt-LCM-XL-2-1024-MS": {
+    "base_models": [],
+    "canonical_id": "PixArt-alpha/PixArt-LCM-XL-2-1024-MS",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS": {
+    "base_models": [],
+    "canonical_id": "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "PixArt-alpha/PixArt-Sigma-XL-2-512-MS": {
+    "base_models": [],
+    "canonical_id": "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "PixArt-alpha/PixArt-XL-2-1024-MS": {
+    "base_models": [],
+    "canonical_id": "PixArt-alpha/PixArt-XL-2-1024-MS",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "Pranilllllll/segformer-satellite-segementation": {
+    "base_models": [],
+    "canonical_id": "Pranilllllll/segformer-satellite-segementation",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "Prior-Labs/tabpfn_2_5": {
+    "base_models": [],
+    "canonical_id": "Prior-Labs/tabpfn_2_5",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "Prior-Labs/tabpfn_2_6": {
+    "base_models": [],
+    "canonical_id": "Prior-Labs/tabpfn_2_6",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "Prior-Labs/tabpfn_3": {
+    "base_models": [],
+    "canonical_id": "Prior-Labs/tabpfn_3",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "Quantamhash/Quantum_STT": {
+    "base_models": [
+      "sbapan41/Quantum_STT"
+    ],
+    "canonical_id": "Quantumhash/Quantum_STT",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "Qwen/Qwen-Image": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen-Image",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-0.5B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-0.5B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-0.5B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-1.5B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-1.5B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-1.5B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-14B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-14B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-14B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-32B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-32B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-32B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-3B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-3B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-3B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-72B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-72B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-72B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-7B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-7B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-7B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-Coder-14B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-Coder-14B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-Coder-14B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-Coder-32B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-Coder-32B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-Coder-32B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-Coder-7B-Instruct": {
+    "base_models": [
+      "Qwen/Qwen2.5-Coder-7B"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-Coder-7B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-VL-32B-Instruct": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen2.5-VL-32B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-VL-32B-Instruct-AWQ": {
+    "base_models": [
+      "Qwen/Qwen2.5-VL-32B-Instruct"
+    ],
+    "canonical_id": "Qwen/Qwen2.5-VL-32B-Instruct-AWQ",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-VL-72B-Instruct": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen2.5-VL-72B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "Qwen/Qwen2.5-VL-7B-Instruct": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen2.5-VL-7B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "Qwen/Qwen3-14B-Instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Qwen/Qwen3-30B-A3B-Instruct-2507": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen3-32B": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen3-32B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Qwen/Qwen3-ASR-0.6B": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen3-ASR-0.6B",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "Qwen/Qwen3-ASR-1.7B": {
+    "base_models": [],
+    "canonical_id": "Qwen/Qwen3-ASR-1.7B",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "Qwen/Qwen3-Coder-32B-Instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Qwen/Qwen3-Embedding-0.6B": {
+    "base_models": [
+      "Qwen/Qwen3-0.6B-Base"
+    ],
+    "canonical_id": "Qwen/Qwen3-Embedding-0.6B",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "Qwen/Qwen3-Embedding-4B": {
+    "base_models": [
+      "Qwen/Qwen3-4B-Base"
+    ],
+    "canonical_id": "Qwen/Qwen3-Embedding-4B",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "Qwen/Qwen3-Embedding-8B": {
+    "base_models": [
+      "Qwen/Qwen3-8B-Base"
+    ],
+    "canonical_id": "Qwen/Qwen3-Embedding-8B",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "ResembleAI/chatterbox": {
+    "base_models": [],
+    "canonical_id": "ResembleAI/chatterbox",
+    "gated": false,
+    "library_name": "chatterbox",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "Roboflow/rf-detr-nano": {
+    "base_models": [],
+    "canonical_id": "Roboflow/rf-detr-nano",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "Roboflow/rf-detr-small": {
+    "base_models": [],
+    "canonical_id": "Roboflow/rf-detr-small",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "Rostlab/prot_bert": {
+    "base_models": [],
+    "canonical_id": "Rostlab/prot_bert",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "Rostlab/prot_bert_bfd": {
+    "base_models": [],
+    "canonical_id": "Rostlab/prot_bert_bfd",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Rostlab/prot_t5_xl_bfd": {
+    "base_models": [],
+    "canonical_id": "Rostlab/prot_t5_xl_bfd",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Rostlab/prot_t5_xl_half_uniref50-enc": {
+    "base_models": [],
+    "canonical_id": "Rostlab/prot_t5_xl_half_uniref50-enc",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Rostlab/prot_t5_xl_uniref50": {
+    "base_models": [],
+    "canonical_id": "Rostlab/prot_t5_xl_uniref50",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Rostlab/prott5_v2_base": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "RuaYiii/musicgen": {
+    "base_models": [],
+    "canonical_id": "RuaYiii/musicgen",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "RunDiffusion/Juggernaut-XL-v9": {
+    "base_models": [],
+    "canonical_id": "RunDiffusion/Juggernaut-XL-v9",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "STMicroelectronics/yolov8n": {
+    "base_models": [],
+    "canonical_id": "STMicroelectronics/yolov8n",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SVECTOR-CORPORATION/FAL": {
+    "base_models": [],
+    "canonical_id": "SVECTOR-CORPORATION/FAL",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SWivid/F5-TTS": {
+    "base_models": [],
+    "canonical_id": "SWivid/F5-TTS",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SaeedLab/ProtEnrich-ESMC-600M": {
+    "base_models": [],
+    "canonical_id": "SaeedLab/ProtEnrich-ESMC-600M",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SaeedLab/ProtEnrich-ProtT5": {
+    "base_models": [],
+    "canonical_id": "SaeedLab/ProtEnrich-ProtT5",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Salesforce/moirai-1.0-R-base": {
+    "base_models": [],
+    "canonical_id": "Salesforce/moirai-1.0-R-base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Salesforce/moirai-1.0-R-large": {
+    "base_models": [],
+    "canonical_id": "Salesforce/moirai-1.0-R-large",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Salesforce/moirai-1.0-R-small": {
+    "base_models": [],
+    "canonical_id": "Salesforce/moirai-1.0-R-small",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Salesforce/moirai-1.1-R-base": {
+    "base_models": [],
+    "canonical_id": "Salesforce/moirai-1.1-R-base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Salesforce/moirai-1.1-R-large": {
+    "base_models": [],
+    "canonical_id": "Salesforce/moirai-1.1-R-large",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SandboxBhh/sentiment-thai-text-model": {
+    "base_models": [],
+    "canonical_id": "SandboxBhh/sentiment-thai-text-model",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Satwik11/gemma-2b-mt-Hindi-Fintuned": {
+    "base_models": [],
+    "canonical_id": "Satwik11/gemma-2b-mt-Hindi-Fintuned",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Sengil/ABSA-Turkish-bert-based-small": {
+    "base_models": [],
+    "canonical_id": "Sengil/ABSA-Turkish-bert-based-small",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SenseTime/deformable-detr": {
+    "base_models": [],
+    "canonical_id": "SenseTime/deformable-detr",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SenseTime/deformable-detr-with-box-refine": {
+    "base_models": [],
+    "canonical_id": "SenseTime/deformable-detr-with-box-refine",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SenseTime/deformable-detr-with-box-refine-two-stage": {
+    "base_models": [],
+    "canonical_id": "SenseTime/deformable-detr-with-box-refine-two-stage",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Shoriful025/legal_contract_named_entity_recognizer": {
+    "base_models": [],
+    "canonical_id": "Shoriful025/legal_contract_named_entity_recognizer",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Shushant/biobert-v1.1-biomedicalQuestionAnswering": {
+    "base_models": [],
+    "canonical_id": "Shushant/biobert-v1.1-biomedicalQuestionAnswering",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Shushant/biomedical_question_answering": {
+    "base_models": [],
+    "canonical_id": "Shushant/biomedical_question_answering",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM": {
+    "base_models": [],
+    "canonical_id": "SivaResearch/DSM_509_Assignment_Sentiment_analysis_BERT_SIVA_GOWTHAM",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "SkyWalkertT1/crypto_bert_sentiment": {
+    "base_models": [],
+    "canonical_id": "SkyWalkertT1/crypto_bert_sentiment",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Snowflake/snowflake-arctic-embed-l-v2.0": {
+    "base_models": [],
+    "canonical_id": "Snowflake/snowflake-arctic-embed-l-v2.0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "StyleTTS2/StyleTTS2-LJSpeech": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Synthyra/ANKH_base": {
+    "base_models": [],
+    "canonical_id": "Synthyra/ANKH_base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "THUDM/CogVLM2-7B-Chat": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "THUDM/cogagent-chat-hf": {
+    "base_models": [],
+    "canonical_id": "THUDM/cogagent-chat-hf",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "THUDM/cogagent-vqa-hf": {
+    "base_models": [],
+    "canonical_id": "THUDM/cogagent-vqa-hf",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Techno03/Legal-NER": {
+    "base_models": [],
+    "canonical_id": "Techno03/Legal-NER",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Tencent-Hunyuan/Hunyuan-7B-MT": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "TheStageAI/thewhisper-large-v3": {
+    "base_models": [],
+    "canonical_id": "TheStageAI/thewhisper-large-v3",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "TinyLlama/TinyLlama-1.1B-Chat-v1.0": {
+    "base_models": [],
+    "canonical_id": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "TommyNgx/YOLOv10-Fire-and-Smoke-Detection": {
+    "base_models": [],
+    "canonical_id": "TommyNgx/YOLOv10-Fire-and-Smoke-Detection",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Tongyi-MAI/Z-Image-Turbo": {
+    "base_models": [],
+    "canonical_id": "Tongyi-MAI/Z-Image-Turbo",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Trelis/SUS-Chat-34B-function-calling-v3": {
+    "base_models": [],
+    "canonical_id": "Trelis/SUS-Chat-34B-function-calling-v3",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Trelis/piper-en-gb-cori-high": {
+    "base_models": [],
+    "canonical_id": "Trelis/piper-en-gb-cori-high",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Trelis/piper-en-us-lessac-high": {
+    "base_models": [],
+    "canonical_id": "Trelis/piper-en-us-lessac-high",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Ultralytics/YOLO11": {
+    "base_models": [],
+    "canonical_id": "Ultralytics/YOLO11",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Ultralytics/YOLOv8": {
+    "base_models": [],
+    "canonical_id": "Ultralytics/YOLOv8",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "Vu74269/bert-squadv2-extend-base": {
+    "base_models": [],
+    "canonical_id": "Vu74269/bert-squadv2-extend-base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "VulcanRaven/ChartQA-smolvlm": {
+    "base_models": [],
+    "canonical_id": "VulcanRaven/ChartQA-smolvlm",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "WhiteRoomProdigy/amicus-ner-v1": {
+    "base_models": [
+      "nlpaueb/legal-bert-base-uncased"
+    ],
+    "canonical_id": "WhiteRoomProdigy/amicus-ner-v1",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "Writer/palmyra-med-20b": {
+    "base_models": [],
+    "canonical_id": "Writer/palmyra-med-20b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "X-iZhang/libra-Llama-3.2-3B-Instruct": {
+    "base_models": [
+      "meta-llama/Llama-3.2-3B-Instruct",
+      "microsoft/rad-dino"
+    ],
+    "canonical_id": "X-iZhang/libra-v1.0-3b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "X-iZhang/libra-v1.0-7b": {
+    "base_models": [
+      "epfl-llm/meditron-7b",
+      "microsoft/rad-dino"
+    ],
+    "canonical_id": "X-iZhang/libra-v1.0-7b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "Xennon-BD/Doctor-Chad": {
+    "base_models": [],
+    "canonical_id": "Xennon-BD/Doctor-Chad",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "YOLOv8n/YOLOv10n": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "Yukang/LongAlpaca-13B": {
+    "base_models": [],
+    "canonical_id": "Yukang/LongAlpaca-13B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Yukang/LongAlpaca-70B": {
+    "base_models": [],
+    "canonical_id": "Yukang/LongAlpaca-70B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Yukang/LongAlpaca-7B": {
+    "base_models": [],
+    "canonical_id": "Yukang/LongAlpaca-7B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "Yzaza/nih-cxr-models": {
+    "base_models": [],
+    "canonical_id": "Yzaza/nih-cxr-models",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ZhipuAI/GLM-4.5V": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "adibvafa/BLIP-MIMIC-CXR": {
+    "base_models": [
+      "Salesforce/blip-image-captioning-large"
+    ],
+    "canonical_id": "adibvafa/BLIP-MIMIC-CXR",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "aditii09/whisper_eng_asr": {
+    "base_models": [],
+    "canonical_id": "aditii09/whisper_eng_asr",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "aehrc/cxrmate-ed": {
+    "base_models": [],
+    "canonical_id": "aehrc/cxrmate-ed",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "ahmed-masry/ChartGemma": {
+    "base_models": [],
+    "canonical_id": "ahmed-masry/chartgemma",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "ahmed-masry/unichart-base-960": {
+    "base_models": [],
+    "canonical_id": "ahmed-masry/unichart-base-960",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "ahotrod/electra_large_discriminator_squad2_512": {
+    "base_models": [],
+    "canonical_id": "ahotrod/electra_large_discriminator_squad2_512",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "ai-sage/GigaAM-Multilingual-Large": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "ai4bharat/indic-parler-tts": {
+    "base_models": [],
+    "canonical_id": "ai4bharat/indic-parler-tts",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "akahana/yolov5s": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "alex17cmbs/chexnet-multilabel": {
+    "base_models": [],
+    "canonical_id": "alex17cmbs/chexnet-multilabel",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "alex17cmbs/vit-chest-xray-multilabel": {
+    "base_models": [],
+    "canonical_id": "alex17cmbs/vit-chest-xray-multilabel",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "alimotahharynia/DrugGen": {
+    "base_models": [
+      "openai-community/gpt2",
+      "liyuesen/druggpt"
+    ],
+    "canonical_id": "alimotahharynia/DrugGen",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "allenai/OLMo-2-1124-13B-Instruct": {
+    "base_models": [
+      "allenai/OLMo-2-1124-13B-Instruct-RLVR2"
+    ],
+    "canonical_id": "allenai/OLMo-2-1124-13B-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "allenai/led-base-16384": {
+    "base_models": [],
+    "canonical_id": "allenai/led-base-16384",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "allenai/led-large-16384": {
+    "base_models": [],
+    "canonical_id": "allenai/led-large-16384",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "allenai/scibert_scivocab_uncased": {
+    "base_models": [],
+    "canonical_id": "allenai/scibert_scivocab_uncased",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "alperengozeten/turkish-sentiment-model": {
+    "base_models": [
+      "emre/turkish-sentiment-analysis"
+    ],
+    "canonical_id": "alperengozeten/turkish-sentiment-model",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "amazon/FalconLite": {
+    "base_models": [],
+    "canonical_id": "amazon/FalconLite",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "amazon/chronos-2": {
+    "base_models": [],
+    "canonical_id": "amazon/chronos-2",
+    "gated": false,
+    "library_name": "chronos-forecasting",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "amazon/chronos-bolt-base": {
+    "base_models": [],
+    "canonical_id": "amazon/chronos-bolt-base",
+    "gated": false,
+    "library_name": "chronos-forecasting",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "amazon/chronos-t5-large": {
+    "base_models": [],
+    "canonical_id": "amazon/chronos-t5-large",
+    "gated": false,
+    "library_name": "chronos-forecasting",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "amazon/chronos-t5-small": {
+    "base_models": [],
+    "canonical_id": "amazon/chronos-t5-small",
+    "gated": false,
+    "library_name": "chronos-forecasting",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "andrewdalpino/ESM2-150M-Protein-Biological-Process": {
+    "base_models": [
+      "facebook/esm2_t30_150M_UR50D"
+    ],
+    "canonical_id": "andrewdalpino/ESM2-150M-Protein-Biological-Process",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "andrewdalpino/ESM2-35M-Protein-Molecular-Function": {
+    "base_models": [
+      "facebook/esm2_t12_35M_UR50D"
+    ],
+    "canonical_id": "andrewdalpino/ESM2-35M-Protein-Molecular-Function",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "andrewdalpino/ESMC-Protein-Function-V0-600M": {
+    "base_models": [
+      "EvolutionaryScale/esmc-600m-2024-12"
+    ],
+    "canonical_id": "andrewdalpino/ESMC-Protein-Function-V0-600M",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "ant-intl/Falcon-TST_Large": {
+    "base_models": [],
+    "canonical_id": "ant-intl/Falcon-TST_Large",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "apple/coreml-detr-semantic-segmentation": {
+    "base_models": [],
+    "canonical_id": "apple/coreml-detr-semantic-segmentation",
+    "gated": false,
+    "library_name": "coreml",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "arkohut/jina-embeddings-v3": {
+    "base_models": [],
+    "canonical_id": "arkohut/jina-embeddings-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "autogluon/chronos-bolt-mini": {
+    "base_models": [],
+    "canonical_id": "autogluon/chronos-bolt-mini",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "autotrain/tabular-binary-extratrees": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "autotrain/tabular-binary-gradientboosting": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "autotrain/tabular-binary-logisticregression": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "autotrain/tabular-binary-randomforest": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "autotrain/tabular-binary-xgboost": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "barflyman/bert-base-german-finetuned-ler-onnx": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "bariskirat/duyguanalizi-berturk": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "bariskirat/duyguanalizi-berturk",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "base-X/timesformer-base-finetuned-k400": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "bayrameker/Turkish-sentiment-ModernBERT-large": {
+    "base_models": [
+      "answerdotai/ModernBERT-large"
+    ],
+    "canonical_id": "bayrameker/Turkish-sentiment-ModernBERT-large",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "bayrameker/turkish-sentiment-modern-bert": {
+    "base_models": [
+      "answerdotai/ModernBERT-base"
+    ],
+    "canonical_id": "bayrameker/turkish-sentiment-modern-bert",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "bigcode/starcoder2-15b-instruct-v0.1": {
+    "base_models": [
+      "bigcode/starcoder2-15b"
+    ],
+    "canonical_id": "bigcode/starcoder2-15b-instruct-v0.1",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "bigcode/starcoder2-7b-instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "bilal01/segformer-b0-finetuned-segments-stamp-verification": {
+    "base_models": [],
+    "canonical_id": "bilal01/segformer-b0-finetuned-segments-stamp-verification",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "black-forest-labs/FLUX.1-Canny-dev": {
+    "base_models": [],
+    "canonical_id": "black-forest-labs/FLUX.1-Canny-dev",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "black-forest-labs/FLUX.1-Fill-dev": {
+    "base_models": [],
+    "canonical_id": "black-forest-labs/FLUX.1-Fill-dev",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "black-forest-labs/FLUX.1-dev": {
+    "base_models": [],
+    "canonical_id": "black-forest-labs/FLUX.1-dev",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "black-forest-labs/FLUX.1-schnell": {
+    "base_models": [],
+    "canonical_id": "black-forest-labs/FLUX.1-schnell",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "boltuix/bert-lite": {
+    "base_models": [
+      "google-bert/bert-base-uncased"
+    ],
+    "canonical_id": "boltuix/bert-lite",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "boltuix/bitBERT": {
+    "base_models": [
+      "google-bert/bert-base-uncased"
+    ],
+    "canonical_id": "boltuix/NeuroBERT-Tiny",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "budecosystem/Chhavi": {
+    "base_models": [],
+    "canonical_id": "budecosystem/Chhavi",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "burtenshaw/m2m100_418M_en_de": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "cagliostrolab/animagine-xl-4.0": {
+    "base_models": [
+      "stabilityai/stable-diffusion-xl-base-1.0"
+    ],
+    "canonical_id": "cagliostrolab/animagine-xl-4.0",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "canopylabs/orpheus-3b-0.1-ft": {
+    "base_models": [
+      "meta-llama/Llama-3.2-3B-Instruct",
+      "canopylabs/orpheus-3b-0.1-pretrained"
+    ],
+    "canonical_id": "canopylabs/orpheus-3b-0.1-ft",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "cernis-intelligence/precis-merged-16bit": {
+    "base_models": [
+      "unsloth/granite-4.0-h-micro"
+    ],
+    "canonical_id": "cernis-intelligence/precis-merged-16bit",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "chrimerss/flood-foundation-prithvi-300m": {
+    "base_models": [],
+    "canonical_id": "chrimerss/flood-foundation-prithvi-300m",
+    "gated": false,
+    "library_name": "terratorch",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw": {
+    "base_models": [
+      "Qwen/Qwen2.5-VL-32B-Instruct"
+    ],
+    "canonical_id": "christopherthompson81/Qwen2.5-VL-32B-Instruct-exl2-4_25bpw",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "codealchemist01/turkish-sentiment-analysis": {
+    "base_models": [],
+    "canonical_id": "codealchemist01/turkish-sentiment-analysis",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "codealchemist01/turkish-sentiment-analysis-finetuned": {
+    "base_models": [
+      "codealchemist01/turkish-sentiment-analysis"
+    ],
+    "canonical_id": "codealchemist01/turkish-sentiment-analysis-finetuned",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "codellama/CodeLlama-7b-instruct-hf": {
+    "base_models": [],
+    "canonical_id": "codellama/CodeLlama-7b-Instruct-hf",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "coqui/XTTS-v2": {
+    "base_models": [],
+    "canonical_id": "coqui/XTTS-v2",
+    "gated": false,
+    "library_name": "coqui",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "coqui/xtts-v2": {
+    "base_models": [],
+    "canonical_id": "coqui/XTTS-v2",
+    "gated": false,
+    "library_name": "coqui",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "cross-encoder/msmarco-MiniLM-L12-en-de-v1": {
+    "base_models": [
+      "microsoft/Multilingual-MiniLM-L12-H384"
+    ],
+    "canonical_id": "cross-encoder/msmarco-MiniLM-L12-en-de-v1",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "text-ranking",
+    "valid": true
+  },
+  "cross-encoder/msmarco-MiniLM-L6-en-de-v1": {
+    "base_models": [
+      "microsoft/Multilingual-MiniLM-L12-H384"
+    ],
+    "canonical_id": "cross-encoder/msmarco-MiniLM-L6-en-de-v1",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "text-ranking",
+    "valid": true
+  },
+  "cy0307/c-videomae-finetune": {
+    "base_models": [
+      "MCG-NJU/videomae-base"
+    ],
+    "canonical_id": "cy0307/c-videomae-finetune",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "dandoune/legal-NER": {
+    "base_models": [
+      "nlpaueb/legal-bert-base-uncased"
+    ],
+    "canonical_id": "dandoune/legal-NER",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "dangvantuan/french-document-embedding": {
+    "base_models": [],
+    "canonical_id": "dangvantuan/french-document-embedding",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "dbmdz/bert-base-turkish-cased": {
+    "base_models": [],
+    "canonical_id": "dbmdz/bert-base-turkish-cased",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "dbmdz/bert-large-cased-finetuned-conll03-english": {
+    "base_models": [],
+    "canonical_id": "dbmdz/bert-large-cased-finetuned-conll03-english",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "dbmdz/german-gpt2": {
+    "base_models": [],
+    "canonical_id": "dbmdz/german-gpt2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "declare-lab/TangoFlux": {
+    "base_models": [],
+    "canonical_id": "declare-lab/TangoFlux",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-V4-Flash": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-V4-Flash",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-V4-Pro": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/DeepSeek-V4-Pro",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "deepseek-ai/DeepSeek-VL2": {
+    "base_models": [],
+    "canonical_id": "deepseek-ai/deepseek-vl2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "deepset/bert-base-cased-squad2": {
+    "base_models": [],
+    "canonical_id": "deepset/bert-base-cased-squad2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "deepset/electra-base-squad2-distilled": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "deepset/roberta-base-squad2": {
+    "base_models": [
+      "FacebookAI/roberta-base"
+    ],
+    "canonical_id": "deepset/roberta-base-squad2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "deepset/roberta-base-squad2-covid": {
+    "base_models": [],
+    "canonical_id": "deepset/roberta-base-squad2-covid",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "diff-rhythm/diff-rhythm-v2": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "distil-whisper/distil-large-v3": {
+    "base_models": [],
+    "canonical_id": "distil-whisper/distil-large-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "dlicari/Italian-Legal-BERT": {
+    "base_models": [],
+    "canonical_id": "dlicari/Italian-Legal-BERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "dmis-lab/biobert-base-cased-v1.1-squad": {
+    "base_models": [],
+    "canonical_id": "dmis-lab/biobert-base-cased-v1.1-squad",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "dmis-lab/biobert-v1.1-squad": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "dnamodel/xraydar-cv": {
+    "base_models": [],
+    "canonical_id": "dnamodel/xraydar-cv",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "dslim/bert-base-NER": {
+    "base_models": [],
+    "canonical_id": "dslim/bert-base-NER",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "earth-insights/SegEarth-R1": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "easwar03/legal-NER": {
+    "base_models": [],
+    "canonical_id": "easwar03/legal-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "easwar03/legal-base-bert-NER": {
+    "base_models": [],
+    "canonical_id": "easwar03/legal-base-bert-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "easwar03/legal-bert-NER": {
+    "base_models": [],
+    "canonical_id": "easwar03/legal-bert-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "easwar03/legal-bert-base-NER": {
+    "base_models": [],
+    "canonical_id": "easwar03/legal-bert-base-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "easwar03/legal-bert-small-NER": {
+    "base_models": [],
+    "canonical_id": "easwar03/legal-bert-small-NER",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "efeyol11/bert-turkish-sentiment": {
+    "base_models": [
+      "savasy/bert-base-turkish-sentiment-cased"
+    ],
+    "canonical_id": "efeyol11/bert-turkish-sentiment",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "emilyalsentzer/Bio_ClinicalBERT": {
+    "base_models": [],
+    "canonical_id": "emilyalsentzer/Bio_ClinicalBERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "emre/turkish-sentiment-analysis": {
+    "base_models": [],
+    "canonical_id": "emre/turkish-sentiment-analysis",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "fabiszn/incomenet-5.5k-base-log": {
+    "base_models": [],
+    "canonical_id": "fabiszn/incomenet-5.5k-base-log",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "facebook/bart-large-cnn": {
+    "base_models": [],
+    "canonical_id": "facebook/bart-large-cnn",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "facebook/detr-resnet-101": {
+    "base_models": [],
+    "canonical_id": "facebook/detr-resnet-101",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "facebook/detr-resnet-50": {
+    "base_models": [],
+    "canonical_id": "facebook/detr-resnet-50",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "facebook/detr-resnet-50-panoptic": {
+    "base_models": [],
+    "canonical_id": "facebook/detr-resnet-50-panoptic",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "facebook/dinov2-base": {
+    "base_models": [],
+    "canonical_id": "facebook/dinov2-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-feature-extraction",
+    "valid": true
+  },
+  "facebook/esm1b_t33_650M_UR50S": {
+    "base_models": [],
+    "canonical_id": "facebook/esm1b_t33_650M_UR50S",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "facebook/esm2_t12_35M_UR50D": {
+    "base_models": [],
+    "canonical_id": "facebook/esm2_t12_35M_UR50D",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "facebook/esm2_t30_150M_UR50D": {
+    "base_models": [],
+    "canonical_id": "facebook/esm2_t30_150M_UR50D",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "facebook/esm2_t33_650M_UR50D": {
+    "base_models": [],
+    "canonical_id": "facebook/esm2_t33_650M_UR50D",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "facebook/m2m100_1.2B": {
+    "base_models": [],
+    "canonical_id": "facebook/m2m100_1.2B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "facebook/mask2former-swin-large-cityscapes-semantic": {
+    "base_models": [],
+    "canonical_id": "facebook/mask2former-swin-large-cityscapes-semantic",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "facebook/mbart-large-50-many-to-many-mmt": {
+    "base_models": [],
+    "canonical_id": "facebook/mbart-large-50-many-to-many-mmt",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "facebook/mms-tts-eng": {
+    "base_models": [],
+    "canonical_id": "facebook/mms-tts-eng",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "facebook/musicgen-large": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/musicgen-medium": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-medium",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/musicgen-melody": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-melody",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/musicgen-small": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-small",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/musicgen-stereo-large": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-stereo-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/musicgen-stereo-small": {
+    "base_models": [],
+    "canonical_id": "facebook/musicgen-stereo-small",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "facebook/nllb-200-1.3B": {
+    "base_models": [],
+    "canonical_id": "facebook/nllb-200-1.3B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "facebook/nllb-200-3.3B": {
+    "base_models": [],
+    "canonical_id": "facebook/nllb-200-3.3B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "facebook/nllb-200-distilled-1.3B": {
+    "base_models": [],
+    "canonical_id": "facebook/nllb-200-distilled-1.3B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "facebook/nllb-200-distilled-600M": {
+    "base_models": [],
+    "canonical_id": "facebook/nllb-200-distilled-600M",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "facebook/omnivore-swin-t": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "facebook/seamless-m4t-v2-large": {
+    "base_models": [],
+    "canonical_id": "facebook/seamless-m4t-v2-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "facebook/timesformer-base-finetuned-k400": {
+    "base_models": [],
+    "canonical_id": "facebook/timesformer-base-finetuned-k400",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "facebook/timesformer-base-finetuned-k600": {
+    "base_models": [],
+    "canonical_id": "facebook/timesformer-base-finetuned-k600",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "facebook/timesformer-base-finetuned-ssv2": {
+    "base_models": [],
+    "canonical_id": "facebook/timesformer-base-finetuned-ssv2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "facebook/w2v-bert-2.0": {
+    "base_models": [],
+    "canonical_id": "facebook/w2v-bert-2.0",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "facebook/wav2vec2-xlsr-53-espeak-cv-ft": {
+    "base_models": [],
+    "canonical_id": "facebook/wav2vec2-xlsr-53-espeak-cv-ft",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "facebookresearch/tabtransformer": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "fishaudio/s2-pro": {
+    "base_models": [],
+    "canonical_id": "fishaudio/s2-pro",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "foduucom/thermal-image-object-detection": {
+    "base_models": [],
+    "canonical_id": "foduucom/thermal-image-object-detection",
+    "gated": false,
+    "library_name": "ultralytics",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "fudan-unipusp/Muse": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "giswqs/s2-water-unetplusplus-efficientnet-b4": {
+    "base_models": [],
+    "canonical_id": "giswqs/s2-water-unetplusplus-efficientnet-b4",
+    "gated": false,
+    "library_name": "segmentation-models-pytorch",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "giswqs/whu-building-unetplusplus-efficientnet-b4": {
+    "base_models": [],
+    "canonical_id": "giswqs/whu-building-unetplusplus-efficientnet-b4",
+    "gated": false,
+    "library_name": "segmentation-models-pytorch",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "gmzx/berturk-turkish-sentiment": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "gmzx/berturk-turkish-sentiment",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "google/bigbird-pegasus-large-arxiv": {
+    "base_models": [],
+    "canonical_id": "google/bigbird-pegasus-large-arxiv",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "google/bigbird-pegasus-large-bigpatent": {
+    "base_models": [],
+    "canonical_id": "google/bigbird-pegasus-large-bigpatent",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "google/bigbird-pegasus-large-pubmed": {
+    "base_models": [],
+    "canonical_id": "google/bigbird-pegasus-large-pubmed",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "google/cxr-foundation": {
+    "base_models": [],
+    "canonical_id": "google/cxr-foundation",
+    "gated": "auto",
+    "library_name": "cxr-foundation",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "google/deplot": {
+    "base_models": [],
+    "canonical_id": "google/deplot",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "visual-question-answering",
+    "valid": true
+  },
+  "google/efficientdet-lite0": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/embeddinggemma-300m": {
+    "base_models": [],
+    "canonical_id": "google/embeddinggemma-300m",
+    "gated": "manual",
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "google/flan-t5-large": {
+    "base_models": [],
+    "canonical_id": "google/flan-t5-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/flan-t5-xl": {
+    "base_models": [],
+    "canonical_id": "google/flan-t5-xl",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/gemini-3.1-pro": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/gemma-2-27b-it": {
+    "base_models": [
+      "google/gemma-2-27b"
+    ],
+    "canonical_id": "google/gemma-2-27b-it",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "google/gemma-2-9b-it": {
+    "base_models": [
+      "google/gemma-2-9b"
+    ],
+    "canonical_id": "google/gemma-2-9b-it",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "google/gemma-4-26b-it": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/long-t5-local-base": {
+    "base_models": [],
+    "canonical_id": "google/long-t5-local-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/long-t5-local-large": {
+    "base_models": [],
+    "canonical_id": "google/long-t5-local-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/long-t5-tglobal-base": {
+    "base_models": [],
+    "canonical_id": "google/long-t5-tglobal-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/long-t5-tglobal-large": {
+    "base_models": [],
+    "canonical_id": "google/long-t5-tglobal-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "google/long-t5-tglobal-xl-16384": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/m2m100_418M": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/madlad400-10b-mt": {
+    "base_models": [],
+    "canonical_id": "google/madlad400-10b-mt",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "google/madlad400-7b-mt": {
+    "base_models": [],
+    "canonical_id": "google/madlad400-7b-mt",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "google/magenta-realtime-2": {
+    "base_models": [],
+    "canonical_id": "google/magenta-realtime-2",
+    "gated": false,
+    "library_name": "magenta-realtime-2",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "google/matcha-ice-it": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/paligemma-2-28b-instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/pegasus-xsum": {
+    "base_models": [],
+    "canonical_id": "google/pegasus-xsum",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "google/pix2struct-chartqa-base": {
+    "base_models": [],
+    "canonical_id": "google/pix2struct-chartqa-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "visual-question-answering",
+    "valid": true
+  },
+  "google/tabfm-1.0.0-jax": {
+    "base_models": [],
+    "canonical_id": "google/tabfm-1.0.0-jax",
+    "gated": false,
+    "library_name": "tabfm",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "google/tabfm-1.0.0-pytorch": {
+    "base_models": [],
+    "canonical_id": "google/tabfm-1.0.0-pytorch",
+    "gated": false,
+    "library_name": "tabfm",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "google/timesfm-1.0-200m": {
+    "base_models": [],
+    "canonical_id": "google/timesfm-1.0-200m",
+    "gated": false,
+    "library_name": "timesfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "google/timesfm-1.0-200m-pytorch": {
+    "base_models": [],
+    "canonical_id": "google/timesfm-1.0-200m-pytorch",
+    "gated": false,
+    "library_name": "timesfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "google/timesfm-2.0-500m": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "google/timesfm-2.0-500m-jax": {
+    "base_models": [],
+    "canonical_id": "google/timesfm-2.0-500m-jax",
+    "gated": false,
+    "library_name": "timesfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "google/timesfm-2.0-500m-pytorch": {
+    "base_models": [],
+    "canonical_id": "google/timesfm-2.0-500m-pytorch",
+    "gated": false,
+    "library_name": "timesfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "google/translategemma-27b-it": {
+    "base_models": [],
+    "canonical_id": "google/translategemma-27b-it",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "google/vivit-b-16x2-kinetics400": {
+    "base_models": [],
+    "canonical_id": "google/vivit-b-16x2-kinetics400",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "gsarti/opus-mt-tc-big-en-de": {
+    "base_models": [],
+    "canonical_id": "gsarti/opus-mt-tc-big-en-de",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "harmonai/aurora-1.5": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "heig-vd-geo/Glacial-Lakes": {
+    "base_models": [],
+    "canonical_id": "heig-vd-geo/Glacial-Lakes",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "hexgrad/Kokoro-82M": {
+    "base_models": [
+      "yl4579/StyleTTS2-LJSpeech"
+    ],
+    "canonical_id": "hexgrad/Kokoro-82M",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "hf-tuner/BERT-Indian-legal-NER": {
+    "base_models": [
+      "google-bert/bert-base-cased"
+    ],
+    "canonical_id": "hf-tuner/BERT-Indian-legal-NER",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "houck2040/tex_leg": {
+    "base_models": [],
+    "canonical_id": "houck2040/tex_leg",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "huangruihua/EMFP": {
+    "base_models": [],
+    "canonical_id": "huangruihua/EMFP",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "huggingface/time-series-transformer-tourism-monthly": {
+    "base_models": [],
+    "canonical_id": "huggingface/time-series-transformer-tourism-monthly",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "huggingworld/m2m100_418M": {
+    "base_models": [
+      "Xenova/m2m100_418M"
+    ],
+    "canonical_id": "huggingworld/m2m100_418M",
+    "gated": false,
+    "library_name": "transformers.js",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "hung200504/bert-squadv2": {
+    "base_models": [
+      "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext"
+    ],
+    "canonical_id": "hung200504/bert-squadv2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "iFaz/llama32_3B_en_emo_v2": {
+    "base_models": [
+      "unsloth/Llama-3.2-3B-Instruct-bnb-4bit"
+    ],
+    "canonical_id": "iFaz/llama32_3B_en_emo_v2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "ianpan/pneumonia-cxr": {
+    "base_models": [
+      "timm/tf_efficientnetv2_s.in21k_ft_in1k"
+    ],
+    "canonical_id": "ianpan/pneumonia-cxr",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "ibm-granite/granite-3.3-8b-instruct": {
+    "base_models": [
+      "ibm-granite/granite-3.3-8b-base"
+    ],
+    "canonical_id": "ibm-granite/granite-3.3-8b-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "ibm-granite/granite-4.1-8b": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-4.1-8b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "ibm-granite/granite-embedding-107m-multilingual": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-embedding-107m-multilingual",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "ibm-granite/granite-embedding-278m-multilingual": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-embedding-278m-multilingual",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "ibm-granite/granite-speech-4.1-2b": {
+    "base_models": [
+      "ibm-granite/granite-4.0-1b-base"
+    ],
+    "canonical_id": "ibm-granite/granite-speech-4.1-2b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "ibm-granite/granite-timeseries-patchtsmixer": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-timeseries-patchtsmixer",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "ibm-granite/granite-timeseries-ttm-r1": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-timeseries-ttm-r1",
+    "gated": false,
+    "library_name": "granite-tsfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "ibm-granite/granite-timeseries-ttm-r2": {
+    "base_models": [],
+    "canonical_id": "ibm-granite/granite-timeseries-ttm-r2",
+    "gated": false,
+    "library_name": "granite-tsfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "ibm-nasa-geospatial/Prithvi-EO-1.0-100M": {
+    "base_models": [],
+    "canonical_id": "ibm-nasa-geospatial/Prithvi-EO-1.0-100M",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ibm-research/ttm-research-r2": {
+    "base_models": [],
+    "canonical_id": "ibm-research/ttm-research-r2",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "ilhamdprastyo/jina-embeddings-v3-tei": {
+    "base_models": [],
+    "canonical_id": "ilhamdprastyo/jina-embeddings-v3-tei",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0": {
+    "base_models": [],
+    "canonical_id": "imkebe/Qwen2.5-VL-3B-Instruct-rk3588-1.2.0",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "incidelen/bert-base-multilingual-turkish-sentiment-analysis-cased": {
+    "base_models": [
+      "google-bert/bert-base-multilingual-cased"
+    ],
+    "canonical_id": "incidelen/bert-base-multilingual-turkish-sentiment-analysis-cased",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "incidelen/bert-base-turkish-sentiment-analysis-128k-cased": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-128k-cased"
+    ],
+    "canonical_id": "incidelen/bert-base-turkish-sentiment-analysis-128k-cased",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "incidelen/bert-base-turkish-sentiment-analysis-cased": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "incidelen/bert-base-turkish-sentiment-analysis-cased",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "incidelen/xlm-roberta-base-turkish-sentiment-analysis": {
+    "base_models": [
+      "FacebookAI/xlm-roberta-base"
+    ],
+    "canonical_id": "incidelen/xlm-roberta-base-turkish-sentiment-analysis",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "intfloat/multilingual-e5-base": {
+    "base_models": [],
+    "canonical_id": "intfloat/multilingual-e5-base",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "intfloat/multilingual-e5-large": {
+    "base_models": [],
+    "canonical_id": "intfloat/multilingual-e5-large",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "intfloat/multilingual-e5-large-instruct": {
+    "base_models": [],
+    "canonical_id": "intfloat/multilingual-e5-large-instruct",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "intfloat/multilingual-e5-small": {
+    "base_models": [],
+    "canonical_id": "intfloat/multilingual-e5-small",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "isaacus/emubert": {
+    "base_models": [
+      "roberta-base"
+    ],
+    "canonical_id": "isaacus/emubert",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "isp-uv-es/superIX": {
+    "base_models": [],
+    "canonical_id": "isp-uv-es/superIX",
+    "gated": false,
+    "library_name": "tf-keras",
+    "pipeline_tag": "image-to-image",
+    "valid": true
+  },
+  "itsomk/chexpert-densenet121": {
+    "base_models": [],
+    "canonical_id": "itsomk/chexpert-densenet121",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "jadechoghari/openmusic": {
+    "base_models": [],
+    "canonical_id": "jadechoghari/openmusic",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "jcomputer/timefs": {
+    "base_models": [],
+    "canonical_id": "jcomputer/timefs",
+    "gated": false,
+    "library_name": "timesfm",
+    "pipeline_tag": "time-series-forecasting",
+    "valid": true
+  },
+  "jinaai/jina-embeddings-v3": {
+    "base_models": [],
+    "canonical_id": "jinaai/jina-embeddings-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "jkfm/finetuned-xray": {
+    "base_models": [
+      "google/vit-base-patch16-224-in21k"
+    ],
+    "canonical_id": "jkfm/finetuned-xray",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "joelito/legal-ner-bert": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "k2-fsa/OmniVoice": {
+    "base_models": [
+      "Qwen/Qwen3-0.6B"
+    ],
+    "canonical_id": "k2-fsa/OmniVoice",
+    "gated": false,
+    "library_name": "omnivoice",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "kaixkhazaki/turkish-sentiment": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "kaixkhazaki/turkish-sentiment",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "kalusev/NER4Legal_SRB": {
+    "base_models": [
+      "classla/bcms-bertic"
+    ],
+    "canonical_id": "kalusev/NER4Legal_SRB",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "kamalray/biomedical-qa-biobert": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "karlwennerstrom/text-to-music": {
+    "base_models": [],
+    "canonical_id": "karlwennerstrom/text-to-music",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "katielink/llava-med-7b-pathvqa-delta": {
+    "base_models": [],
+    "canonical_id": "katielink/llava-med-7b-pathvqa-delta",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "katielink/llava-med-7b-vqarad-delta": {
+    "base_models": [],
+    "canonical_id": "katielink/llava-med-7b-vqarad-delta",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "keras-io/TF_Decision_Trees": {
+    "base_models": [],
+    "canonical_id": "keras-io/TF_Decision_Trees",
+    "gated": false,
+    "library_name": "tf-keras",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "keras-io/semantic-segmentation": {
+    "base_models": [],
+    "canonical_id": "keras-io/semantic-segmentation",
+    "gated": false,
+    "library_name": "generic",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "keras-io/structured-data-classification-grn-vsn": {
+    "base_models": [],
+    "canonical_id": "keras-io/structured-data-classification-grn-vsn",
+    "gated": false,
+    "library_name": "tf-keras",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "keras-io/tab_transformer": {
+    "base_models": [],
+    "canonical_id": "keras-io/tab_transformer",
+    "gated": false,
+    "library_name": "tf-keras",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "keras/llama3_instruct_8b_en_int8": {
+    "base_models": [],
+    "canonical_id": "keras/llama3_instruct_8b_en_int8",
+    "gated": false,
+    "library_name": "keras-hub",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "keras/mistral_instruct_7b_en": {
+    "base_models": [],
+    "canonical_id": "keras/mistral_instruct_7b_en",
+    "gated": false,
+    "library_name": "keras-hub",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "kiselyovd/chest-xray-classifier": {
+    "base_models": [
+      "facebook/convnextv2-tiny-22k-224"
+    ],
+    "canonical_id": "kiselyovd/chest-xray-classifier",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "kmfoda/long-t5-tglobal-xxl": {
+    "base_models": [],
+    "canonical_id": "kmfoda/long-t5-tglobal-xxl",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "koble-ai/jina-embeddings-v3": {
+    "base_models": [],
+    "canonical_id": "koble-ai/jina-embeddings-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "kornia/rt_detr": {
+    "base_models": [],
+    "canonical_id": "kornia/rt_detr",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "krea/Krea-2-Turbo": {
+    "base_models": [
+      "krea/Krea-2-Raw"
+    ],
+    "canonical_id": "krea/Krea-2-Turbo",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "ktrapeznikov/biobert_v1.1_pubmed_squad_v2": {
+    "base_models": [],
+    "canonical_id": "ktrapeznikov/biobert_v1.1_pubmed_squad_v2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "latent-consistency/lcm-lora-sdv1-5": {
+    "base_models": [
+      "runwayml/stable-diffusion-v1-5"
+    ],
+    "canonical_id": "latent-consistency/lcm-lora-sdv1-5",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-image",
+    "valid": true
+  },
+  "law-ai/CustomInLawBERT": {
+    "base_models": [],
+    "canonical_id": "law-ai/CustomInLawBERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "law-ai/InCaseLawBERT": {
+    "base_models": [],
+    "canonical_id": "law-ai/InCaseLawBERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "law-ai/InLegalBERT": {
+    "base_models": [],
+    "canonical_id": "law-ai/InLegalBERT",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "lblod/longformer-classifier-refinement-abb": {
+    "base_models": [],
+    "canonical_id": "lblod/longformer-classifier-refinement-abb",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "likith123/SSAF-FinBert": {
+    "base_models": [],
+    "canonical_id": "likith123/SSAF-FinBert",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "llava-hf/llava-v1.6-vicuna-7b-hf": {
+    "base_models": [],
+    "canonical_id": "llava-hf/llava-v1.6-vicuna-7b-hf",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "longluu/Medical-QA-deberta-MRQA-COVID-QA": {
+    "base_models": [],
+    "canonical_id": "longluu/Medical-QA-deberta-MRQA-COVID-QA",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "longluu/Medical-QA-gatortrons-COVID-QA": {
+    "base_models": [],
+    "canonical_id": "longluu/Medical-QA-gatortrons-COVID-QA",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "question-answering",
+    "valid": true
+  },
+  "loodos/bert-base-turkish-uncased": {
+    "base_models": [],
+    "canonical_id": "loodos/bert-base-turkish-uncased",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "lxyuan/vit-xray-pneumonia-classification": {
+    "base_models": [
+      "google/vit-base-patch16-224-in21k"
+    ],
+    "canonical_id": "lxyuan/vit-xray-pneumonia-classification",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "lyuwenhao/rt-detr_r18vd_coco": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "martinkorelic/dpr-zoo-models": {
+    "base_models": [
+      "allenai/satlas-pretrain"
+    ],
+    "canonical_id": "martinkorelic/dpr-zoo-models",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "matheusrdgsf/phi-sentiment-analysis-model": {
+    "base_models": [],
+    "canonical_id": "matheusrdgsf/phi-sentiment-analysis-model",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "mbarnig/lb-de-fr-en-pt-coqui-stt-models": {
+    "base_models": [],
+    "canonical_id": "mbarnig/lb-de-fr-en-pt-coqui-stt-models",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mehddii/cicids2017-soc-classifier-v2": {
+    "base_models": [],
+    "canonical_id": "mehddii/cicids2017-soc-classifier-v2",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "meta-llama/CodeLlama-34b-Instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "meta-llama/Llama-3-70B-Instruct": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "meta-llama/Llama-3.1-8B-Instruct": {
+    "base_models": [
+      "meta-llama/Meta-Llama-3.1-8B"
+    ],
+    "canonical_id": "meta-llama/Llama-3.1-8B-Instruct",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "meta-llama/Llama-3.2-11B-Vision-Instruct": {
+    "base_models": [],
+    "canonical_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "meta-llama/Llama-3.3-70B-Instruct": {
+    "base_models": [
+      "meta-llama/Llama-3.1-70B"
+    ],
+    "canonical_id": "meta-llama/Llama-3.3-70B-Instruct",
+    "gated": "manual",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "mettinski/logo-detector-rfdetr": {
+    "base_models": [],
+    "canonical_id": "mettinski/logo-detector-rfdetr",
+    "gated": false,
+    "library_name": "rfdetr",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "mfaytin/mask2former-satellite": {
+    "base_models": [],
+    "canonical_id": "mfaytin/mask2former-satellite",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+    "gated": false,
+    "library_name": "open_clip",
+    "pipeline_tag": "zero-shot-image-classification",
+    "valid": true
+  },
+  "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "microsoft/BiomedVLP-BioViL-T": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedVLP-BioViL-T",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "feature-extraction",
+    "valid": true
+  },
+  "microsoft/BiomedVLP-CXR-BERT-general": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedVLP-CXR-BERT-general",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "microsoft/BiomedVLP-CXR-BERT-specialized": {
+    "base_models": [],
+    "canonical_id": "microsoft/BiomedVLP-CXR-BERT-specialized",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "microsoft/LLaMA-2-13b-GTL-Delta": {
+    "base_models": [],
+    "canonical_id": "microsoft/LLaMA-2-13b-GTL-Delta",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/Phi-3-mini-4k-instruct": {
+    "base_models": [],
+    "canonical_id": "microsoft/Phi-3-mini-4k-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/Phi-3.5-mini-instruct": {
+    "base_models": [],
+    "canonical_id": "microsoft/Phi-3.5-mini-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/Phi-3.5-vision-instruct": {
+    "base_models": [],
+    "canonical_id": "microsoft/Phi-3.5-vision-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "microsoft/Phi-4": {
+    "base_models": [],
+    "canonical_id": "microsoft/phi-4",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/Phi-4-mini-instruct": {
+    "base_models": [],
+    "canonical_id": "microsoft/Phi-4-mini-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/Phi-4-multimodal-instruct": {
+    "base_models": [],
+    "canonical_id": "microsoft/Phi-4-multimodal-instruct",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "microsoft/VibeVoice-1.5B": {
+    "base_models": [],
+    "canonical_id": "microsoft/VibeVoice-1.5B",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "microsoft/ft-transformer": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "microsoft/llava-med-7b-delta": {
+    "base_models": [],
+    "canonical_id": "microsoft/llava-med-7b-delta",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/llava-med-v1.5-mistral-7b": {
+    "base_models": [],
+    "canonical_id": "microsoft/llava-med-v1.5-mistral-7b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "microsoft/maira-2": {
+    "base_models": [],
+    "canonical_id": "microsoft/maira-2",
+    "gated": "auto",
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/phi-1_5": {
+    "base_models": [],
+    "canonical_id": "microsoft/phi-1_5",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "microsoft/radedit": {
+    "base_models": [],
+    "canonical_id": "microsoft/radedit",
+    "gated": "auto",
+    "library_name": "diffusers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "microsoft/speecht5_tts": {
+    "base_models": [],
+    "canonical_id": "microsoft/speecht5_tts",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "microsoft/swin-large-patch4-window12-in22k": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "microsoft/xclip-base-patch16-kinetics-600": {
+    "base_models": [],
+    "canonical_id": "microsoft/xclip-base-patch16-kinetics-600",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "microsoft/xclip-base-patch32": {
+    "base_models": [],
+    "canonical_id": "microsoft/xclip-base-patch32",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "microsoft/xclip-large-patch14": {
+    "base_models": [],
+    "canonical_id": "microsoft/xclip-large-patch14",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "miladfa7/picth_vision_checkpoint_7": {
+    "base_models": [
+      "MCG-NJU/videomae-base-finetuned-kinetics"
+    ],
+    "canonical_id": "miladfa7/picth_vision_checkpoint_7",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "minishlab/potion-multilingual-128M": {
+    "base_models": [],
+    "canonical_id": "minishlab/potion-multilingual-128M",
+    "gated": false,
+    "library_name": "model2vec",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mistralai/Mistral-7B-Instruct-v0.2": {
+    "base_models": [],
+    "canonical_id": "mistralai/Mistral-7B-Instruct-v0.2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "mistralai/Mistral-7B-Instruct-v0.3": {
+    "base_models": [
+      "mistralai/Mistral-7B-v0.3"
+    ],
+    "canonical_id": "mistralai/Mistral-7B-Instruct-v0.3",
+    "gated": false,
+    "library_name": "vllm",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mistralai/Mistral-Large-2411": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "mistralai/Mistral-Nemo-Instruct-2407": {
+    "base_models": [
+      "mistralai/Mistral-Nemo-Base-2407"
+    ],
+    "canonical_id": "mistralai/Mistral-Nemo-Instruct-2407",
+    "gated": false,
+    "library_name": "vllm",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mistralai/Mistral-Small-Instruct-2501": {
+    "base_models": [
+      "mistralai/Mistral-Small-24B-Base-2501"
+    ],
+    "canonical_id": "mistralai/Mistral-Small-24B-Instruct-2501",
+    "gated": false,
+    "library_name": "vllm",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mistralai/Voxtral-Mini-3B-2507": {
+    "base_models": [],
+    "canonical_id": "mistralai/Voxtral-Mini-3B-2507",
+    "gated": false,
+    "library_name": "mistral-common",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "mlfoundations/tabula-8b": {
+    "base_models": [],
+    "canonical_id": "mlfoundations/tabula-8b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "mlx-community/rfdetr-base-fp32": {
+    "base_models": [
+      "roboflow/rf-detr"
+    ],
+    "canonical_id": "mlx-community/rfdetr-base-fp32",
+    "gated": false,
+    "library_name": "mlx",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "mou11/pneumonia-detector": {
+    "base_models": [
+      "google/vit-base-patch16-224"
+    ],
+    "canonical_id": "mou11/pneumonia-detector",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "mrm8488/bert-base-german-finetuned-ler": {
+    "base_models": [],
+    "canonical_id": "mrm8488/bert-base-german-finetuned-ler",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "token-classification",
+    "valid": true
+  },
+  "msamilim/mdeberta-v3-turkish-sentiment-optuna-hpo": {
+    "base_models": [
+      "microsoft/mdeberta-v3-base"
+    ],
+    "canonical_id": "msamilim/mdeberta-v3-turkish-sentiment-optuna-hpo",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "msamilim/modernbert-turkish-sentiment-optuna-hpo": {
+    "base_models": [
+      "artiwise-ai/modernbert-base-tr-uncased"
+    ],
+    "canonical_id": "msamilim/modernbert-turkish-sentiment-optuna-hpo",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "mz516/bert-finetuned-squad-v1": {
+    "base_models": [],
+    "canonical_id": "mz516/bert-finetuned-squad-v1",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "nateraw/videomae-base-finetuned-ucf101-subset": {
+    "base_models": [],
+    "canonical_id": "nateraw/videomae-base-finetuned-ucf101-subset",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "video-classification",
+    "valid": true
+  },
+  "nave1616/SegFormer-landcover-FT": {
+    "base_models": [
+      "nvidia/segformer-b4-finetuned-ade-512-512"
+    ],
+    "canonical_id": "nave1616/SegFormer-landcover-FT",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "ncbi/MedCPT-Cross-Encoder": {
+    "base_models": [],
+    "canonical_id": "ncbi/MedCPT-Cross-Encoder",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "nferrez/protein-bert": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "nickmuchi/vit-finetuned-chest-xray-pneumonia": {
+    "base_models": [],
+    "canonical_id": "nickmuchi/vit-finetuned-chest-xray-pneumonia",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "nikhilkoneru/musicgen": {
+    "base_models": [],
+    "canonical_id": "nikhilkoneru/musicgen",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "nlpaueb/legal-bert-base-uncased": {
+    "base_models": [],
+    "canonical_id": "nlpaueb/legal-bert-base-uncased",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "fill-mask",
+    "valid": true
+  },
+  "nvidia/Nemotron-3-Embed-8B-BF16": {
+    "base_models": [
+      "mistralai/Ministral-3-8B-Instruct-2512"
+    ],
+    "canonical_id": "nvidia/Nemotron-3-Embed-8B-BF16",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "nvidia/RADIO": {
+    "base_models": [],
+    "canonical_id": "nvidia/RADIO",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-feature-extraction",
+    "valid": true
+  },
+  "nvidia/Riva-Translate-4B-Instruct-v2": {
+    "base_models": [
+      "nvidia/Mistral-NeMo-12B-Base"
+    ],
+    "canonical_id": "nvidia/Riva-Translate-4B-Instruct-v2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "nvidia/canary-1b": {
+    "base_models": [],
+    "canonical_id": "nvidia/canary-1b",
+    "gated": false,
+    "library_name": "nemo",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "nvidia/canary-1b-v2": {
+    "base_models": [],
+    "canonical_id": "nvidia/canary-1b-v2",
+    "gated": false,
+    "library_name": "nemo",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "nvidia/parakeet-tdt-0.6b-v3": {
+    "base_models": [],
+    "canonical_id": "nvidia/parakeet-tdt-0.6b-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "nvidia/segformer-b5-finetuned-cityscapes-1024-1024": {
+    "base_models": [],
+    "canonical_id": "nvidia/segformer-b5-finetuned-cityscapes-1024-1024",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "openai/gpt-oss-120b": {
+    "base_models": [],
+    "canonical_id": "openai/gpt-oss-120b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "openai/gpt-oss-20b": {
+    "base_models": [],
+    "canonical_id": "openai/gpt-oss-20b",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-generation",
+    "valid": true
+  },
+  "openai/whisper-base": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-large": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-large",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-large-v2": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-large-v2",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-large-v3": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-large-v3",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-large-v3-turbo": {
+    "base_models": [
+      "openai/whisper-large-v3"
+    ],
+    "canonical_id": "openai/whisper-large-v3-turbo",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-medium": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-medium",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-small": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-small",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openai/whisper-tiny": {
+    "base_models": [],
+    "canonical_id": "openai/whisper-tiny",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "openbmb/VoxCPM2": {
+    "base_models": [],
+    "canonical_id": "openbmb/VoxCPM2",
+    "gated": false,
+    "library_name": "voxcpm",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "openmmlab/upernet-convnext-base": {
+    "base_models": [],
+    "canonical_id": "openmmlab/upernet-convnext-base",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw": {
+    "base_models": [
+      "Qwen/Qwen2.5-VL-72B-Instruct"
+    ],
+    "canonical_id": "ordis-co-ltd/Qwen2.5-VL-72B-Instruct_exl2_6.0bpw",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "parler-tts/parler-tts-mini-expresso": {
+    "base_models": [],
+    "canonical_id": "parler-tts/parler-tts-mini-expresso",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-to-speech",
+    "valid": true
+  },
+  "parler-tts/parler-tts-v1": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "patrickvonplaten/led-large-16384-pubmed": {
+    "base_models": [],
+    "canonical_id": "patrickvonplaten/led-large-16384-pubmed",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "playto-mt/opus-mt-en-de-ct2": {
+    "base_models": [
+      "Helsinki-NLP/opus-mt-en-de"
+    ],
+    "canonical_id": "playto-mt/opus-mt-en-de-ct2",
+    "gated": false,
+    "library_name": "ctranslate2",
+    "pipeline_tag": "translation",
+    "valid": true
+  },
+  "prakashchhipa/Qwen2.5-VL-7B-ChartQA-LoRA": {
+    "base_models": [
+      "Qwen/Qwen2.5-VL-7B-Instruct"
+    ],
+    "canonical_id": "prakashchhipa/Qwen2.5-VL-7B-ChartQA-LoRA",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "image-to-text",
+    "valid": true
+  },
+  "pranjal/biobert-squad2": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "prithivMLmods/ChemQwen-vL": {
+    "base_models": [
+      "Qwen/Qwen2-VL-2B-Instruct"
+    ],
+    "canonical_id": "prithivMLmods/ChemQwen-vL",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "prithivMLmods/ChemQwen2-vL": {
+    "base_models": [
+      "Qwen/Qwen2-VL-2B-Instruct"
+    ],
+    "canonical_id": "prithivMLmods/ChemQwen2-vL",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-text-to-text",
+    "valid": true
+  },
+  "prithivMLmods/Multilabel-GeoSceneNet": {
+    "base_models": [
+      "google/siglip2-base-patch16-224"
+    ],
+    "canonical_id": "prithivMLmods/Multilabel-GeoSceneNet",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  },
+  "projectlosangeles/HeartMuLa": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "pszemraj/led-base-book-summary": {
+    "base_models": [],
+    "canonical_id": "pszemraj/led-base-book-summary",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "pszemraj/led-large-book-summary": {
+    "base_models": [],
+    "canonical_id": "pszemraj/led-large-book-summary",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "pszemraj/long-t5-tglobal-base-16384-book-summary": {
+    "base_models": [],
+    "canonical_id": "pszemraj/long-t5-tglobal-base-16384-book-summary",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "pszemraj/long-t5-tglobal-large-pubmed-3k-booksum-16384-WIP": {
+    "base_models": [],
+    "canonical_id": "pszemraj/long-t5-tglobal-large-pubmed-3k-booksum-16384-WIP",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "pszemraj/long-t5-tglobal-xl-16384-book-summary": {
+    "base_models": [],
+    "canonical_id": "pszemraj/long-t5-tglobal-xl-16384-book-summary",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "pszemraj/long-t5-tglobal-xl-16384-booksci-summary-v1": {
+    "base_models": [],
+    "canonical_id": "pszemraj/long-t5-tglobal-xl-16384-booksci-summary-v1",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "qualcomm/Yolo-X": {
+    "base_models": [],
+    "canonical_id": "qualcomm/Yolo-X",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "rafaibnsultan/GeoSAM": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "ratnaonline1/segFormer-b4-city-satellite-segmentation-1024x1024": {
+    "base_models": [],
+    "canonical_id": "ratnaonline1/segFormer-b4-city-satellite-segmentation-1024x1024",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "resemble-ai/chatterbox": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "riffusion/riffusion": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "riffusion/riffusion-model-v1": {
+    "base_models": [],
+    "canonical_id": "riffusion/riffusion-model-v1",
+    "gated": false,
+    "library_name": "diffusers",
+    "pipeline_tag": "text-to-audio",
+    "valid": true
+  },
+  "rufimelo/Legal-BERTimbau-base": {
+    "base_models": [],
+    "canonical_id": "rufimelo/Legal-BERTimbau-base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "rufimelo/Legal-BERTimbau-large": {
+    "base_models": [],
+    "canonical_id": "rufimelo/Legal-BERTimbau-large",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "salt-ice/bert-base-turkish-cased-sentiment": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "saribasmetehan/bert-base-turkish-sentiment-analysis": {
+    "base_models": [],
+    "canonical_id": "saribasmetehan/bert-base-turkish-sentiment-analysis",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "scikit-learn/tabular-classifier": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "sentence-transformers/LaBSE": {
+    "base_models": [],
+    "canonical_id": "sentence-transformers/LaBSE",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "sentence-transformers/distiluse-base-multilingual-cased-v2": {
+    "base_models": [],
+    "canonical_id": "sentence-transformers/distiluse-base-multilingual-cased-v2",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2": {
+    "base_models": [],
+    "canonical_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "sentence-transformers/paraphrase-multilingual-mpnet-base-v2": {
+    "base_models": [],
+    "canonical_id": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "shaafsalman/shaafsalman": {
+    "base_models": [],
+    "canonical_id": "shaafsalman/shaafsalman",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "skops/tabular-k-nearest-neighbors": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "skops/tabular-svm-classifier": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "stabilityai/sdxl-turbo": {
+    "base_models": [],
+    "canonical_id": "stabilityai/sdxl-turbo",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-audio-open-1.0": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-audio-open-1.0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-audio-open-3-medium": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "stabilityai/stable-audio-open-3-small": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "stabilityai/stable-audio-open-small": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-audio-open-small",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-2-1": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "stabilityai/stable-diffusion-3-medium": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-3-medium",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-3.5-large": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-3.5-large",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-3.5-large-turbo": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-3.5-large-turbo",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-3.5-medium": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-3.5-medium",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-xl-base-1.0": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-xl-base-1.0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stabilityai/stable-diffusion-xl-refiner-1.0": {
+    "base_models": [],
+    "canonical_id": "stabilityai/stable-diffusion-xl-refiner-1.0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stable-diffusion-v1-5/stable-diffusion-v1-5": {
+    "base_models": [],
+    "canonical_id": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "star092304/vi-sign-language-videomae-base": {
+    "base_models": [],
+    "canonical_id": "star092304/vi-sign-language-videomae-base",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "stevenbucaille/rf-detr-small": {
+    "base_models": [],
+    "canonical_id": "stevenbucaille/rf-detr-small",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "suparthjain/vit-base-chexpert-clinicalai": {
+    "base_models": [],
+    "canonical_id": "suparthjain/vit-base-chexpert-clinicalai",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "suriya7/t5-base-text-to-sql": {
+    "base_models": [],
+    "canonical_id": "suriya7/t5-base-text-to-sql",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "svercoutere/legal-bert-base-classifier-refinement-abb": {
+    "base_models": [],
+    "canonical_id": "svercoutere/legal-bert-base-classifier-refinement-abb",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "sweetcocoa/pop2piano": {
+    "base_models": [],
+    "canonical_id": "sweetcocoa/pop2piano",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "syzymon/long_llama_3b_instruct": {
+    "base_models": [],
+    "canonical_id": "syzymon/long_llama_3b_instruct",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "syzymon/long_llama_3b_v1_1": {
+    "base_models": [],
+    "canonical_id": "syzymon/long_llama_3b_v1_1",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "tablegpt/TableGPT2-7B": {
+    "base_models": [],
+    "canonical_id": "tablegpt/TableGPT2-7B",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "templates/tabular-classification": {
+    "base_models": [],
+    "canonical_id": "templates/tabular-classification",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "theforecastingcompany/t0-alpha": {
+    "base_models": [],
+    "canonical_id": "theforecastingcompany/t0-alpha",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "thenextme/videomae-base-finetuned-kinetics-finetuned": {
+    "base_models": [],
+    "canonical_id": "thenextme/videomae-base-finetuned-kinetics-finetuned",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "thu-ml/unidiffuser-v0": {
+    "base_models": [],
+    "canonical_id": "thu-ml/unidiffuser-v0",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "thu-ml/unidiffuser-v1": {
+    "base_models": [],
+    "canonical_id": "thu-ml/unidiffuser-v1",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "tner/bert-base-cased-ontonotes5": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "toolevalxm/RadiologyAI-ChestXray": {
+    "base_models": [],
+    "canonical_id": "toolevalxm/RadiologyAI-ChestXray",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "ultralytics/yolov5": {
+    "base_models": [],
+    "canonical_id": "ultralytics/yolov5",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "ultralytics/yolov8n": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "umairinayat/medical-models": {
+    "base_models": [],
+    "canonical_id": "umairinayat/medical-models",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit": {
+    "base_models": [],
+    "canonical_id": "unsloth/Qwen2.5-VL-32B-Instruct-bnb-4bit",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit": {
+    "base_models": [],
+    "canonical_id": "unsloth/Qwen2.5-VL-32B-Instruct-unsloth-bnb-4bit",
+    "library_name": null,
+    "pipeline_tag": null,
+    "resolution": "public_model_page",
+    "valid": true
+  },
+  "ustc-community/dfine-nano": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "utrobinmv/t5_revmt_en_de": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "webnn/yolo11n": {
+    "base_models": [],
+    "canonical_id": "webnn/yolo11n",
+    "gated": false,
+    "library_name": "ultralytics",
+    "pipeline_tag": "object-detection",
+    "valid": true
+  },
+  "whiteh4t/esm2-650m-protein-localization-lora": {
+    "base_models": [
+      "facebook/esm2_t33_650M_UR50D"
+    ],
+    "canonical_id": "whiteh4t/esm2-650m-protein-localization-lora",
+    "gated": false,
+    "library_name": "peft",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "winvoker/turkish-sentiment-analysis-dataset": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "wu-pr-gw/segformer-b2-finetuned-with-LoveDA": {
+    "base_models": [],
+    "canonical_id": "wu-pr-gw/segformer-b2-finetuned-with-LoveDA",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": null,
+    "valid": true
+  },
+  "xkeyC/whisper-large-v3-turbo-gguf": {
+    "base_models": [
+      "openai/whisper-large-v3"
+    ],
+    "canonical_id": "xkeyC/whisper-large-v3-turbo-gguf",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "automatic-speech-recognition",
+    "valid": true
+  },
+  "xpertsystems/cyb001-baseline-classifier": {
+    "base_models": [],
+    "canonical_id": "xpertsystems/cyb001-baseline-classifier",
+    "gated": false,
+    "library_name": "pytorch",
+    "pipeline_tag": "tabular-classification",
+    "valid": true
+  },
+  "yashrane2904/LED_Finetuned": {
+    "base_models": [],
+    "canonical_id": "yashrane2904/LED_Finetuned",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "summarization",
+    "valid": true
+  },
+  "yeniguno/absa-turkish-bert-dbmdz": {
+    "base_models": [
+      "dbmdz/bert-base-turkish-cased"
+    ],
+    "canonical_id": "yeniguno/absa-turkish-bert-dbmdz",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "text-classification",
+    "valid": true
+  },
+  "ytu-ce-cosmos/turkish-colbert": {
+    "base_models": [
+      "ytu-ce-cosmos/turkish-base-bert-uncased"
+    ],
+    "canonical_id": "ytu-ce-cosmos/turkish-colbert",
+    "gated": false,
+    "library_name": null,
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "yuyijiong/segformer-b5-remote-sensing-quality": {
+    "base_models": [],
+    "canonical_id": "yuyijiong/segformer-b5-remote-sensing-quality",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-segmentation",
+    "valid": true
+  },
+  "zenml/finetuned-snowflake-arctic-embed-m": {
+    "base_models": [
+      "Snowflake/snowflake-arctic-embed-m"
+    ],
+    "canonical_id": "zenml/finetuned-snowflake-arctic-embed-m",
+    "gated": false,
+    "library_name": "sentence-transformers",
+    "pipeline_tag": "sentence-similarity",
+    "valid": true
+  },
+  "zlucia/custom-legal-ner": {
+    "http_status": 401,
+    "resolution": "not_publicly_resolvable",
+    "valid": false
+  },
+  "zubairsalman7/xray_vit": {
+    "base_models": [
+      "google/vit-base-patch16-224-in21k"
+    ],
+    "canonical_id": "zubairsalman7/xray_vit",
+    "gated": false,
+    "library_name": "transformers",
+    "pipeline_tag": "image-classification",
+    "valid": true
+  }
+}
