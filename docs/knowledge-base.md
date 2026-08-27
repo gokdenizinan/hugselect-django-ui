@@ -1,6 +1,6 @@
 # Elasticsearch knowledge-base reproduction
 
-HugSelect `v1.0.0` uses index `models_t7` with 69,000 searchable documents.
+HugSelect `v1.0.1` uses index `models_t7` with 69,000 searchable documents.
 The latest recorded model modification in the snapshot is 29 April 2025.
 
 ## Release files
@@ -11,6 +11,12 @@ The GitHub release publishes:
 - `models_t7-2025-04-29.ndjson.gz.sha256` — integrity checksum;
 - `models_t7-2025-04-29-manifest.json` — index name, count, source period,
   export date, format version, and release commit.
+
+Verify the downloaded archive before import:
+
+```bash
+sha256sum --check models_t7-2025-04-29.ndjson.gz.sha256
+```
 
 ## Import
 
@@ -26,6 +32,16 @@ python tools/elasticsearch_snapshot.py import \
 Import refuses to overwrite an existing index unless `--replace` is supplied.
 It creates the index from the archived mapping/settings, bulk-loads documents,
 refreshes the index, and verifies the expected count.
+
+Verify the restored server version and index count independently:
+
+```bash
+curl -s http://localhost:9200/
+curl -s http://localhost:9200/models_t7/_count
+```
+
+The first response must identify Elasticsearch `7.17.29`; the second must
+report `69000` documents.
 
 ## Export
 

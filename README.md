@@ -14,16 +14,30 @@ performance scores.
 
 ## Released knowledge base
 
-The `v1.0.0` release uses Elasticsearch index `models_t7`, containing **69,000
+The `v1.0.1` release uses Elasticsearch index `models_t7`, containing **69,000
 searchable model records**. The metadata was collected through 29 April 2025.
 The compressed release snapshot is published as:
 
 `models_t7-2025-04-29.ndjson.gz`
 
-Download it from the `v1.0.0` GitHub release before following either setup
+Download it from the `v1.0.1` GitHub release before following either setup
 method below. The release also provides a SHA-256 checksum and an index
 manifest. The original collection and evidence-construction pipelines remain
 in the numbered repository directories for audit and reconstruction.
+
+## Supported release environment
+
+HugSelect `v1.0.1` is verified with:
+
+- Python **3.14.5**;
+- Django **6.0.7**;
+- Elasticsearch server **7.17.29**;
+- the exact Python package versions in `requirements.txt`.
+
+Elasticsearch is the local recommendation knowledge base. Gemini and OpenAI
+are used only for requirement extraction; candidate retrieval is never
+delegated to either provider or to the live Hugging Face service. Hugging Face
+is contacted at runtime only to verify that shortlisted model pages resolve.
 
 ## Quick start with Docker Compose
 
@@ -33,20 +47,22 @@ index snapshot.
 ```bash
 git clone https://github.com/gokdenizinan/hugselect-django-ui.git
 cd hugselect-django-ui
-git checkout v1.0.0
+git checkout v1.0.1
 cp .env.example .env
 ```
 
-Set `GEMINI_API_KEY` and a unique `DJANGO_SECRET_KEY` in `.env`, then start the
-services:
+Set `GEMINI_API_KEY` and a unique `DJANGO_SECRET_KEY` in `.env`. The Gemini key
+may be left empty if only the degraded basic-search path is being reproduced.
+Then build the application and start Elasticsearch:
 
 ```bash
+docker compose build web
 docker compose up -d elasticsearch
 python tools/elasticsearch_snapshot.py import \
   --url http://localhost:9200 \
   --index models_t7 \
   --input /path/to/models_t7-2025-04-29.ndjson.gz
-docker compose up --build web
+docker compose up -d web
 ```
 
 Open <http://127.0.0.1:8000/search/>. Confirm the imported record count with:
@@ -55,25 +71,37 @@ Open <http://127.0.0.1:8000/search/>. Confirm the imported record count with:
 curl -s http://localhost:9200/models_t7/_count
 ```
 
-The count must be `69000`.
+The count must be `69000`. Inspect service health and logs with:
+
+```bash
+docker compose ps
+docker compose logs --tail=100 web elasticsearch
+```
+
+Stop the stack with `docker compose down`; add `--volumes` only when the local
+restored index should also be removed.
 
 ## Local installation
-
-HugSelect `v1.0.0` is verified with Python 3.14.5, Django 6.0.7,
-Elasticsearch server 7.17.29, and the pinned Python packages in
-`requirements.txt`.
 
 ```bash
 git clone https://github.com/gokdenizinan/hugselect-django-ui.git
 cd hugselect-django-ui
-git checkout v1.0.0
+git checkout v1.0.1
 python3.14 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-Start Elasticsearch 7.17.29 at `http://localhost:9200`, then import the release
+Start Elasticsearch 7.17.29 at `http://localhost:9200`. The simplest supported
+local configuration is the repository's single-node service:
+
+```bash
+docker compose up -d elasticsearch
+curl -s http://localhost:9200/
+```
+
+The response must identify Elasticsearch `7.17.29`. Import the release
 snapshot:
 
 ```bash
@@ -93,6 +121,50 @@ python manage.py migrate
 python manage.py check
 python manage.py runserver
 ```
+
+Open <http://127.0.0.1:8000/search/>.
+
+## Minimal reproducible example
+
+After the index count is `69000` and Django is running, submit this query on
+the search page with **All models** selected:
+
+```text
+instruction-following English text-generation model
+```
+
+With a working Gemini key, the results page labels the run **Feature-based
+recommendation** and shows the interpreted criteria. Without a Gemini key, the
+same request uses the explicitly labeled **Basic fallback search**. In both
+cases, recommendations are retrieved from the local `models_t7` index and the
+results page reports the current Hugging Face availability check.
+
+For a machine-verifiable Docker reproduction, run:
+
+```bash
+tools/verify_docker_e2e.sh /path/to/models_t7-2025-04-29.ndjson.gz
+```
+
+The script builds the pinned Python image, starts Elasticsearch 7.17.29,
+restores and verifies all 69,000 records, starts Django, executes a
+representative retrieval, and submits a CSRF-protected search through the web
+endpoint. It uses a temporary Compose volume and removes that volume on exit.
+The same procedure is defined in `.github/workflows/docker-e2e.yml`.
+
+## Configuration
+
+Copy `.env.example` to `.env` for Docker Compose. Local shell deployments use
+the same names:
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `DJANGO_SECRET_KEY` | Yes outside development | Django signing secret; use a unique random value. |
+| `DJANGO_DEBUG` | No | `true` for local development; disable for deployment. |
+| `DJANGO_ALLOWED_HOSTS` | Yes outside the defaults | Comma-separated Django host allow-list. |
+| `HUGSELECT_ES_URL` | No | Elasticsearch URL; defaults to `http://localhost:9200`. |
+| `HUGSELECT_ES_INDEX` | No | Index name; the release uses `models_t7`. |
+| `GEMINI_API_KEY` | Needed for feature extraction | Gemini credential used by the primary extraction path. |
+| `OPENAI_FALLBACK_MODEL` | No | Quota-continuation model; defaults to `gpt-4.1-mini`. |
 
 ## API keys and privacy
 
@@ -158,9 +230,27 @@ Run the exact release verification suite:
 .venv/bin/python hugselect_web/manage.py test recommender -v 2
 ```
 
-The `v1.0.0` release contains 147 automated recommender tests. The SoftwareX
+The `v1.0.1` release contains 147 automated recommender tests. The SoftwareX
 evaluation package, scenario definitions, raw response schema, normalization,
-and analysis scripts are under `evaluation/softwarex_v1/`.
+and analysis scripts are under `evaluation/softwarex_v1/`. The behavioural
+audit was captured against `v1.0.0`; `v1.0.1` retains the same recommendation
+implementation and adds the pinned container base, Docker health check,
+end-to-end verification, and expanded reproduction documentation.
+
+To reproduce the software-verification row reported in the paper, use the
+release tag and run, in order:
+
+```bash
+.venv/bin/python hugselect_web/manage.py check
+.venv/bin/python hugselect_web/manage.py test recommender -v 2
+git diff --check
+tools/verify_docker_e2e.sh /path/to/models_t7-2025-04-29.ndjson.gz
+```
+
+The expected Django result is `Ran 147 tests` followed by `OK`; the Docker
+result must report a 69,000-document restore and a successful representative
+search. The release-level behavioural audit is reproduced separately with the
+commands in `evaluation/softwarex_v1/README.md`.
 
 ## Index export and recovery
 
@@ -184,6 +274,6 @@ Support contact: `siamak.farshidi@wur.nl`
 ## Citation
 
 A repository DOI was not assigned for this version. Cite the exact immutable
-[`v1.0.0` GitHub release](https://github.com/gokdenizinan/hugselect-django-ui/releases/tag/v1.0.0)
+[`v1.0.1` GitHub release](https://github.com/gokdenizinan/hugselect-django-ui/releases/tag/v1.0.1)
 rather than a moving branch. The earlier framework data and evaluation archive
 remains available from Mendeley Data at DOI `10.17632/9xbhyxr7tf.1`.

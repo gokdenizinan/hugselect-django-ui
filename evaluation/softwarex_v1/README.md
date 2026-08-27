@@ -1,8 +1,9 @@
 # SoftwareX release evaluation
 
 This directory is the reproducibility package for the HugSelect `v1.0.0`
-release-level study. It separates measured runs from protocol metadata so that
-missing services cannot be mistaken for completed experiments.
+release-level study, bundled unchanged with the functionally equivalent
+`v1.0.1` submission release. It separates measured runs from protocol metadata
+so that missing services cannot be mistaken for completed experiments.
 
 ## Protocol
 

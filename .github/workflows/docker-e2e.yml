@@ -1,0 +1,39 @@
+name: Docker end-to-end verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - django-ui
+    paths:
+      - Dockerfile
+      - docker-compose.yml
+      - requirements.txt
+      - tools/elasticsearch_snapshot.py
+      - tools/verify_docker_e2e.sh
+      - .github/workflows/docker-e2e.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download the released index snapshot
+        run: |
+          curl --fail --location --retry 3 \
+            --output models_t7-2025-04-29.ndjson.gz \
+            https://github.com/gokdenizinan/hugselect-django-ui/releases/download/v1.0.0/models_t7-2025-04-29.ndjson.gz
+          curl --fail --location --retry 3 \
+            --output models_t7-2025-04-29.ndjson.gz.sha256 \
+            https://github.com/gokdenizinan/hugselect-django-ui/releases/download/v1.0.0/models_t7-2025-04-29.ndjson.gz.sha256
+          sha256sum --check models_t7-2025-04-29.ndjson.gz.sha256
+
+      - name: Build, restore, start, and exercise HugSelect
+        run: |
+          chmod +x tools/verify_docker_e2e.sh
+          tools/verify_docker_e2e.sh models_t7-2025-04-29.ndjson.gz

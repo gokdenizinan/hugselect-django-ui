@@ -1,6 +1,6 @@
 # Ranking and Decision Stress specification
 
-This file records the behavior of HugSelect `v1.0.0` in implementation terms.
+This file records the behavior of HugSelect `v1.0.1` in implementation terms.
 
 ## Feasibility
 

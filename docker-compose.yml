@@ -27,6 +27,15 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request;
+          urllib.request.urlopen('http://localhost:8000/search/', timeout=5)"
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
 volumes:
   elasticsearch-data:
