@@ -65,6 +65,10 @@ python tools/elasticsearch_snapshot.py import \
 docker compose up -d web
 ```
 
+The web container applies Django migrations before starting the development
+server, which initializes the session table used by searches and saved
+comparisons.
+
 Open <http://127.0.0.1:8000/search/>. Confirm the imported record count with:
 
 ```bash
